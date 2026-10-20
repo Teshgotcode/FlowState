@@ -1,0 +1,710 @@
+{
+  "tray": {
+    "settings": "Innstillinger...",
+    "checkUpdates": "Sjekk etter oppdateringer...",
+    "copyLastTranscript": "Kopier siste transkripsjon",
+    "unloadModel": "Last ut modell",
+    "model": "Modell",
+    "quit": "Avslutt",
+    "cancel": "Avbryt",
+    "secureInputWarning": "⚠ Hurtigtaster blokkert av Sikker innskriving"
+  },
+  "sidebar": {
+    "general": "Generelt",
+    "models": "Modeller",
+    "advanced": "Avansert",
+    "postProcessing": "Etterbehandling",
+    "history": "Historikk",
+    "debug": "Feilsøking",
+    "about": "Om"
+  },
+  "onboarding": {
+    "subtitle": "For å komme i gang, velg en transkripsjonsmodell",
+    "existingModelsTitle": "Kompatible modeller",
+    "downloadModelsTitle": "Tilgjengelig for nedlasting",
+    "showAllModels": "Vis alle {{total}} modeller",
+    "showFewerModels": "Vis færre modeller",
+    "recommended": "Anbefalt",
+    "customModelDescription": "Ikke offisielt støttet",
+    "migration": {
+      "title": "Modellene dine må oppdateres",
+      "description": "FlowState bruker nå en nyere type modell. Last ned den nye versjonen for å fortsette transkripsjon. Gamle versjoner vil bli fjernet.",
+      "replaces": "Erstatter {{name}}",
+      "oldFormat": "Gammelt format",
+      "failed": "Nedlasting mislyktes",
+      "retry": "Prøv igjen",
+      "chooseAnother": "Velg en annen modell",
+      "download": "Last ned modeller ({{size}})",
+      "continue": "Fortsett",
+      "timeRemaining": "{{time}} igjen"
+    },
+    "modelCard": {
+      "accuracy": "nøyaktighet",
+      "speed": "hastighet"
+    },
+    "models": {
+      "small": {
+        "name": "Whisper Small",
+        "description": "Rask og ganske nøyaktig."
+      },
+      "medium": {
+        "name": "Whisper Medium",
+        "description": "God nøyaktighet, middels hastighet"
+      },
+      "turbo": {
+        "name": "Whisper Turbo",
+        "description": "Balansert nøyaktighet og hastighet."
+      },
+      "large": {
+        "name": "Whisper Large",
+        "description": "God nøyaktighet, men treg."
+      },
+      "breeze-asr": {
+        "name": "Breeze ASR",
+        "description": "Optimalisert for taiwansk mandarin. Støtter kodeskifte."
+      }
+    },
+    "errors": {
+      "selectModel": "Kunne ikke velge modell"
+    },
+    "permissions": {
+      "title": "Tillatelser kreves",
+      "description": "FlowState trenger noen tillatelser for å fungere skikkelig.",
+      "microphone": {
+        "title": "Mikrofontilgang",
+        "description": "Kreves for å høre stemmen din ved transkripsjon."
+      },
+      "accessibility": {
+        "title": "Tilgjengelighetstilgang",
+        "description": "Kreves for å skrive inn transkribert tekst i appene dine."
+      },
+      "grant": "Gi tillatelse",
+      "granted": "Gitt",
+      "waiting": "Venter...",
+      "allGranted": "Alt klart!",
+      "errors": {
+        "checkFailed": "Kunne ikke sjekke tillatelser. Prøv igjen.",
+        "requestFailed": "Kunne ikke be om tillatelse. Prøv igjen."
+      }
+    }
+  },
+  "modelSelector": {
+    "custom": "Tilpasset",
+    "legacy": "Arv",
+    "streaming": "Streaming",
+    "active": "Aktiv",
+    "switching": "Bytter...",
+    "noModelsAvailable": "Ingen modeller tilgjengelig",
+    "verifying": "Verifiserer {{modelName}}...",
+    "verifyingGeneric": "Verifiserer...",
+    "downloading": "Laster ned {{percentage}}%",
+    "downloadingMultiple": "Laster ned {{count}} modeller...",
+    "modelReady": "Modell klar",
+    "loading": "Laster {{modelName}}...",
+    "loadingGeneric": "Laster...",
+    "modelError": "Modellfeil",
+    "modelUnloaded": "Modell avlastet",
+    "noModelDownloadRequired": "Ingen modell – nedlasting kreves",
+    "deleteModel": "Slett {{modelName}}",
+    "downloadSpeed": "{{speed}} MB/s",
+    "cancel": "Avbryt",
+    "cancelDownload": "Avbryt nedlasting",
+    "capabilities": {
+      "languageSelection": "Støtter flere inndataspråk",
+      "singleLanguage": "Støtter kun dette språket",
+      "languageCount": "{{total}} språk",
+      "languageOnly": "{{language}} kun",
+      "translation": "Kan oversette til engelsk",
+      "translate": "Oversett",
+      "streaming": "Viser live-transkripsjon mens du snakker"
+    }
+  },
+  "settings": {
+    "modelSettings": {
+      "title": "{{model}}-innstillinger"
+    },
+    "general": {
+      "title": "Generelt",
+      "shortcut": {
+        "title": "FlowState-snarveier",
+        "description": "Konfigurer tastatursnarveier for å starte tale-til-tekst-opptak",
+        "loading": "Laster snarveier ...",
+        "none": "Ingen snarveier konfigurert",
+        "notFound": "Snarvei ikke funnet",
+        "pressKeys": "Trykk på taster ...",
+        "bindings": {
+          "transcribe": {
+            "name": "Transkriberingssnarvei",
+            "description": "Tastatursnarveien for å ta opp og transkribere stemmen din."
+          },
+          "cancel": {
+            "name": "Avbryt-snarvei",
+            "description": "Tastatursnarveien for å avbryte det pågående opptaket."
+          },
+          "transcribe_with_post_process": {
+            "name": "Etterbehandlingssnarvei",
+            "description": "Valgfritt: En egen snarvei som alltid bruker AI-etterbehandling på transkripsjonen din."
+          }
+        },
+        "errors": {
+          "restore": "Kunne ikke gjenopprette original snarvei",
+          "set": "Kunne ikke angi snarvei: {{error}}",
+          "reset": "Kunne ikke tilbakestille snarveien til opprinnelig verdi"
+        }
+      },
+      "language": {
+        "title": "Språk",
+        "description": "Velg språk for talegjenkjenning. Auto bestemmer språket automatisk, mens valg av et bestemt språk kan gi bedre nøyaktighet for det språket.",
+        "searchPlaceholder": "Søk etter språk ...",
+        "noResults": "Ingen språk funnet",
+        "auto": "Auto"
+      },
+      "shortcutActivation": {
+        "title": "Snarvei-atferd",
+        "description": "Velg hvordan transkriberingssnarveien starter og stopper opptak.",
+        "options": {
+          "holdOrToggle": "Auto",
+          "pushToTalk": "Hold",
+          "toggle": "Veksle"
+        },
+        "descriptions": {
+          "hold_or_toggle": "Hold inne for å ta opp, eller trykk for å veksle",
+          "push_to_talk": "Tar opp mens du holder snarveien inne",
+          "toggle": "Trykk snarveien for å starte opptak, trykk igjen for å stoppe"
+        }
+      }
+    },
+    "models": {
+      "title": "Transkripsjonsmodeller",
+      "description": "Velg en transkripsjonsmodell eller last ned flere modeller. Ulike modeller gir varierende nøyaktighet og hastighet.",
+      "searchPlaceholder": "Søk etter modeller etter navn …",
+      "yourModels": "Nedlastede modeller",
+      "availableModels": "Tilgjengelige for nedlasting",
+      "deleteConfirm": "Er du sikker på at du vil slette {{modelName}}? Du må laste den ned på nytt for å bruke den.",
+      "deleteActiveConfirm": "{{modelName}} er din aktive modell. Hvis du sletter den, stopper transkripsjonene til du velger en ny modell. Er du sikker?",
+      "deleteTitle": "Slett modell",
+      "retiredNotice": {
+        "title": "Gamle modeller fungerer ikke lenger med FlowState",
+        "description": "De opptar {{size}} på datamaskinen din.",
+        "delete": "Slett modeller",
+        "deleted": "Slettet gamle modeller",
+        "deleteFailed": "Noen gamle modeller kunne ikke slettes. Sjekk loggen for detaljer."
+      },
+      "filters": {
+        "allLanguages": "Alle språk",
+        "streaming": "Filtrer modeller som støtter sanntids streaming-transkripsjon",
+        "translation": "Filtrer modeller som støtter oversettelse til engelsk"
+      },
+      "rescan": {
+        "label": "Skann på nytt",
+        "tooltip": "Skann etter modeller lagt til i modellmappen eller Hugging Face-hurtigbufferen utenfor FlowState"
+      },
+      "noModelsMatch": "Ingen modeller samsvarer med dette filteret."
+    },
+    "sound": {
+      "title": "Lyd",
+      "microphone": {
+        "title": "Mikrofon",
+        "description": "Velg foretrukket mikrofonenhet",
+        "placeholder": "Velg mikrofon ...",
+        "loading": "Laster ..."
+      },
+      "channel": {
+        "title": "Inngangskanal",
+        "description": "Velg hvilken inngangskanal som skal tas opp fra. Bruk dette hvis lydgrensesnittet ditt har flere innganger.",
+        "average": "Gjennomsnitt av alle kanaler",
+        "channel": "Kanal {{n}}"
+      },
+      "audioFeedback": {
+        "label": "Lydtilbakemelding",
+        "description": "Spill av lyd når opptak starter og stopper"
+      },
+      "outputDevice": {
+        "title": "Utdataenhet",
+        "description": "Velg foretrukket lydutdataenhet for avspilling av tilbakemeldingslyder",
+        "placeholder": "Velg utdataenhet ...",
+        "loading": "Laster ..."
+      },
+      "volume": {
+        "title": "Volum",
+        "description": "Juster volumet på tilbakemeldingslydene"
+      }
+    },
+    "advanced": {
+      "groups": {
+        "app": "App",
+        "output": "Utdata",
+        "transcription": "Transkripsjon",
+        "history": "Historikk",
+        "experimental": "Eksperimentelt"
+      },
+      "experimentalToggle": {
+        "label": "Eksperimentelle funksjoner",
+        "description": "Aktiver eksperimentelle funksjoner som fortsatt er under utvikling."
+      },
+      "lazyStreamClose": {
+        "label": "Hold mikrofonen åpen mellom transkripsjoner",
+        "description": "Holder mikrofonstrømmen åpen i 30 sekunder etter at opptaket stopper, noe som reduserer ventetiden ved transkripsjoner rett etter hverandre. Kan forringe Bluetooth-lydkvaliteten mens funksjonen er aktiv."
+      },
+      "acceleration": {
+        "transcribe": {
+          "title": "Maskinvareakselerasjon",
+          "description": "Velg maskinvaren som brukes til transkripsjon. Auto bruker GPU-en når den er tilgjengelig og faller tilbake til CPU-en."
+        },
+        "gpuDevice": {
+          "auto": "Auto"
+        }
+      },
+      "startHidden": {
+        "label": "Start skjult",
+        "description": "Starter i systemstatusfeltet uten å åpne vinduet."
+      },
+      "autostart": {
+        "label": "Start ved oppstart",
+        "description": "Starter FlowState automatisk når du logger inn på datamaskinen."
+      },
+      "showTrayIcon": {
+        "label": "Vis statusfeltikon",
+        "description": "Viser FlowState-ikonet i systemstatusfeltet."
+      },
+      "overlay": {
+        "style": {
+          "title": "Overlegg",
+          "description": "Velg opptaksoverlegget: Ingen skjuler det, Minimal viser en kompakt pille, Live viser transkripsjonen i sanntid mens du snakker (kun modeller med streaming-støtte – se etter Streaming-merket i modellvelgeren). På Linux anbefales «Ingen».",
+          "options": {
+            "none": "Ingen",
+            "minimal": "Minimal",
+            "live": "Live"
+          }
+        },
+        "position": {
+          "title": "Overleggsposisjon",
+          "description": "Hvor overlegget vises på skjermen under opptak og transkripsjon.",
+          "options": {
+            "bottom": "Nederst",
+            "top": "Øverst"
+          }
+        }
+      },
+      "pasteMethod": {
+        "title": "Innlimingsmetode",
+        "description": "Velg hvordan tekst settes inn. Direkte: simulerer tastaturinntasting via systeminndata. Ingen: hopper over innliming og oppdaterer kun historikk/utklippstavle.",
+        "options": {
+          "clipboard": "Utklippstavle ({{modifier}}+V)",
+          "clipboardCtrlShiftV": "Utklippstavle (Ctrl+Shift+V)",
+          "clipboardShiftInsert": "Utklippstavle (Shift+Insert)",
+          "direct": "Direkte",
+          "none": "Ingen",
+          "externalScript": "Eksternt skript"
+        },
+        "externalScriptPlaceholder": "/sti/til/ditt/skript.sh"
+      },
+      "typingTool": {
+        "title": "Skriveverktøy",
+        "description": "Velg hvilket Linux-skriveverktøy som skal brukes for Direkte-innlimingsmetoden. Auto oppdager og bruker automatisk det beste tilgjengelige verktøyet for systemet ditt.",
+        "options": {
+          "auto": "Auto (anbefalt)"
+        }
+      },
+      "clipboardHandling": {
+        "title": "Håndtering av utklippstavle",
+        "description": "Ikke endre utklippstavlen bevarer det som ligger i utklippstavlen etter transkripsjonen. Kopier til utklippstavle legger igjen transkripsjonsresultatet i utklippstavlen etter innliming.",
+        "options": {
+          "dontModify": "Ikke endre utklippstavlen",
+          "copyToClipboard": "Kopier til utklippstavle"
+        }
+      },
+      "autoSubmit": {
+        "title": "Automatisk innsending",
+        "description": "Sender automatisk den valgte tastekombinasjonen etter at teksten er satt inn. Cmd+Enter gjelder på macOS, mens Windows/Linux bruker Super+Enter.",
+        "options": {
+          "off": "Av",
+          "enter": "Enter",
+          "cmdEnter": "Cmd+Enter",
+          "superEnter": "Super+Enter",
+          "ctrlEnter": "Ctrl+Enter"
+        }
+      },
+      "translateToEnglish": {
+        "label": "Oversett til engelsk",
+        "description": "Oversetter automatisk tale fra andre språk til engelsk under transkripsjon."
+      },
+      "modelUnload": {
+        "title": "Frigi modell",
+        "description": "Frigjør automatisk GPU/CPU-minne når modellen ikke har blitt brukt på det angitte tidspunktet",
+        "options": {
+          "never": "Aldri",
+          "immediately": "Umiddelbart",
+          "min2": "Etter 2 minutter",
+          "min5": "Etter 5 minutter",
+          "min10": "Etter 10 minutter",
+          "min15": "Etter 15 minutter",
+          "hour1": "Etter 1 time",
+          "sec15": "Etter 15 sekunder (feilsøking)"
+        }
+      },
+      "customWords": {
+        "title": "Egne ord",
+        "description": "Hjelper modeller med støtte til å gjenkjenne navn og spesialiserte begreper. Fuzzy-korreksjon er for øyeblikket begrenset til ord med A–Z og tall.",
+        "placeholder": "Legg til et ord",
+        "add": "Legg til",
+        "remove": "Fjern {{word}}",
+        "duplicate": "«{{word}}» finnes allerede"
+      },
+      "voiceActivityDetection": {
+        "title": "Taleaktivitetsdeteksjon",
+        "description": "Filtrerer stillhet fra opptak. Modeller med streaming-støtte bruker en lengre VAD-hale; deaktivering av VAD tar opp rå lyd."
+      },
+      "longFormChunking": {
+        "title": "Deling av lange opptak",
+        "description": "Deler lange opptak ved pauser før transkripsjon, noe som vanligvis forbedrer transkripsjonskvaliteten."
+      },
+      "vadBackend": {
+        "title": "Motor for taleaktivitetsdeteksjon",
+        "description": "Velg detektoren som brukes til å filtrere stillhet. Earshot er eksperimentell; bytt tilbake til Silero hvis tale blir klippet eller støy beholdes.",
+        "options": {
+          "silero": "Silero",
+          "earshot": "Earshot"
+        }
+      },
+      "fillerWordRemoval": {
+        "title": "Fjern fyllord",
+        "description": "Fjerner vanlige nølingsord fra transkripsjoner. Slå av for å beholde dem."
+      },
+      "chineseScript": {
+        "title": "Kinesisk skrift",
+        "description": "Skriver transkripsjoner av mandarin og kantonesisk i forenklet eller tradisjonelle tegn. Andre språk blir uendret.",
+        "options": {
+          "asTranscribed": "Som transkribert",
+          "simplified": "Forenklet",
+          "traditional": "Tradisjonell"
+        }
+      }
+    },
+    "postProcessing": {
+      "hotkey": {
+        "title": "Hurtigtast"
+      },
+      "api": {
+        "title": "API",
+        "provider": {
+          "title": "Leverandør",
+          "description": "Velg en OpenAI-kompatibel eller Anthropic-kompatibel leverandør."
+        },
+        "apiFormat": {
+          "title": "API-format",
+          "description": "Forespørselsformatet som forventes av ditt egendefinerte endepunkt.",
+          "options": {
+            "openai": "OpenAI-kompatibel (Chat Completions)",
+            "anthropic": "Anthropic Messages"
+          }
+        },
+        "appleIntelligence": {
+          "unavailable": "Apple Intelligence er ikke tilgjengelig på denne enheten. Krever en Mac med Apple Silicon som kjører macOS Tahoe (26.0) eller nyere, med Apple Intelligence aktivert i Systeminnstillinger."
+        },
+        "baseUrl": {
+          "title": "Base-URL",
+          "description": "API-base-URL for den valgte leverandøren. Kun den egendefinerte leverandøren kan redigeres.",
+          "placeholder": "https://api.openai.com/v1",
+          "placeholderAnthropic": "https://api.anthropic.com/v1"
+        },
+        "apiKey": {
+          "title": "API-nøkkel",
+          "description": "API-nøkkel for den valgte leverandøren.",
+          "placeholder": "sk-..."
+        },
+        "model": {
+          "title": "Modell",
+          "descriptionCustom": "Oppgi modellidentifikatoren som forventes av ditt egendefinerte endepunkt.",
+          "descriptionDefault": "Velg en modell som eksponeres av den valgte leverandøren.",
+          "placeholderWithOptions": "Søk etter eller velg en modell",
+          "placeholderNoOptions": "Skriv inn et modellnavn",
+          "refreshModels": "Oppdater modeller"
+        }
+      },
+      "prompts": {
+        "title": "Prompt",
+        "selectedPrompt": {
+          "title": "Valgt prompt",
+          "description": "Velg en mal for å forbedre transkripsjoner, eller opprett en ny. Bruk ${output} i promptteksten for å referere til det fangede transkriptet."
+        },
+        "noPrompts": "Ingen prompts tilgjengelig",
+        "selectPrompt": "Velg en prompt",
+        "createNew": "Opprett ny prompt",
+        "promptLabel": "Promptnavn",
+        "promptLabelPlaceholder": "Skriv inn promptnavn",
+        "promptInstructions": "Promptinstruksjoner",
+        "promptInstructionsPlaceholder": "Skriv instruksjonene som skal kjøres etter transkripsjon. Eksempel: Forbedre grammatikk og klarhet i følgende tekst: ${output}",
+        "promptTip": "Tips: Bruk <code>${output}</code> for å sette inn den transkriberte teksten i prompten din.",
+        "updatePrompt": "Oppdater prompt",
+        "deletePrompt": "Slett prompt",
+        "createPrompt": "Opprett prompt",
+        "cancel": "Avbryt",
+        "selectToEdit": "Velg en prompt ovenfor for å se og redigere detaljene.",
+        "createFirst": "Klikk «Opprett ny prompt» ovenfor for å opprette din første etterbehandlingsprompt."
+      }
+    },
+    "history": {
+      "title": "Historikk",
+      "openFolder": "Åpne opptaksmappen",
+      "loading": "Laster historikk ...",
+      "empty": "Ingen transkripsjoner ennå. Start et opptak for å bygge opp historikken din!",
+      "copyToClipboard": "Kopier transkripsjon til utklippstavlen",
+      "copyError": "Kunne ikke kopiere transkripsjonen til utklippstavlen.",
+      "save": "Lagre transkripsjon",
+      "unsave": "Fjern fra lagrede",
+      "delete": "Slett oppføring",
+      "deleteError": "Kunne ikke slette oppføringen. Prøv igjen.",
+      "retranscribe": "Transkriber på nytt",
+      "retranscribeError": "Kunne ikke transkribere på nytt. Prøv igjen.",
+      "transcribing": "Transkriberer ...",
+      "transcriptionFailed": "Transkripsjonen mislyktes. Du kan transkribere på nytt med prøv igjen-ikonet."
+    },
+    "debug": {
+      "title": "Feilsøking",
+      "logDirectory": {
+        "title": "Loggkatalog",
+        "description": "Plassering der loggfiler lagres"
+      },
+      "logLevel": {
+        "title": "Loggnivå",
+        "description": "Angir hvor detaljert loggingen skal være"
+      },
+      "liveLogs": {
+        "title": "Live logger",
+        "description": "Strømmer applikasjonslogger i sanntid for å diagnostisere problemer uten å åpne loggfilen. Kun logger som sendes mens denne panelet er åpent, vises; følger loggnivåinnstillingen ovenfor.",
+        "live": "Live",
+        "paused": "Satt på pause",
+        "pause": "Pause",
+        "resume": "Fortsett",
+        "copied": "Kopiert",
+        "lineCount": "{{count}} linjer",
+        "empty": "Venter på logger … Oppføringer vises her etter hvert som appen sender dem."
+      },
+      "updateChecks": {
+        "label": "Se etter oppdateringer",
+        "description": "Ser automatisk etter nye versjoner av FlowState",
+        "lockedDescription": "Deaktivert av systemkonfigurasjon (HANDY_DISABLE_UPDATER)"
+      },
+      "whatsNewPreview": {
+        "title": "Forhåndsvis nyheter",
+        "description": "Åpner den nyeste medfølgende utgivelsesnotaten uten å merke den som sett",
+        "button": "Forhåndsvis",
+        "noNotes": "Ingen medfølgende utgivelsesnotater funnet",
+        "error": "Kunne ikke forhåndsvise utgivelsesnotatene"
+      },
+      "onboardingPreview": {
+        "title": "Forhåndsvis introduksjon",
+        "description": "Forhåndsviser introduksjonsskjermene uten å endre tillatelser, modeller eller fullføringsstatus",
+        "permissionsButton": "Tillatelser",
+        "modelsButton": "Modellvalg",
+        "exitButton": "Avslutt forhåndsvisning"
+      },
+      "soundTheme": {
+        "label": "Lydtema",
+        "description": "Velg et lydtema for tilbakemelding ved start og stopp av opptak"
+      },
+      "wordCorrectionThreshold": {
+        "title": "Terskel for ordkorrigering",
+        "description": "Følsomhet for korrigering av egne ord"
+      },
+      "historyLimit": {
+        "title": "Grense for historikk",
+        "description": "Maksimalt antall historikkoppføringer som beholdes",
+        "entries": "oppføringer"
+      },
+      "recordingRetention": {
+        "title": "Automatisk sletting av opptak",
+        "description": "Sletter automatisk gamle opptak for å spare plass",
+        "never": "Aldri",
+        "preserveLimit": "Behold de {{count}} nyeste",
+        "days3": "Etter 3 dager",
+        "weeks2": "Etter 2 uker",
+        "months3": "Etter 3 måneder",
+        "placeholder": "Velg lagringsperiode ..."
+      },
+      "alwaysOnMicrophone": {
+        "label": "Alltid på-mikrofon",
+        "description": "Holder mikrofonen aktiv for raskere respons"
+      },
+      "clamshellMicrophone": {
+        "title": "Mikrofon ved lukket lokk",
+        "description": "Mikrofonen som brukes når laptoplokket er lukket"
+      },
+      "postProcessingToggle": {
+        "label": "Etterbehandling",
+        "description": "Aktiverer AI-drevet tekstforbedring etter transkripsjon"
+      },
+      "muteWhileRecording": {
+        "label": "Demp under opptak",
+        "description": "Demping av systemlyd under opptak"
+      },
+      "appendTrailingSpace": {
+        "label": "Legg til mellomrom på slutten",
+        "description": "Legger til et mellomrom etter den innlimte transkripsjonen"
+      },
+      "keyboardImplementation": {
+        "title": "Tastaturimplementering",
+        "description": "Velg bakenden for tastatursnarveier.",
+        "bindingsReset": "Tastatursnarveiene var inkompatible og ble tilbakestilt til standardverdier"
+      },
+      "paths": {
+        "appData": "Appdata:",
+        "models": "Modeller:",
+        "settings": "Innstillinger:"
+      },
+      "pasteDelay": {
+        "title": "Innlimingsforsinkelse (før)",
+        "description": "Forsinkelse (i millisekunder) etter kopiering av tekst, før innlimingstasten sendes. Øk hvis ingenting blir limt inn."
+      },
+      "pasteDelayAfter": {
+        "title": "Innlimingsforsinkelse (etter)",
+        "description": "Forsinkelse (i millisekunder) etter innlimingstasten, før den forrige utklippstavlen gjenopprettes. Øk hvis det gamle innholdet i utklippstavlen blir limt inn i stedet for transkripsjonen."
+      },
+      "holdThreshold": {
+        "title": "Terskel for hold",
+        "description": "Kun i Auto-modus: hvor lenge (i millisekunder) snarveien må holdes inne før det teller som hold i stedet for trykk. Senk hvis korte hold får opptaket til å bli stående på; øk hvis bevisste trykk behandles som hold."
+      },
+      "reliablePaste": {
+        "title": "Pålitelig innliming (beta)",
+        "description": "Gjenoppretter utklippstavlen først etter at målappen faktisk har lest transkripsjonen, i stedet for etter en fast forsinkelse. Ment for å fikse at gammelt utklippstavleinnhold blir limt inn under systembelastning. Krever en innlimingsmetode via utklippstavlen; kun macOS og Windows."
+      },
+      "recordingBuffer": {
+        "title": "Ekstra opptaksbuffer",
+        "description": "Ekstra tid (i millisekunder) til å fortsette opptaket etter at du slipper tasten, for å fange etterfølgende lyd. 0 = ingen ekstra buffer."
+      },
+      "keyboardDiagnostic": {
+        "title": "Tastaturdiagnostikk",
+        "description": "Sjekker om tastaturhendelser når FlowState. Kun hendelsestall registreres – aldri hvilke taster du trykker.",
+        "run": "Kjør 10-sekunders diagnostikk",
+        "running": "Lytter … trykk snarveien din noen ganger (f.eks. Option+Space)",
+        "secureInputLabel": "Sikker inndata",
+        "enabled": "aktivert",
+        "disabled": "deaktivert",
+        "holder": "holdt av {{name}} (pid {{pid}})",
+        "holderUnknown": "ingen synlig holder",
+        "keyDown": "Tast ned",
+        "keyUp": "Tast opp",
+        "flagsChanged": "Modifikatorer",
+        "mouse": "Mus",
+        "verdictBlocked": "Sikker inndata blokkerer tastaturhendelser – tastatursnarveier kan ikke fungere før dette er løst.",
+        "verdictSuspicious": "Modifikatorhendelser kom frem, men ingen tastehendelser – noe undertrykker taster selv om Sikker inndata rapporteres som deaktivert. Vennligst rapporter dette på GitHub.",
+        "verdictOk": "Tastaturhendelser når FlowState normalt.",
+        "verdictNoEvents": "Ingen hendelser registrert – trykket du på noen taster under testen?",
+        "failed": "Diagnostikken mislyktes: {{error}}"
+      }
+    },
+    "about": {
+      "title": "Om",
+      "version": {
+        "title": "Versjon",
+        "description": "Nåværende versjon av FlowState"
+      },
+      "whatsNewUpdates": {
+        "label": "Vis nyheter",
+        "description": "Viser utgivelsesnotater etter FlowState-oppdateringer"
+      },
+      "appDataDirectory": {
+        "title": "Appdatakatalog",
+        "description": "Plassering der FlowState lagrer dataene sine"
+      },
+      "sourceCode": {
+        "title": "Kildekode",
+        "description": "Se kildekoden og bidra",
+        "button": "Vis på GitHub"
+      },
+      "supportDevelopment": {
+        "title": "Støtt utviklingen",
+        "description": "Hjelp oss å fortsette å bygge FlowState",
+        "button": "Doner"
+      },
+      "acknowledgments": {
+        "title": "Anerkjennelser",
+        "ggml": {
+          "title": "ggml",
+          "description": "Høytytende tensorbibliotek for maskinværing-maskinlæring på enheten",
+          "details": "FlowStates lokale tale-til-tekst er bygget på transcribe.cpp og ggml. Takk til det fantastiske arbeidet av Georgi Gerganov og bidragsytere."
+        }
+      }
+    }
+  },
+  "footer": {
+    "checkingUpdates": "Sjekker etter oppdateringer...",
+    "updateAvailableShort": "Oppdatering tilgjengelig",
+    "upToDate": "Du har siste versjon",
+    "updateCheckingDisabled": "Oppdateringssjekk er deaktivert",
+    "downloading": "Laster ned... {{progress}}%",
+    "installing": "Installerer...",
+    "preparing": "Klargjør...",
+    "checkForUpdates": "Sjekk etter oppdateringer",
+    "portableUpdateTitle": "Manuell oppdatering kreves",
+    "portableUpdateMessage": "Portable installasjoner kan ikke oppdateres automatisk. Last ned installasjonsprogrammet for ditt system nedenfor, kjør det, og installer til samme mappe — din Data/-mappe (innstillinger, modeller, opptak) beholdes.",
+    "portableUpdateButton": "Last ned installasjonsprogram",
+    "portableUpdateBrowseMessage": "Portable installasjoner kan ikke oppdateres automatisk. Last ned siste versjon for ditt system fra GitHub Releases og installer til samme mappe — din Data/-mappe (innstillinger, modeller, opptak) beholdes.",
+    "portableUpdateBrowseButton": "Åpne GitHub Releases"
+  },
+  "whatsNew": {
+    "title": "Nytt i FlowState v{{version}}"
+  },
+  "common": {
+    "loading": "Laster...",
+    "delete": "Slett",
+    "back": "Tilbake",
+    "close": "Lukk",
+    "open": "Åpne",
+    "copy": "Kopier",
+    "clear": "Tøm",
+    "noOptionsFound": "Ingen alternativer funnet"
+  },
+  "accessibility": {
+    "permissionsDescription": "FlowState trenger tilgjengelighets-tillatelser for å skrive inn transkribert tekst.",
+    "openSettings": "Åpne systeminnstillinger"
+  },
+  "errors": {
+    "loadDirectory": "Kunne ikke laste mappen: {{error}}",
+    "micPermissionDeniedTitle": "Mikrofontilgang nektet",
+    "micPermissionDenied": {
+      "generic": "Operativsystemet nektet tilgang til mikrofonen. Gi mikrofontillatelse i systeminnstillingene dine.",
+      "windows": "Aktiver mikrofontilgang i Innstillinger → Personvern og sikkerhet → Mikrofon (inkludert skrivebordsapp-tilgang).",
+      "macos": "Gi mikrofontilgang i Systeminnstillinger → Personvern og sikkerhet → Mikrofon.",
+      "linux": "Gi mikrofontilgang i lyd- eller personverninnstillingene til systemet ditt."
+    },
+    "noInputDeviceTitle": "Ingen mikrofon funnet",
+    "noInputDevice": "Ingen lydinngangsenhet ble oppdaget. Koble til en mikrofon eller hodetelefon og prøv igjen.",
+    "recordingFailed": "Kunne ikke starte opptak: {{error}}",
+    "modelLoadFailed": "Kunne ikke laste modell: {{model}}",
+    "modelLoadFailedUnknown": "ukjent modell",
+    "pasteFailedTitle": "Kunne ikke lime inn tekst",
+    "pasteFailed": "Tekst kunne ikke limes inn i den aktive applikasjonen.",
+    "transcriptionFailedTitle": "Transkripsjon feilet"
+  },
+  "appLanguage": {
+    "title": "Språk for applikasjonen",
+    "description": "Endre språket i FlowState-grensesnittet"
+  },
+  "theme": {
+    "title": "Applikasjonstema",
+    "description": "Velg om FlowState følger systemtemaet ditt eller holder seg lyst eller mørkt",
+    "options": {
+      "system": "System",
+      "light": "Lys",
+      "dark": "Mørk"
+    }
+  },
+  "overlay": {
+    "transcribing": "Transkriberer...",
+    "processing": "Behandler...",
+    "loadingModel": "Laster modell..."
+  },
+  "secureInput": {
+    "blockedWithCulprit_one": "{{name}} blokkerer kanskje 1 snarvei",
+    "blockedWithCulprit_other": "{{name}} blokkerer kanskje {{count}} snarveier",
+    "blockedNoCulprit_one": "macOS blokkerer midlertidig 1 snarvei",
+    "blockedNoCulprit_other": "macOS blokkerer midlertidig {{count}} snarveier",
+    "recorderBlockedWithCulprit": "{{name}} blokkerer kanskje endringer av snarveier",
+    "recorderBlockedNoCulprit": "macOS blokkerer midlertidig endringer av snarveier",
+    "learnMore": "Slik fikser du",
+    "recorderBlocked": "Kan ikke ta opp snarveier nå — macOS Secure Input blokkerer tastetrykk. Løs Secure Input-advarselen først.",
+    "dismiss": "Lukk"
+  }
+}
