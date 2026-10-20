@@ -1,36 +1,51 @@
-/* Handy Colors */
+/* FlowState colors */
 
 :root {
-  /* Palette source of truth. Each themed color is defined once as a
-     light/dark pair; the active tokens below and the `data-theme` overrides
-     in App.css reference these, so a hex value lives in exactly one place. */
-  --light-color-text: #0f0f0f;
-  --light-color-background: #fbfbfb;
-  --light-color-logo-primary: #faa2ca;
-  --light-color-logo-stroke: #382731;
+  /* Brand palette — the only FlowState hex values (see the brand brief).
+     Derived tints use color-mix() from these, never a fifth brand hue. */
+  --flow-navy: #0d1a63; /* deep background (dark canvas), light-mode text */
+  --flow-blue: #1a2ca3; /* secondary surface, hover, gradient mid */
+  --flow-action: #2845d6; /* primary action: buttons, toggles, focus rings */
+  --flow-accent: #f68048; /* accent: recording state, active highlight */
 
-  --dark-color-text: #fbfbfb;
-  --dark-color-background: #2c2b29;
-  --dark-color-logo-primary: #f28cbb;
-  --dark-color-logo-stroke: #fad1ed;
+  /* Semantic light/dark pairs. The active tokens below and the `data-theme`
+     overrides in App.css reference these, so a value lives in exactly one
+     place; hexes that are brand colors resolve through the palette above. */
+  --light-color-text: var(--flow-navy);
+  --light-color-background: #fafbff;
+  --light-color-logo-primary: var(--flow-action);
+  --light-color-logo-stroke: var(--flow-navy);
+  --light-color-background-ui: var(--flow-action);
+
+  --dark-color-text: #eef1ff;
+  --dark-color-background: var(--flow-navy);
+  --dark-color-logo-primary: var(--flow-accent);
+  --dark-color-logo-stroke: #eef1ff;
+  /* Lightened action so the fill clears 3:1 against the navy canvas (3.33:1)
+     while white text on it stays AA (4.68:1). */
+  --dark-color-background-ui: color-mix(in srgb, var(--flow-action) 80%, white);
 
   /* Semantic status colors. First used by SecureInputWarning; intended to
      replace the ad-hoc yellow-500/red-500 usages (e.g. ui/Alert.tsx) over
-     time so status styling is themeable from one place. */
-  --light-color-warning: #d97706;
-  --light-color-error: #dc2626;
+     time so status styling is themeable from one place. Both keep AA
+     (>= 4.5:1) against their theme's background. */
+  --light-color-warning: #b45309;
+  --light-color-error: #c81e1e;
   --dark-color-warning: #fbbf24;
   --dark-color-error: #f87171;
 
-  /* Tokens that do not change between light and dark */
-  --color-background-ui: #da5893;
-  --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #808080;
+  /* Tokens that do not change between light and dark. text-stroke uses the
+     palette's cool paper tone so stroked text reads on navy/action fills in
+     either theme; mid-gray is shifted cool (not warm-neutral) to sit with
+     the navy/blue palette. */
+  --color-text-stroke: #eef1ff;
+  --color-mid-gray: #7b8299;
 
   /* Active palette — defaults to light, follows the OS via the media query
      below, or is forced by `data-theme` (see the overrides below). */
   --color-text: var(--light-color-text);
   --color-background: var(--light-color-background);
+  --color-background-ui: var(--light-color-background-ui);
   --color-logo-primary: var(--light-color-logo-primary);
   --color-logo-stroke: var(--light-color-logo-stroke);
   --color-warning: var(--light-color-warning);
@@ -41,6 +56,7 @@
   :root {
     --color-text: var(--dark-color-text);
     --color-background: var(--dark-color-background);
+    --color-background-ui: var(--dark-color-background-ui);
     --color-logo-primary: var(--dark-color-logo-primary);
     --color-logo-stroke: var(--dark-color-logo-stroke);
     --color-warning: var(--dark-color-warning);
@@ -52,7 +68,7 @@
  * Explicit theme override, driven by the `theme` setting via
  * `document.documentElement.dataset.theme`. When set, the higher-specificity
  * attribute selectors win over the `prefers-color-scheme` media query above,
- * so a user can keep Handy light or dark regardless of the OS setting.
+ * so a user can keep FlowState light or dark regardless of the OS setting.
  * `system` (or no attribute) leaves the OS in charge.
  *
  * Lives here (not in App.css) so every window that imports the shared palette —
@@ -61,6 +77,7 @@
 :root[data-theme="light"] {
   --color-text: var(--light-color-text);
   --color-background: var(--light-color-background);
+  --color-background-ui: var(--light-color-background-ui);
   --color-logo-primary: var(--light-color-logo-primary);
   --color-logo-stroke: var(--light-color-logo-stroke);
   --color-warning: var(--light-color-warning);
@@ -70,6 +87,7 @@
 :root[data-theme="dark"] {
   --color-text: var(--dark-color-text);
   --color-background: var(--dark-color-background);
+  --color-background-ui: var(--dark-color-background-ui);
   --color-logo-primary: var(--dark-color-logo-primary);
   --color-logo-stroke: var(--dark-color-logo-stroke);
   --color-warning: var(--dark-color-warning);
