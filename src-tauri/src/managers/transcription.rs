@@ -906,9 +906,15 @@ impl TranscriptionManager {
         live: Option<RunOutcome>,
     ) -> Result<String> {
         #[cfg(debug_assertions)]
-        if std::env::var("HANDY_FORCE_TRANSCRIPTION_FAILURE").is_ok() {
+        if [
+            "FLOWSTATE_FORCE_TRANSCRIPTION_FAILURE",
+            "HANDY_FORCE_TRANSCRIPTION_FAILURE",
+        ]
+        .iter()
+        .any(|flag| std::env::var(flag).is_ok())
+        {
             return Err(anyhow::anyhow!(
-                "Simulated transcription failure (HANDY_FORCE_TRANSCRIPTION_FAILURE)"
+                "Simulated transcription failure (FLOWSTATE_FORCE_TRANSCRIPTION_FAILURE)"
             ));
         }
 
@@ -1170,9 +1176,16 @@ fn run_setup(info: &LoadedInfo, settings: &AppSettings, validated_language: &str
 
     let run_options = RunOptions {
         task: run_plan.task,
-        language: run_plan.language,
+        language: run_plan.language.clone(),
         target_language: run_plan.target_language,
-        vocabulary: vocabulary_for_model(info.supports_vocabulary, &settings.custom_words),
+        vocabulary: vocabulary_for_model(
+            info.supports_vocabulary,
+            run_plan
+                .language
+                .as_deref()
+                .is_some_and(is_norwegian_language),
+            &settings.custom_words,
+        ),
         ..Default::default()
     };
 
@@ -1355,7 +1368,7 @@ fn effective_language_for_model(
     }
 }
 
-/// Resolve how confidently Handy knows the language of the text produced by a
+/// Resolve how confidently FlowState knows the language of the text produced by a
 /// transcription run. The UI language is deliberately not part of this
 /// decision.
 fn resolve_output_language_evidence(
@@ -1370,7 +1383,7 @@ fn resolve_output_language_evidence(
 
     // Stored language intent is only evidence when this specific engine run
     // actually received the hint. Some multilingual engines (notably Parakeet
-    // V3) always auto-detect and ignore Handy's selection; transcribe-cpp also
+    // V3) always auto-detect and ignore FlowState's selection; transcribe-cpp also
     // drops a requested hint when the loaded model does not advertise it.
     if let Some(language) = applied_language_hint.filter(|lang| !lang.is_empty() && *lang != "auto")
     {
@@ -1412,11 +1425,29 @@ fn with_model_detected_language(
     }
 }
 
+/// Norwegian has three ISO spellings in play; the engine and the catalog
+/// disagree on which one they use.
+fn is_norwegian_language(language: &str) -> bool {
+    matches!(language, "no" | "nb" | "nn")
+}
+
 /// Custom words for transcribe-cpp's `vocabulary` slot, in priority order.
 /// Empty for models without Feature::Vocabulary, which would warn on every run
 /// and rely on fuzzy correction instead.
-fn vocabulary_for_model(supports_vocabulary: bool, custom_words: &[String]) -> Vec<String> {
-    if supports_vocabulary {
+///
+/// The vocabulary is a text prompt, so it also biases the output language.
+/// Measured on this repo's benchmark (15 Norwegian + 15 English sentences,
+/// whisper-large-v3-turbo Q8_0): the seeded Norwegian ES words lift Norwegian
+/// from 6.1% to 4.4% WER but push English from 1.0% to 15.6%, including one
+/// sentence decoded as Spanish. So only bias a run whose language is known to
+/// be Norwegian. On auto the language is not known until after the run; the
+/// fuzzy post-correction carries the custom words there instead.
+fn vocabulary_for_model(
+    supports_vocabulary: bool,
+    language_is_norwegian: bool,
+    custom_words: &[String],
+) -> Vec<String> {
+    if supports_vocabulary && language_is_norwegian {
         custom_words.to_vec()
     } else {
         Vec::new()
@@ -1696,7 +1727,7 @@ pub fn describe_compute_devices(tm: &TranscriptionManager) -> Result<Vec<String>
         .collect())
 }
 
-/// Map Handy's whisper accelerator setting to a transcribe-cpp [`Backend`].
+/// Map FlowState's whisper accelerator setting to a transcribe-cpp [`Backend`].
 ///
 /// `Auto` lets the library pick the best device (with CPU fallback), while
 /// `Cpu` forces strict CPU. `Gpu` only remains as the companion setting for an
@@ -2167,7 +2198,7 @@ mod tests {
     fn fuzzy_correction_is_skipped_exactly_when_vocabulary_was_sent() {
         let settings = AppSettings {
             selected_language: "en".to_string(),
-            custom_words: vec!["Handy".to_string()],
+            custom_words: vec!["FlowState".to_string()],
             ..Default::default()
         };
         let evidence = OutputLanguageEvidence::UserSelected("en".to_string());
@@ -2175,23 +2206,36 @@ mod tests {
 
         // The model was already prompted with the term: leave its output alone.
         let prompted = post_process_transcription_text(
-            "i use handy every day".to_string(),
+            "i use flowstate every day".to_string(),
             &settings,
             true,
             &evidence,
             &supported,
         );
-        assert_eq!(prompted, "i use handy every day");
+        assert_eq!(prompted, "i use flowstate every day");
 
         // No vocabulary sent: the fuzzy post-correction fixes the casing.
         let corrected = post_process_transcription_text(
-            "i use handy every day".to_string(),
+            "i use flowstate every day".to_string(),
             &settings,
             false,
             &evidence,
             &supported,
         );
-        assert_eq!(corrected, "i use Handy every day");
+        assert_eq!(corrected, "i use FlowState every day");
+    }
+
+    #[test]
+    fn vocabulary_is_only_sent_for_norwegian_runs() {
+        let words = vec!["Solan".to_string()];
+
+        assert_eq!(vocabulary_for_model(true, true, &words), words);
+        assert!(vocabulary_for_model(true, false, &words).is_empty());
+        assert!(vocabulary_for_model(false, true, &words).is_empty());
+        assert!(is_norwegian_language("no"));
+        assert!(is_norwegian_language("nb"));
+        assert!(is_norwegian_language("nn"));
+        assert!(!is_norwegian_language("en"));
     }
 }
 

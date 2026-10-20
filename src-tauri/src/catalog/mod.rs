@@ -4,7 +4,7 @@
 //! catalog (the version pinned in `package.json`; `bun run check:catalog`
 //! keeps the two identical). It lists every model transcribe.cpp publishes,
 //! with pinned revisions, per-quant hashes and benchmark results, and marks
-//! the curated subset. It is compiled into the binary so Handy ships a
+//! the curated subset. It is compiled into the binary so FlowState ships a
 //! complete model list with zero network access.
 //!
 //! Every supported transcription model is offered for download and mirrored
@@ -35,13 +35,16 @@ const SCHEMA: u32 = 2;
 /// `scripts/mirror_models.py` populates it from this catalog.
 const MIRRORS: &[&str] = &["https://blob.handy.computer"];
 
-/// Handy's list order and onboarding set, keyed by catalog id. Kept from the
-/// previous generator until onboarding moves to the package's recommendations.
+/// FlowState's list order and onboarding set, keyed by catalog id.
 /// `(id, rank, recommended)`: rank is the editorial sort position (lower =
 /// higher); recommended is the small badged onboarding subset.
-const HANDY_RANKING: &[(&str, u32, bool)] = &[
+///
+/// First place is the model that measured best for this app's users on the
+/// Norwegian + English dictation benchmark (docs/model-benchmark.md): 6.1%
+/// Norwegian WER, 1.0% English WER, ~1.1 s per 5 s utterance on Apple Silicon.
+const FLOWSTATE_RANKING: &[(&str, u32, bool)] = &[
+    ("whisper-large-v3-turbo", 0, true),
     ("parakeet-unified-en-0.6b", 1, true),
-    ("nemotron-3.5-asr-streaming-0.6b", 2, true),
     ("canary-180m-flash", 3, true),
     ("cohere-transcribe-03-2026", 4, true),
     ("whisper-medium", 5, true),
@@ -50,6 +53,10 @@ const HANDY_RANKING: &[(&str, u32, bool)] = &[
     ("parakeet-tdt-0.6b-v2", 8, false),
     ("Qwen3-ASR-0.6B", 9, false),
     ("Fun-ASR-MLT-Nano-2512", 10, false),
+    // Catalog claims nb-NO, but the engine rejects every language hint for this
+    // model and autodetect scored 72% WER on Norwegian in our benchmark. Keep it
+    // downloadable for English-only users, do not recommend it.
+    ("nemotron-3.5-asr-streaming-0.6b", 11, false),
 ];
 
 #[derive(Deserialize)]
@@ -65,7 +72,7 @@ struct CatalogRoot {
     results: HashMap<String, ModelResults>,
 }
 
-/// One model as written in `catalog.json`. Only the fields Handy needs are
+/// One model as written in `catalog.json`. Only the fields FlowState needs are
 /// declared; serde ignores the rest (license, parameters, …).
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -138,7 +145,7 @@ impl CatalogModel {
         self.files.get(&self.quant)
     }
 
-    /// Handy uses a flat models directory for mirror downloads, so only
+    /// FlowState uses a flat models directory for mirror downloads, so only
     /// transcription models with root-level default files can be offered.
     /// Must match `offered_models` in `scripts/mirror_models.py`.
     fn is_offered(&self) -> bool {
@@ -270,7 +277,7 @@ impl From<&CatalogModel> for ModelDescriptor {
         let default_filename = default_quant_file(&files, Some(&m.quant))
             .map(|f| f.filename.clone())
             .unwrap_or_default();
-        let ranking = HANDY_RANKING.iter().find(|(id, _, _)| *id == m.id);
+        let ranking = FLOWSTATE_RANKING.iter().find(|(id, _, _)| *id == m.id);
         let results = ROOT.results.get(&m.id);
 
         ModelDescriptor {
@@ -321,13 +328,13 @@ static ROOT: Lazy<CatalogRoot> = Lazy::new(|| {
     root
 });
 
-/// Transcription models: the only role Handy can load. Language ID, VAD and
+/// Transcription models: the only role FlowState can load. Language ID, VAD and
 /// diarization models are published alongside them but produce no text.
 fn transcription_models() -> impl Iterator<Item = &'static CatalogModel> {
     ROOT.models.iter().filter(|m| m.role == "asr")
 }
 
-/// Every transcription model Handy can download, normalised into descriptors.
+/// Every transcription model FlowState can download, normalised into descriptors.
 pub static CATALOG: Lazy<Vec<ModelDescriptor>> = Lazy::new(|| {
     transcription_models()
         .filter(|m| m.is_offered())
@@ -481,8 +488,8 @@ mod tests {
     }
 
     #[test]
-    fn handy_ranking_names_offered_models() {
-        for (id, _, _) in HANDY_RANKING {
+    fn flowstate_ranking_names_offered_models() {
+        for (id, _, _) in FLOWSTATE_RANKING {
             let model = transcription_models()
                 .find(|m| m.id == *id)
                 .unwrap_or_else(|| panic!("ranked model {id} is not in the catalog"));
@@ -490,7 +497,7 @@ mod tests {
         }
         assert_eq!(
             CATALOG.iter().filter(|d| d.recommended).count(),
-            HANDY_RANKING.iter().filter(|(_, _, r)| *r).count()
+            FLOWSTATE_RANKING.iter().filter(|(_, _, r)| *r).count()
         );
     }
 
@@ -510,7 +517,7 @@ mod tests {
     }
 
     #[test]
-    fn catalog_matches_the_engine_handy_ships() {
+    fn catalog_matches_the_engine_flowstate_ships() {
         // Every model must be loadable by the transcribe-cpp crate we link.
         let cargo = include_str!("../../Cargo.toml");
         let engine = cargo
@@ -529,7 +536,7 @@ mod tests {
         };
         assert!(
             parse(&ROOT.transcribe_cpp) <= parse(engine),
-            "catalog built for transcribe.cpp {} but Handy links {}",
+            "catalog built for transcribe.cpp {} but FlowState links {}",
             ROOT.transcribe_cpp,
             engine
         );
@@ -537,7 +544,7 @@ mod tests {
             if let Some(min) = &m.min_engine {
                 assert!(
                     parse(min) <= parse(engine),
-                    "{} needs transcribe.cpp {min}, Handy links {engine}",
+                    "{} needs transcribe.cpp {min}, FlowState links {engine}",
                     m.id
                 );
             }
