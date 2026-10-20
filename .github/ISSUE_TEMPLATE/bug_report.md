@@ -1,6 +1,6 @@
 ---
 name: Bug Report
-about: Create a report to help us improve Handy
+about: Create a report to help us improve FlowState
 title: "[BUG] "
 labels: ["bug"]
 assignees: ""
@@ -8,7 +8,7 @@ assignees: ""
 
 ## Before You Submit
 
-**Please search [existing issues](https://github.com/cjpais/Handy/issues) to avoid duplicates.** Your bug may already be reported! Right now it's just me maintaining this project so many issues can be overwhelming! Help me out by checking first.
+**Please search [existing issues](https://github.com/Teshgotcode/FlowState/issues) to avoid duplicates.** Your bug may already be reported! This is a small student-run fork, so please check first.
 
 ## Bug Description
 

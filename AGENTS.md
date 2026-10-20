@@ -2,6 +2,17 @@
 
 This file provides guidance to AI coding assistants working with code in this repository.
 
+## What this repo is
+
+FlowState is a local-first dictation app built for students at NTNU Entreprenørskolen (ES). Press a shortcut, speak, get text pasted where the cursor was. All processing happens on the user's machine: no account, no telemetry, no crash reporting, update checks off by default.
+
+FlowState is a fork of [Handy](https://github.com/cjpais/Handy) by CJ Pais, MIT licensed. Upstream is under a feature freeze, so ES-specific work lives here. Do not edit `LICENSE` or `README-upstream.md`; they keep the upstream record intact.
+
+Repo layout:
+
+- `origin` = [Teshgotcode/FlowState](https://github.com/Teshgotcode/FlowState) (this fork)
+- `upstream` = [cjpais/Handy](https://github.com/cjpais/Handy)
+
 ## Development Commands
 
 **Prerequisites:**
@@ -37,7 +48,8 @@ bun run lint:fix          # ESLint with auto-fix
 bun run format            # Prettier + cargo fmt
 bun run format:check      # Check formatting without changes
 bun run format:frontend   # Prettier only
-bun run format:backend    # cargo fmt only
+bun run format:backend   # cargo fmt only
+bun run check:translations  # Verify all locales have the same keys
 ```
 
 **Model Setup (Required for Development):**
@@ -51,7 +63,7 @@ For detailed platform-specific build setup, see [BUILD.md](BUILD.md).
 
 ## Architecture Overview
 
-Handy is a cross-platform desktop speech-to-text application built with Tauri 2.x (Rust backend + React/TypeScript frontend).
+FlowState is a cross-platform desktop speech-to-text application built with Tauri 2.x (Rust backend + React/TypeScript frontend).
 
 ### Backend Structure (src-tauri/src/)
 
@@ -67,7 +79,7 @@ Handy is a cross-platform desktop speech-to-text application built with Tauri 2.
 - `commands/` - Tauri command handlers for frontend communication
 - `cli.rs` - CLI argument definitions (clap derive)
 - `shortcut.rs` - Global keyboard shortcut handling
-- `settings.rs` - Application settings management
+- `settings.rs` - Application settings management, including the seeded ES word list
 - `overlay.rs` - Recording overlay window (platform-specific)
 - `signal_handle.rs` - `send_transcription_input()` reusable function
 - `utils.rs` - Platform detection helpers
@@ -103,8 +115,8 @@ Handy is a cross-platform desktop speech-to-text application built with Tauri 2.
 **Core Libraries:**
 
 - `transcribe-cpp` - Local speech recognition (Whisper, Parakeet, Moonshine, SenseVoice, etc.; GGML/GGUF) with GPU acceleration
-- `handy-recorder` - Microphone capture: device selection, resampling to 16 kHz, failure detection
-- `transcribe-cpp` (Silero VAD v6, CPU-only, in-process) / `earshot` - Voice Activity Detection
+- `handy-recorder` - Microphone capture: device selection, resampling to 16 kHz, failure detection. This is a real upstream crate dependency; do not rename it.
+- Silero VAD v6 (CPU-only, in-process via transcribe-cpp) / `earshot` - Voice Activity Detection
 - `rdev` - Global keyboard shortcuts
 - `rodio` - Audio playback for feedback sounds
 
@@ -124,19 +136,38 @@ Settings are stored using Tauri's store plugin with reactive updates:
 - Audio devices (microphone/output selection)
 - Model preferences (Small/Medium/Turbo/Large Whisper variants)
 - Audio feedback and translation options
+- Custom words (seeded with an ES vocabulary: Entreprenørskolen, gründer, aksjekapital, kundevalidering and more; editable in settings)
 
 ### Single Instance Architecture
 
-The app enforces single instance behavior — launching when already running brings the settings window to front rather than creating a new process. Remote control flags (`--toggle-transcription`, etc.) work by launching a second instance that sends args to the running instance via `tauri_plugin_single_instance`, then exits.
+The app enforces single instance behavior: launching when already running brings the settings window to front rather than creating a new process. Remote control flags (`--toggle-transcription`, etc.) work by launching a second instance that sends args to the running instance via `tauri_plugin_single_instance`, then exits.
+
+## Environment Variables
+
+The canonical prefix is `FLOWSTATE_*`. The old `HANDY_*` names are accepted as a fallback for one release, so existing scripts and Nix configurations keep working. New code reads `FLOWSTATE_*` first, then falls back to `HANDY_*`.
+
+User-facing variables:
+
+- `FLOWSTATE_DISABLE_UPDATER` (legacy `HANDY_DISABLE_UPDATER`) - force-disable the self-updater at runtime without touching the persisted setting; used by the Nix package, where self-update cannot work against an immutable `/nix/store`
+- `FLOWSTATE_FORCE_AI_STUB` (legacy `HANDY_FORCE_AI_STUB`) - stub out AI post-processing
+- `FLOWSTATE_KEEP_VULKAN_IMPLICIT_LAYERS` (legacy `HANDY_KEEP_VULKAN_IMPLICIT_LAYERS`) - keep implicit Vulkan layers enabled on Windows
+- `FLOWSTATE_NO_GTK_LAYER_SHELL` (legacy `HANDY_NO_GTK_LAYER_SHELL`) - disable the GTK layer shell overlay on Linux
+
+Test-only variables (`*_TEST_*`, `*_WORKER_FAULT*`) stay internal to the test suite and do not need the fallback.
 
 ## Internationalization (i18n)
 
-All user-facing strings must use i18next translations. ESLint enforces this (no hardcoded strings in JSX).
+All user-facing strings must use i18next translations. ESLint enforces this (no hardcoded strings in JSX). The app ships 27 locales.
+
+- English (`en`) is the source language and the code default.
+- Norwegian bokmål (`no`) is the translation this fork maintains; keep it complete for every new key.
 
 **Adding new text:**
 
 1. Add key to `src/i18n/locales/en/translation.json`
-2. Use in component: `const { t } = useTranslation(); t('key.path')`
+2. Add the Norwegian bokmål translation to `src/i18n/locales/no/translation.json`
+3. Use in component: `const { t } = useTranslation(); t('key.path')`
+4. Run `bun run check:translations`
 
 **File structure:**
 
@@ -146,8 +177,8 @@ src/i18n/
 ├── languages.ts       # Language metadata
 └── locales/
     ├── en/translation.json  # English (source)
-    ├── de/, es/, fr/, ja/, ru/, zh/, ...
-    └── ...
+    ├── no/translation.json  # Norwegian bokmål (maintained by this fork)
+    └── ...                  # 25 more locales
 ```
 
 For translation contribution guidelines, see [CONTRIBUTING_TRANSLATIONS.md](CONTRIBUTING_TRANSLATIONS.md).
@@ -167,9 +198,11 @@ For translation contribution guidelines, see [CONTRIBUTING_TRANSLATIONS.md](CONT
 - Tailwind CSS for styling
 - Path aliases: `@/` → `./src/`
 
+**User-facing copy** is Norwegian bokmål by default. Short sentences, one idea per sentence, no exclamation marks, no em dashes, no marketing filler. Brand names are never translated: FlowState, transcribe.cpp, ggml, OpenAI.
+
 ## CLI Parameters
 
-Handy supports command-line parameters on all platforms for integration with scripts, window managers, and autostart configurations.
+The binary and CLI are `flowstate`. It supports command-line parameters on all platforms for integration with scripts, window managers, and autostart configurations.
 
 **Implementation:** `cli.rs` (definitions), `main.rs` (parsing), `lib.rs` (applying), `signal_handle.rs` (shared logic)
 
@@ -184,7 +217,7 @@ Handy supports command-line parameters on all platforms for integration with scr
 
 **Key design decisions:**
 
-- CLI flags are runtime-only overrides — they do NOT modify persisted settings
+- CLI flags are runtime-only overrides: they do NOT modify persisted settings
 - Remote control flags work via `tauri_plugin_single_instance`: second instance sends args, then exits
 - `send_transcription_input()` in `signal_handle.rs` is shared between signal handlers and CLI
 
@@ -194,23 +227,31 @@ Access debug features: `Cmd+Shift+D` (macOS) or `Ctrl+Shift+D` (Windows/Linux)
 
 ## Platform Notes
 
-- **macOS**: Metal acceleration, accessibility permissions required for keyboard shortcuts
-- **Windows**: Vulkan acceleration, code signing. Implicit Vulkan layers (overlays, capture hooks) are disabled for the Handy process via `VK_LOADER_LAYERS_DISABLE=~implicit~` set in `main.rs`; opt out with `HANDY_KEEP_VULKAN_IMPLICIT_LAYERS=1` or by setting `VK_LOADER_LAYERS_DISABLE` yourself
-- **Linux**: OpenBLAS + Vulkan, limited Wayland support, overlay uses GTK layer shell (disable with `HANDY_NO_GTK_LAYER_SHELL=1`)
-- **Nix/NixOS**: the Nix package sets `HANDY_DISABLE_UPDATER=1` to force-disable the self-updater at runtime without touching the persisted setting (self-update can't work against an immutable `/nix/store`)
+- **macOS**: Metal acceleration, accessibility permissions required for keyboard shortcuts. Post-processing can use Apple Intelligence locally on Apple Silicon.
+- **Windows**: Vulkan acceleration, code signing. Implicit Vulkan layers (overlays, capture hooks) are disabled for the FlowState process via `VK_LOADER_LAYERS_DISABLE=~implicit~` set in `main.rs`; opt out with `FLOWSTATE_KEEP_VULKAN_IMPLICIT_LAYERS=1` or by setting `VK_LOADER_LAYERS_DISABLE` yourself
+- **Linux**: OpenBLAS + Vulkan, limited Wayland support, overlay uses GTK layer shell (disable with `FLOWSTATE_NO_GTK_LAYER_SHELL=1`)
+
+## Upstream-merge workflow
+
+This fork tracks upstream and pulls fixes regularly. Keep that cheap:
+
+- Fetch and merge upstream regularly: `git fetch upstream && git merge upstream/main`
+- Keep ES changes small, focused, and clearly separated (ES defaults in `settings.rs`, the `no` locale, the ES word list, local-first post-processing defaults). Avoid scattering fork edits through shared files; each upstream refactor then lands with small conflicts.
+- Do not rename upstream crate names in `src-tauri/Cargo.toml` / `Cargo.lock` (`handy-recorder`, `handy-cpal`, `handy-keys`, `@handy-computer/models`). They are real dependencies, not brand strings.
+- Brand strings that DO change with the fork: product name FlowState, binary and CLI `flowstate`, bundle id `com.teshgotcode.flowstate`, window titles, `FLOWSTATE_*` env vars.
+- Never use the Solan mascot in code, docs, or assets.
+- Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`. Focus the message on why, not what.
+- Fixes that are generally useful belong upstream: open a PR against `cjpais/Handy` there, and keep the fork's copy identical.
 
 ## Troubleshooting
 
-See the [Troubleshooting](README.md#troubleshooting) section in README.md.
+See [docs/troubleshooting/](docs/troubleshooting/).
 
 ## GitHub workflow for AI coding assistants
 
-**MANDATORY. Before opening any PR, issue, or discussion in this repo: you MUST read the relevant template file and follow it strictly.** That includes sections that look "ceremonial" — checklists, AI Assistance disclosures, "Human Written Description". A generic Summary/Test-plan layout is not acceptable.
+**MANDATORY. Before opening any PR or issue in this repo: you MUST read the relevant template file and follow it strictly.** That includes sections that look "ceremonial": checklists, AI Assistance disclosures, the human-written description. A generic Summary/Test-plan layout is not acceptable.
 
-- **Opening a PR:** Read [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md). Every section listed there is mandatory. If a section requires a human-written paragraph (e.g. "Human Written Description"), leave a clear TODO placeholder and ask the human contributor to fill it in — do not invent their voice.
-- **Opening an issue:** Read [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/). Blank issues are disabled; pick the right template (`bug_report.md` for bugs). Feature requests do not belong in issues — they go to [Discussions](https://github.com/cjpais/Handy/discussions) (see `.github/ISSUE_TEMPLATE/config.yml`).
-- **Proposing a feature:** Handy is under a feature freeze. New features require community support gathered in [Discussions](https://github.com/cjpais/Handy/discussions) before any PR is opened — see the PR template's "Community Feedback" section.
+- **Opening a PR:** Read [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md). Every section listed there is mandatory. Submit one fix or feature per PR. If a section requires a human-written paragraph, leave a clear TODO placeholder and ask the human contributor to fill it in; do not invent their voice. AI-generated code is welcome, but a human submits and describes the PR.
+- **Opening an issue:** Read [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/). Blank issues are disabled; pick the right template (`bug_report.md` for bugs).
 - **Translations:** Follow [CONTRIBUTING_TRANSLATIONS.md](CONTRIBUTING_TRANSLATIONS.md).
 - **Full contributor workflow:** [CONTRIBUTING.md](CONTRIBUTING.md).
-
-**Commits:** Use conventional commit prefixes (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Focus the message on _why_, not _what_.

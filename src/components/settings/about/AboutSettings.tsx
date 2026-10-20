@@ -11,6 +11,11 @@ import { ShowWhatsNewOnUpdate } from "../ShowWhatsNewOnUpdate";
 import { ThemeSelector } from "../ThemeSelector";
 import { LogDirectory } from "../debug";
 
+// ES brand identity, localised: Norwegian is the default UI language, English
+// is first-class for exchange students and international contributors.
+const TAGLINE_FALLBACK = "Diktering som aldri forlater maskinen.";
+const ES_LINE_FALLBACK = "Laget for Entreprenørskolen ved NTNU";
+
 export const AboutSettings: React.FC = () => {
   const { t } = useTranslation();
   const [version, setVersion] = useState("");
@@ -29,16 +34,17 @@ export const AboutSettings: React.FC = () => {
     fetchVersion();
   }, []);
 
-  const handleDonateClick = async () => {
-    try {
-      await openUrl("https://handy.computer/donate");
-    } catch (error) {
-      console.error("Failed to open donate link:", error);
-    }
-  };
-
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
+      <div>
+        <p className="text-sm font-medium text-text">
+          {t("settings.about.tagline", { defaultValue: TAGLINE_FALLBACK })}
+        </p>
+        <p className="text-xs text-mid-gray">
+          {t("settings.about.esLine", { defaultValue: ES_LINE_FALLBACK })}
+        </p>
+      </div>
+
       <SettingsGroup title={t("settings.about.title")}>
         <AppLanguageSelector descriptionMode="tooltip" grouped={true} />
         <ThemeSelector descriptionMode="tooltip" grouped={true} />
@@ -54,12 +60,21 @@ export const AboutSettings: React.FC = () => {
         <ShowWhatsNewOnUpdate descriptionMode="tooltip" grouped={true} />
 
         <SettingContainer
-          title={t("settings.about.supportDevelopment.title")}
-          description={t("settings.about.supportDevelopment.description")}
+          title={t("settings.about.upstream.title", {
+            defaultValue: "Basert på Handy",
+          })}
+          description={t("settings.about.upstream.description", {
+            defaultValue:
+              "FlowState bygger på Handy (MIT) av cjpais og bidragsyterne.",
+          })}
           grouped={true}
         >
-          <Button variant="primary" size="md" onClick={handleDonateClick}>
-            {t("settings.about.supportDevelopment.button")}
+          <Button
+            variant="secondary"
+            size="md"
+            onClick={() => openUrl("https://github.com/cjpais/Handy")}
+          >
+            {t("settings.about.sourceCode.button")}
           </Button>
         </SettingContainer>
 
@@ -71,7 +86,7 @@ export const AboutSettings: React.FC = () => {
           <Button
             variant="secondary"
             size="md"
-            onClick={() => openUrl("https://github.com/cjpais/Handy")}
+            onClick={() => openUrl("https://github.com/Teshgotcode/FlowState")}
           >
             {t("settings.about.sourceCode.button")}
           </Button>

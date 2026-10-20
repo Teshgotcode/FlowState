@@ -1,6 +1,6 @@
-# Contributing Translations to Handy
+# Contributing Translations to FlowState
 
-Thank you for helping translate Handy! This guide explains how to add or improve translations.
+Thank you for helping translate FlowState! This guide explains how to add or improve translations. The app ships 27 locales; English is the source language, and Norwegian bokmål is the translation this fork maintains.
 
 ## Quick Start
 
@@ -93,6 +93,7 @@ export const LANGUAGE_METADATA: Record<
 2. Go to Settings → General → App Language
 3. Select your language
 4. Verify all text displays correctly
+5. Run `bun run check:translations` to confirm all locales have the same keys
 
 ### Step 6: Submit a Pull Request
 
@@ -120,7 +121,7 @@ Found a typo or better translation?
 
 ### Don't:
 
-- Translate brand names (Handy, transcribe.cpp, ggml, OpenAI)
+- Translate brand names (FlowState, transcribe.cpp, ggml, OpenAI). "FlowState" stays "FlowState" in every language.
 - Change or remove `{{variables}}`
 - Modify JSON keys
 - Add extra spaces or formatting
@@ -146,7 +147,7 @@ Some languages have complex plural rules. For now, use a general form that works
 
 ## Questions?
 
-- Open an issue on GitHub
+- Open an issue on [GitHub](https://github.com/Teshgotcode/FlowState/issues)
 - Join the discussion in existing translation PRs
 
 ## Currently Supported Languages
@@ -161,4 +162,4 @@ We welcome additional languages that are not yet in the [locale folders](src/i18
 
 ---
 
-Thank you for making Handy accessible to more people around the world!
+Thank you for making FlowState accessible to more people around the world!

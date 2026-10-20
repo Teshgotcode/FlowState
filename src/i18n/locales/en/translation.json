@@ -81,7 +81,7 @@
       "grant": "Grant Permission",
       "granted": "Granted",
       "waiting": "Waiting...",
-      "allGranted": "All set!",
+      "allGranted": "All set.",
       "errors": {
         "checkFailed": "Failed to check permissions. Please try again.",
         "requestFailed": "Failed to request permission. Please try again."
@@ -270,7 +270,7 @@
       "overlay": {
         "style": {
           "title": "Overlay",
-          "description": "Choose the recording overlay: None hides it, Minimal shows a compact pill, Live shows transcription in real time as you speak (streaming-capable models only — look for the Streaming badge in the model picker). On Linux 'None' is recommended.",
+          "description": "Choose the recording overlay: None hides it, Minimal shows a compact pill, Live shows transcription in real time as you speak (streaming-capable models only; look for the Streaming badge in the model picker). On Linux 'None' is recommended.",
           "options": {
             "none": "None",
             "minimal": "Minimal",
@@ -448,7 +448,7 @@
       "title": "History",
       "openFolder": "Open Recordings Folder",
       "loading": "Loading history...",
-      "empty": "No transcriptions yet. Start recording to build your history!",
+      "empty": "No transcriptions yet. Start recording to build your history.",
       "copyToClipboard": "Copy transcription to clipboard",
       "copyError": "Failed to copy transcription to clipboard.",
       "save": "Save transcription",
@@ -484,7 +484,7 @@
       "updateChecks": {
         "label": "Check for Updates",
         "description": "Automatically check for new versions of FlowState",
-        "lockedDescription": "Disabled by system configuration (HANDY_DISABLE_UPDATER)"
+        "lockedDescription": "Disabled by system configuration (FLOWSTATE_DISABLE_UPDATER)"
       },
       "whatsNewPreview": {
         "title": "Preview What's New",
@@ -575,7 +575,7 @@
       },
       "keyboardDiagnostic": {
         "title": "Keyboard Diagnostic",
-        "description": "Checks whether keyboard events reach FlowState. Only event counts are recorded — never which keys you press.",
+        "description": "Checks whether keyboard events reach FlowState. Only event counts are recorded, never which keys you press.",
         "run": "Run 10s diagnostic",
         "running": "Listening… press your shortcut a few times (e.g. Option+Space)",
         "secureInputLabel": "Secure Input",
@@ -587,10 +587,10 @@
         "keyUp": "Key up",
         "flagsChanged": "Modifiers",
         "mouse": "Mouse",
-        "verdictBlocked": "Secure Input is blocking key events — keyed shortcuts cannot work until it is resolved.",
-        "verdictSuspicious": "Modifier events arrived but no key events — something is suppressing keys even though Secure Input reports disabled. Please report this on GitHub.",
+        "verdictBlocked": "Secure Input is blocking key events. Keyed shortcuts cannot work until it is resolved.",
+        "verdictSuspicious": "Modifier events arrived but no key events. Something is suppressing keys even though Secure Input reports disabled. Please report this on GitHub.",
         "verdictOk": "Key events are reaching FlowState normally.",
-        "verdictNoEvents": "No events captured — did you press any keys during the test?",
+        "verdictNoEvents": "No events captured. Did you press any keys during the test?",
         "failed": "Diagnostic failed: {{error}}"
       }
     },
@@ -625,7 +625,13 @@
           "description": "High-performance tensor library for on-device machine learning inference",
           "details": "FlowState's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
         }
-      }
+      },
+      "upstream": {
+        "title": "Built on Handy",
+        "description": "FlowState builds on Handy (MIT) by cjpais and contributors."
+      },
+      "tagline": "Dictation that never leaves your machine.",
+      "esLine": "Built for NTNU Entreprenørskolen"
     }
   },
   "footer": {
@@ -638,9 +644,9 @@
     "preparing": "Preparing...",
     "checkForUpdates": "Check for updates",
     "portableUpdateTitle": "Manual update required",
-    "portableUpdateMessage": "Portable installs cannot be updated automatically. Download the installer for your system below, run it, and install to the same folder — your Data/ folder (settings, models, recordings) is kept in place.",
+    "portableUpdateMessage": "Portable installs cannot be updated automatically. Download the installer for your system below, run it, and install to the same folder. Your Data/ folder (settings, models, recordings) is kept in place.",
     "portableUpdateButton": "Download installer",
-    "portableUpdateBrowseMessage": "Portable installs cannot be updated automatically. Download the latest version for your system from GitHub Releases and install it to the same folder — your Data/ folder (settings, models, recordings) is kept in place.",
+    "portableUpdateBrowseMessage": "Portable installs cannot be updated automatically. Download the latest version for your system from GitHub Releases and install it to the same folder. Your Data/ folder (settings, models, recordings) is kept in place.",
     "portableUpdateBrowseButton": "Open GitHub Releases"
   },
   "whatsNew": {
@@ -704,7 +710,7 @@
     "recorderBlockedWithCulprit": "{{name}} may be blocking shortcut changes",
     "recorderBlockedNoCulprit": "macOS is temporarily blocking shortcut changes",
     "learnMore": "How to fix",
-    "recorderBlocked": "Can't record shortcuts right now — macOS Secure Input is blocking key events. Resolve the Secure Input warning first.",
+    "recorderBlocked": "Can't record shortcuts right now. macOS Secure Input is blocking key events. Resolve the Secure Input warning first.",
     "dismiss": "Dismiss"
   }
 }
