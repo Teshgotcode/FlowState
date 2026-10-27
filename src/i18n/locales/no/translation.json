@@ -19,12 +19,6 @@
     "about": "Om"
   },
   "onboarding": {
-    "subtitle": "Velg en transkripsjonsmodell for å komme i gang",
-    "existingModelsTitle": "Kompatible modeller",
-    "downloadModelsTitle": "Tilgjengelige for nedlasting",
-    "showAllModels": "Vis alle {{total}} modeller",
-    "showFewerModels": "Vis færre modeller",
-    "recommended": "Anbefalt",
     "customModelDescription": "Ikke offisielt støttet",
     "migration": {
       "title": "Modellene dine må oppdateres",
@@ -35,12 +29,7 @@
       "retry": "Prøv igjen",
       "chooseAnother": "Velg en annen modell",
       "download": "Last ned modeller ({{size}})",
-      "continue": "Fortsett",
-      "timeRemaining": "{{time}} igjen"
-    },
-    "modelCard": {
-      "accuracy": "nøyaktighet",
-      "speed": "hastighet"
+      "continue": "Fortsett"
     },
     "models": {
       "small": {
@@ -68,32 +57,255 @@
       "selectModel": "Kunne ikke velge modell"
     },
     "permissions": {
-      "title": "Tillatelser",
-      "description": "FlowState trenger et par tillatelser for å fungere.",
       "microphone": {
-        "title": "Mikrofontilgang",
-        "description": "Kreves for å høre stemmen din ved transkripsjon."
+        "name": "Mikrofon",
+        "why": "Slik kan FlowState høre deg. Lyden gjøres om til tekst på denne maskinen og lastes aldri opp."
       },
       "accessibility": {
-        "title": "Tilgjengelighet",
-        "description": "Kreves for å skrive inn transkribert tekst i appene dine."
+        "name": "Tilgjengelighet",
+        "why": "Slik fungerer snarveien din i alle apper, og FlowState kan skrive teksten der markøren står."
       },
-      "grant": "Gi tillatelse",
-      "granted": "Gitt",
-      "waiting": "Venter...",
-      "allGranted": "Alt er klart.",
       "errors": {
         "checkFailed": "Kunne ikke sjekke tillatelser. Prøv igjen.",
         "requestFailed": "Kunne ikke be om tillatelse. Prøv igjen."
+      },
+      "titleMac": "To tillatelser, så er du klar",
+      "titleWindows": "Én tillatelse, så er du klar",
+      "subtitleMac": "macOS spør før en app kan lytte eller skrive.",
+      "subtitleWindows": "Windows spør før en app kan lytte.",
+      "allow": "Tillat",
+      "openSettings": "Åpne innstillinger",
+      "allowed": "Tillatt",
+      "waiting": "Venter",
+      "turnOnMac": "Slå på FlowState i Systeminnstillinger, og kom tilbake hit.",
+      "turnOnWindows": "Slå på mikrofontilgang i Windows-innstillinger, og kom tilbake hit.",
+      "hintBoth": "Tillat begge for å fortsette",
+      "hintMicrophone": "Tillat mikrofonen for å fortsette",
+      "welcomeBack": "Velkommen tilbake. Vi fortsetter der du slapp.",
+      "relaunch": "Virker ikke snarveien etter dette? <relaunch>Start FlowState på nytt</relaunch>, så lander du rett her igjen."
+    },
+    "shell": {
+      "back": "Tilbake",
+      "continue": "Fortsett",
+      "progress": "Steg {{step}} av {{count}}"
+    },
+    "welcome": {
+      "title": "Snakk i stedet for å skrive, i alle apper",
+      "subtitle": "Velg språkene du vil diktere på",
+      "languagesLabel": "Språk",
+      "noMatch": "Ingen språk treffer «{{query}}». FlowStates modeller dekker rundt 100 språk; flere finnes i innstillingene.",
+      "appLanguage": "Appspråk",
+      "menusIn": "Menyer på <b>{{language}}</b>",
+      "chinese": {
+        "question": "Du snakker {{languages}}. Hvilke tegn skal FlowState skrive?",
+        "label": "Kinesiske tegn",
+        "zh-Hans": "Forenklede",
+        "zh-Hant": "Taiwan",
+        "zh-HK": "Hongkong"
+      },
+      "hint": {
+        "pickOne": "Velg minst ett språk",
+        "weak_one": "{{languages}}: ingen modell hører det godt nok ennå",
+        "weak_other": "{{languages}}: ingen modell hører disse godt nok ennå"
       }
+    },
+    "download": {
+      "checking": "Sjekker nedlastingen…",
+      "ready": "{{name}} er klar",
+      "failed": "Nedlastingen stoppet",
+      "downloading": "Laster ned {{name}}",
+      "progress": "{{done}} av {{total}}",
+      "progressLeft": "{{done}} av {{total}}, {{time}} igjen",
+      "checkingName": "Sjekker {{name}}",
+      "checkingDetail": "Sjekker at nedlastingen er fullført",
+      "stopped": "{{name}} stoppet nedlastingen",
+      "retryDetail": "Prøv igjen fortsetter der den stoppet",
+      "retryDownload": "Prøv nedlasting på nytt",
+      "cardProgress": "Laster ned {{percent}} %, {{done}} av {{total}}",
+      "timeLeft": "{{time}} igjen",
+      "speedLeft": "{{speed}}, {{time}} igjen"
+    },
+    "model": {
+      "title": "Velg en språkmodell",
+      "subtitle": "Språkmodellen gjør talen din om til tekst, rett på denne maskinen",
+      "label": "Språkmodell",
+      "lines": {
+        "recommended": "Beste balanse mellom hastighet og nøyaktighet for språkene dine",
+        "faster": "Raskere, med noen flere feil",
+        "accurate": "Færrest feil, men tregere"
+      },
+      "shorts": {
+        "recommended": "Best balanse for deg",
+        "faster": "Raskere, noen flere feil",
+        "accurate": "Færrest feil, men tregere"
+      },
+      "model": "Modell",
+      "showAll": "Vis alle {{count}} modellene",
+      "download": "Last ned {{size}}",
+      "downloadInstead": "Last ned {{size}} i stedet",
+      "pauses": "{{name}} pauset på {{percent}} %",
+      "resumeLater": "Velg den på nytt for å fortsette der den stoppet",
+      "hint": "Laster ned mens du fullfører oppsettet"
+    },
+    "demo": {
+      "title": "Snakk i alle apper, med én snarvei",
+      "hold": "<0>Klikk der du ville skrevet.</0> <1>Hold snarveien og snakk.</1> <2>Slipp, og ordene dine dukker opp.</2>",
+      "tap": "<0>Klikk der du ville skrevet.</0> <1>Trykk snarveien og snakk.</1> <2>Trykk igjen, og ordene dine dukker opp.</2>",
+      "apps": {
+        "messages": "Meldinger",
+        "notes": "Notater"
+      },
+      "chat": "Kommer du i kveld da?",
+      "noteTitle": "Helgeplaner",
+      "screenLabel": "En bærbar maskin: noen klikker i en app, trykker snarveien og snakker, og ordene dukker opp der de klikket.",
+      "change": "Endre",
+      "yourShortcut": "Snarveien din er",
+      "pressKeys": "Trykk de nye tastene",
+      "addKey": "Legg nå til en tast",
+      "cancel": "Avbryt",
+      "tryIt": "Prøv selv"
+    },
+    "try": {
+      "title": "Prøv det!",
+      "subtitle": "FlowState står i hjørnet og viser deg hvordan",
+      "noteLabel": "Notat",
+      "placeholder": "Nytt notat",
+      "hold": "Hold <keys/> og snakk.",
+      "tapNext": "Trykk <keys/> én gang, og snakk.",
+      "letGo": "Slipp <keys/> når du er ferdig.",
+      "tapAgain": "Trykk <keys/> igjen når du er ferdig.",
+      "watch": "Se på notatet.",
+      "changeKeys": "Endre snarveien din, {{keys}}",
+      "doneHold": "Femmer! Sånn holder du.",
+      "doneHoldNext": "Deretter: den hendefrie måten.",
+      "doneTap": "Femmer! Sånn trykker du.",
+      "doneTapNext": "Prøv nå å holde dem inne mens du snakker.",
+      "giveFive": "Det satt! Gi meg en femmer",
+      "highFive": "Femmer",
+      "slowLine": "{{name}} brukte {{wait}} på denne maskinen. <faster>Prøv en raskere modell</faster>",
+      "nothingTyped": "Hmm, ingenting kom frem.",
+      "nothingTypedSub": "Klikk i notatet først, og prøv igjen.",
+      "silent": "Jeg hørte ingenting.",
+      "silentSub": "Ingen lyd kom fra mikrofonen. Prøv en annen:",
+      "noWords": "Jeg fanget ikke opp noen ord.",
+      "noWordsSub": "Prøv igjen, og si en hel setning.",
+      "finish": "Fullfør",
+      "skip": "Hopp over",
+      "seconds": "{{value}} s"
+    },
+    "done": {
+      "title": "Nå er alt klart",
+      "subMac": "FlowState ligger i menylinjen nå. Hold eller trykk <keys/> i en app for å snakke.",
+      "subTray": "FlowState ligger i systemstatusfeltet nå. Hold eller trykk <keys/> i en app for å snakke.",
+      "hint": "Du kan endre dette senere i innstillingene",
+      "highFiveLabel": "Femmer",
+      "atLogin": "Start FlowState når jeg logger inn",
+      "finish": "Fullfør",
+      "panel": {
+        "name": "FlowState",
+        "ready": "Klar",
+        "languages": "Språk",
+        "model": "Språkmodell",
+        "shortcut": "Snarvei",
+        "changeLanguages": "Endre språk, {{languages}}",
+        "changeModel": "Endre språkmodell, {{model}}"
+      }
+    },
+    "linux": {
+      "tryIt": "Virker det ikke? <guide>Linux-oppsettsguiden</guide>",
+      "done": "Virker det ikke i andre apper? <guide>Linux-oppsettsguiden</guide>"
     }
+  },
+  "modelTable": {
+    "tags": {
+      "preview": "Live-forhåndsvisning",
+      "previewTitle": "Viser ordene dine i Live-overlegget mens du snakker, og skriver dem ut når du slutter",
+      "translate": "Oversetter",
+      "translateTitle": "Kan gjøre det du sier om til engelsk tekst. Slå det på i innstillingene"
+    },
+    "rubric": {
+      "gradeTitle": "Nøyaktighet i {{language}}: {{grade}}",
+      "accuracyTitle": "Nøyaktighet i {{language}}",
+      "overallTitle": "Nøyaktighet i språkene dine: {{grade}}",
+      "overall": "Nøyaktighet i språkene dine",
+      "meaning": {
+        "A": "Svært få feil: ordene dine kommer vanligvis ut slik du sa dem",
+        "B": "Noen feil: regn med å rette et ord innimellom",
+        "C": "Hyppige feil: enkelte detaljer kan gå tapt",
+        "D": "Mange feil: regn med å kontrollere og rette det som skrives",
+        "F": "Ofte uklart: mye av det du sier kan komme ut feil"
+      },
+      "unsupported": "Denne modellen forstår ikke {{language}}, så den kan ikke skrive det",
+      "unrated": "Denne modellen forstår {{language}}, men vi har ikke målt hvor godt ennå",
+      "under": "under {{max}} %",
+      "between": "{{min}} til {{max}} %",
+      "over": "{{min}} % eller mer",
+      "speedTitle": "Hastighet: {{speed}}",
+      "speedName": {
+        "0": "Svært treg",
+        "1": "Treg",
+        "2": "Middels",
+        "3": "Rask",
+        "4": "Svært rask"
+      },
+      "speedMeaning": {
+        "0": "Ordene dine kommer etter en lang ventetid",
+        "1": "Ordene dine kommer etter en ventetid",
+        "2": "Ordene dine kommer etter en kort ventetid",
+        "3": "Ordene dine kommer nesten med én gang",
+        "4": "Ordene dine kommer med én gang"
+      },
+      "speedPreview": "{{meaning}}, med live-forhåndsvisning mens du snakker",
+      "untimed": "Vi har ikke målt hvor rask den er ennå",
+      "underSeconds": "under {{max}} s",
+      "betweenSeconds": "{{min}} til {{max}} s",
+      "overSeconds": "{{min}} s eller mer"
+    },
+    "roles": {
+      "recommended": "Anbefalt",
+      "faster": "Raskere",
+      "accurate": "Mer nøyaktig",
+      "fromAll": "Fra alle modeller"
+    },
+    "speed": "Hastighet",
+    "size": "Størrelse",
+    "accuracy": "Nøyaktighet",
+    "search": "Søk i modeller",
+    "allLabel": "Språkmodeller",
+    "noMatch": "Ingenting treffer «{{query}}». Prøv et språk, eller en familie som Whisper eller Parakeet",
+    "noFilterMatch": "Ingen modeller treffer disse filtrene",
+    "speedUntested": "Hastigheten er ikke målt ennå",
+    "speedWords": {
+      "0": "Svært treg, ordene kommer etter en lang ventetid",
+      "1": "Treg, ordene kommer etter en ventetid",
+      "2": "Middels, ordene kommer etter en kort ventetid",
+      "3": "Rask, ordene kommer nesten med én gang",
+      "4": "Svært rask, ordene kommer med én gang"
+    },
+    "speedWordsPreview": {
+      "0": "Svært treg, med live-forhåndsvisning mens du snakker",
+      "1": "Treg, med live-forhåndsvisning mens du snakker",
+      "2": "Middels, med live-forhåndsvisning mens du snakker",
+      "3": "Rask, med live-forhåndsvisning mens du snakker",
+      "4": "Svært rask, med live-forhåndsvisning mens du snakker"
+    },
+    "missingLanguage": "Savner du et språk?",
+    "allLanguages": "Alle",
+    "downloadingLine": "Laster ned {{percent}} % av {{total}}",
+    "customLine": "Lagt til fra modellmappen din. Ikke vurdert.",
+    "legacyLine": "En eldre nedlasting. Ikke vurdert."
+  },
+  "languagePicker": {
+    "search": "Søk i språk",
+    "addAnother": "Legg til en til",
+    "remove": "Fjern {{language}}",
+    "alreadyAdded_one": "{{languages}} er allerede lagt til.",
+    "alreadyAdded_other": "{{languages}} er allerede lagt til."
   },
   "modelSelector": {
     "custom": "Egendefinert",
-    "legacy": "Eldre format",
     "streaming": "Streaming",
     "active": "Aktiv",
-    "switching": "Bytter...",
     "noModelsAvailable": "Ingen modeller tilgjengelig",
     "verifying": "Kontrollerer {{modelName}}...",
     "verifyingGeneric": "Kontrollerer...",
@@ -105,19 +317,8 @@
     "modelError": "Modellfeil",
     "modelUnloaded": "Modellen er lastet ut",
     "noModelDownloadRequired": "Ingen modell – må lastes ned",
-    "deleteModel": "Slett {{modelName}}",
     "downloadSpeed": "{{speed}} MB/s",
-    "cancel": "Avbryt",
-    "cancelDownload": "Avbryt nedlasting",
-    "capabilities": {
-      "languageSelection": "Støtter flere inndataspråk",
-      "singleLanguage": "Støtter kun dette språket",
-      "languageCount": "{{total}} språk",
-      "languageOnly": "Kun {{language}}",
-      "translation": "Kan oversette til engelsk",
-      "translate": "Oversett",
-      "streaming": "Viser transkripsjonen i sanntid mens du snakker"
-    }
+    "lockedWhileTranscribing": "Du kan bytte modell når Historikk er ferdig med å transkribere."
   },
   "settings": {
     "modelSettings": {
@@ -147,9 +348,7 @@
           }
         },
         "errors": {
-          "restore": "Kunne ikke gjenopprette den opprinnelige snarveien",
-          "set": "Kunne ikke sette snarveien: {{error}}",
-          "reset": "Kunne ikke tilbakestille snarveien til standard"
+          "set": "Kunne ikke sette snarveien: {{error}}"
         }
       },
       "language": {
@@ -157,7 +356,22 @@
         "description": "Velg språk for talegjenkjenning. Auto finner språket automatisk. Et fast språk kan gi bedre nøyaktighet.",
         "searchPlaceholder": "Søk etter språk...",
         "noResults": "Ingen språk funnet",
-        "auto": "Auto"
+        "auto": "Auto",
+        "autoUnavailable": {
+          "title": "Auto er slått av",
+          "oneLanguage": "Bare ett av språkene dine fungerer med denne modellen",
+          "undetectable": "Ikke tilgjengelig med {{languages}}",
+          "noMatch": "Ingen av språkene dine fungerer med denne modellen"
+        },
+        "detectorMissingTitle": "Auto trenger en egen nedlasting",
+        "detectorMissing": "Denne modellen kan ikke avgjøre hvilket språk du snakker. Auto trenger en liten språkdetektor for å finne det ut",
+        "stopDetectorDownload": "Stopp nedlastingen av språkdetektoren"
+      },
+      "preferredLanguages": {
+        "title": "Foretrukne språk",
+        "description": "Språkene du snakker. FlowState bruker dem til å anbefale modeller.",
+        "noMatch": "Ingen språk treffer «{{query}}»",
+        "weak": "Ingen modell gjenkjenner {{languages}} godt nok ennå."
       },
       "shortcutActivation": {
         "title": "Slik fungerer snarveien",
@@ -175,14 +389,36 @@
       }
     },
     "models": {
-      "title": "Transkripsjonsmodeller",
-      "description": "Velg en transkripsjonsmodell, eller last ned flere. Ulike modeller gir ulik nøyaktighet og hastighet.",
-      "searchPlaceholder": "Søk etter modellnavn...",
-      "yourModels": "Nedlastede modeller",
-      "availableModels": "Tilgjengelige for nedlasting",
-      "deleteConfirm": "Er du sikker på at du vil slette {{modelName}}? Du må laste den ned på nytt for å bruke den.",
-      "deleteActiveConfirm": "{{modelName}} er din aktive modell. Hvis du sletter den, stopper transkripsjonene til du velger en ny modell. Er du sikker?",
-      "deleteTitle": "Slett modell",
+      "title": "Modeller",
+      "changeLanguages": "Endre språk",
+      "sections": {
+        "yours": "På denne maskinen",
+        "fits": "For språkene dine",
+        "untested": "Ikke testet"
+      },
+      "untestedNote": "Ikke testet med FlowState. De kan være tregere eller lage flere feil.",
+      "untestedHidden_one": "{{count}} modell til er ikke finjustert for diktat. Søk for å finne den.",
+      "untestedHidden_other": "{{count}} modeller til er ikke finjustert for diktat. Søk for å finne en.",
+      "emptyYours": "Ingen modeller ennå. Velg én nedenfor: den lastes ned, og så tar FlowState den i bruk.",
+      "showMore": "Vis {{count}} til",
+      "showFewer": "Vis færre",
+      "download": "Last ned og bruk",
+      "downloadingThenUse": "{{percent}} % av {{total}}, bytter deretter",
+      "loading": "Laster inn…",
+      "deleteAsk": "Slette {{name}}? Det frigjør {{size}}.",
+      "deleteAskActive": "Slette {{name}}? FlowState kan ikke transkribere før du velger en annen.",
+      "cancel": "Avbryt",
+      "deleteModel": "Slett {{name}}",
+      "cancelDownload": "Stopp nedlastingen av {{name}}",
+      "legend": {
+        "open": "Slik blir modellene vurdert",
+        "accuracyNote": "For hvert av språkene dine: hvor mange ord en modell feilet i testopptakene våre.",
+        "speedNote": {
+          "accelerated": "Hvor lang tid 30 sekunder tale bruker på å bli skrevet ut på testlaptoppen vår sin grafikkbrikke. Denne maskinen kan avvike.",
+          "cpu": "Hvor lang tid 30 sekunder tale bruker på å bli skrevet ut på testlaptoppen vår sin prosessor. Denne maskinen kan avvike."
+        },
+        "marks": "? er ikke målt ennå. — hører ikke det språket."
+      },
       "retiredNotice": {
         "title": "Gamle modeller fungerer ikke lenger med FlowState",
         "description": "De opptar {{size}} på datamaskinen din.",
@@ -190,16 +426,13 @@
         "deleted": "Slettet gamle modeller",
         "deleteFailed": "Noen gamle modeller kunne ikke slettes. Sjekk loggen for detaljer."
       },
-      "filters": {
-        "allLanguages": "Alle språk",
-        "streaming": "Filtrer modeller som støtter streaming-transkripsjon",
-        "translation": "Filtrer modeller som støtter oversettelse til engelsk"
-      },
       "rescan": {
         "label": "Skann på nytt",
         "tooltip": "Finner modeller som er lagt til i modellmappen eller Hugging Face-hurtigbufferen utenfor FlowState"
-      },
-      "noModelsMatch": "Ingen modeller samsvarer med dette filteret."
+      }
+    },
+    "languages": {
+      "title": "Språk"
     },
     "sound": {
       "title": "Lyd",
@@ -357,7 +590,13 @@
       },
       "longFormChunking": {
         "title": "Deling av lange opptak",
-        "description": "Deler lange opptak ved naturlige pauser før transkripsjonen. Det gir vanligvis bedre resultat."
+        "description": "Deler lange opptak ved naturlige pauser før transkripsjonen. Det gir vanligvis bedre resultat. Transkriberte filer og lange ny-transkripsjoner blir alltid delt."
+      },
+      "languageDetection": {
+        "title": "Begrens Auto til språkene mine",
+        "description": "Auto velger bare blant de foretrukne språkene dine, ved hjelp av en liten språkdetektor. Slå dette på hvis Auto stadig velger et språk du ikke snakker",
+        "downloadHint": "Å slå dette på laster ned en liten språkdetektor",
+        "downloadingHint": "Laster ned språkdetektoren. Slå dette av for å avbryte"
       },
       "vadBackend": {
         "title": "Motor for taleaktivitetsdeteksjon",
@@ -373,11 +612,12 @@
       },
       "chineseScript": {
         "title": "Kinesisk skrift",
-        "description": "Skriver transkripsjoner av mandarin og kantonesisk i forenklet eller tradisjonell skrift. Andre språk endres ikke.",
+        "description": "Skriver transkripsjoner av mandarin og kantonesisk med forenklede tegn, eller med tradisjonelle tegn slik de skrives i Taiwan eller Hongkong. Andre språk endres ikke.",
         "options": {
           "asTranscribed": "Som transkribert",
           "simplified": "Forenklet",
-          "traditional": "Tradisjonell"
+          "traditionalTw": "Tradisjonelt (Taiwan)",
+          "traditionalHk": "Tradisjonelt (Hongkong)"
         }
       }
     },
@@ -456,9 +696,21 @@
       "delete": "Slett oppføring",
       "deleteError": "Kunne ikke slette oppføringen. Prøv igjen.",
       "retranscribe": "Transkriber på nytt",
-      "retranscribeError": "Kunne ikke transkribere på nytt. Prøv igjen.",
+      "cancelTranscription": "Avbryt transkripsjonen",
       "transcribing": "Transkriberer...",
-      "transcriptionFailed": "Transkripsjonen mislyktes. Bruk prøv-igjen-ikonet for å transkribere på nytt."
+      "transcriptionFailed": "Transkripsjonen mislyktes. Bruk prøv-igjen-ikonet for å transkribere på nytt.",
+      "notTranscribed": "Ikke transkribert. Du kan transkribere den med prøv-igjen-ikonet.",
+      "transcribeFile": "Transkriber fil",
+      "mediaFiles": "Lyd og video",
+      "fileUnsupported": "Kunne ikke lese lyd fra {{name}}.",
+      "readingFile": "Leser {{name}}...",
+      "transcribeFailed": "Transkripsjonen mislyktes. Prøv igjen.",
+      "waiting": "Venter på transkripsjon",
+      "transcribingPercent": "Transkriberer, {{percent}} %",
+      "showMore": "Vis mer",
+      "showLess": "Vis mindre",
+      "dropTitle": "Slipp for å transkribere",
+      "dropDescription": "Den dukker opp i Historikk."
     },
     "debug": {
       "title": "Feilsøking",
@@ -496,9 +748,27 @@
       "onboardingPreview": {
         "title": "Forhåndsvis introduksjonen",
         "description": "Viser introduksjonsskjermene uten å endre tillatelser, modeller eller hva som er fullført.",
-        "permissionsButton": "Tillatelser",
-        "modelsButton": "Modellvalg",
-        "exitButton": "Avslutt forhåndsvisning"
+        "exitButton": "Avslutt forhåndsvisning",
+        "choose": "Velg en skjerm",
+        "screens": {
+          "welcome": "Velkommen",
+          "permissions": "Tillatelser",
+          "model": "Modell",
+          "demo": "Demo",
+          "try": "Prøv",
+          "done": "Alt er klart"
+        }
+      },
+      "onboardingRun": {
+        "title": "Kjør introduksjonen",
+        "description": "Kjør gjennom introduksjonen på ekte fra starten: den ber om tillatelser, laster ned modeller og lagrer valgene dine",
+        "button": "Start"
+      },
+      "modelMigration": {
+        "title": "Modellmigrering",
+        "description": "Åpne skjermen for modelloppdatering i gammelt format på ekte: den laster ned erstatninger, bytter modeller og sletter gamle filer",
+        "button": "Åpne",
+        "noRetired": "Ingen modeller i gammelt format på disken"
       },
       "soundTheme": {
         "label": "Lydtema",
@@ -548,11 +818,6 @@
         "description": "Velg motoren bak tastatursnarveiene.",
         "bindingsReset": "Tastatursnarveiene passet ikke og ble tilbakestilt til standard"
       },
-      "paths": {
-        "appData": "Appdata:",
-        "models": "Modeller:",
-        "settings": "Innstillinger:"
-      },
       "pasteDelay": {
         "title": "Innlimingsforsinkelse (før)",
         "description": "Forsinkelse (i millisekunder) etter kopiering av tekst, før innlimingstasten sendes. Øk hvis ingenting blir limt inn."
@@ -572,6 +837,10 @@
       "recordingBuffer": {
         "title": "Ekstra opptaksbuffer",
         "description": "Ekstra tid (i millisekunder) opptaket fortsetter etter at du slipper tasten, slik at lyden rett etter blir tatt med. 0 = ingen ekstra buffer."
+      },
+      "languageDetectionWindow": {
+        "title": "Lyd for språkdeteksjon",
+        "description": "Antall sekunder tale språkdetektoren hører. Lengre gir mer nøyaktighet, men er tregere."
       },
       "keyboardDiagnostic": {
         "title": "Tastaturdiagnostikk",
@@ -655,16 +924,11 @@
   "common": {
     "loading": "Laster...",
     "delete": "Slett",
-    "back": "Tilbake",
     "close": "Lukk",
     "open": "Åpne",
     "copy": "Kopier",
     "clear": "Tøm",
     "noOptionsFound": "Ingen alternativer funnet"
-  },
-  "accessibility": {
-    "permissionsDescription": "FlowState trenger tilgjengelighetstilgang for å skrive inn transkribert tekst.",
-    "openSettings": "Åpne systeminnstillinger"
   },
   "errors": {
     "loadDirectory": "Kunne ikke laste mappen: {{error}}",
