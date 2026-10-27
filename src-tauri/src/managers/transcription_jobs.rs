@@ -165,6 +165,13 @@ impl TranscriptionJobManager {
         self.queue(entry_id, true);
     }
 
+    /// Queues an entry whose recording is already saved (a stopped meeting)
+    /// for background transcription. The entry exists with no text yet; the
+    /// job reads the recording chunk by chunk and fills it in.
+    pub fn queue_saved_recording(&self, entry_id: i64) {
+        self.queue(entry_id, false);
+    }
+
     /// Queues the entry to be transcribed from its recording, unless it
     /// already is.
     fn queue(&self, entry_id: i64, retry: bool) {

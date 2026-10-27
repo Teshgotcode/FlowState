@@ -38,6 +38,7 @@ pub use utils::{env_flag_enabled, flowstate_env_flag_enabled};
 use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::history::HistoryManager;
+use managers::meeting::MeetingManager;
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
 use managers::transcription_jobs::TranscriptionJobManager;
@@ -97,6 +98,192 @@ fn build_console_filter() -> env_filter::Filter {
     }
 
     builder.build()
+}
+
+/// The specta builder with every command and event the frontend can use.
+/// A free function rather than inline in [`run`], so the bindings freshness
+/// test can rebuild exactly what the app registers and compare it with the
+/// checked-in `src/bindings.ts`.
+fn specta_builder() -> Builder<tauri::Wry> {
+    Builder::<tauri::Wry>::new()
+        .commands(collect_commands![
+            shortcut::change_binding,
+            shortcut::reset_binding,
+            shortcut::change_shortcut_activation_setting,
+            shortcut::change_hold_threshold_ms_setting,
+            shortcut::change_audio_feedback_setting,
+            shortcut::change_audio_feedback_volume_setting,
+            shortcut::change_sound_theme_setting,
+            shortcut::change_theme_setting,
+            shortcut::change_start_hidden_setting,
+            shortcut::change_autostart_setting,
+            shortcut::change_translate_to_english_setting,
+            shortcut::change_selected_language_setting,
+            shortcut::change_spoken_languages_setting,
+            shortcut::change_overlay_position_setting,
+            shortcut::change_overlay_style_setting,
+            shortcut::change_debug_mode_setting,
+            shortcut::change_word_correction_threshold_setting,
+            shortcut::change_extra_recording_buffer_setting,
+            shortcut::change_language_detection_setting,
+            shortcut::change_language_detection_window_setting,
+            shortcut::change_paste_delay_ms_setting,
+            shortcut::change_paste_delay_after_ms_setting,
+            shortcut::change_reliable_paste_setting,
+            shortcut::change_paste_method_setting,
+            shortcut::get_available_typing_tools,
+            shortcut::change_typing_tool_setting,
+            shortcut::change_external_script_path_setting,
+            shortcut::change_clipboard_handling_setting,
+            shortcut::change_auto_submit_setting,
+            shortcut::change_auto_submit_key_setting,
+            shortcut::change_post_process_enabled_setting,
+            shortcut::change_experimental_enabled_setting,
+            shortcut::change_post_process_base_url_setting,
+            shortcut::change_post_process_api_format_setting,
+            shortcut::change_post_process_api_key_setting,
+            shortcut::change_post_process_model_setting,
+            shortcut::set_post_process_provider,
+            shortcut::fetch_post_process_models,
+            shortcut::add_post_process_prompt,
+            shortcut::update_post_process_prompt,
+            shortcut::delete_post_process_prompt,
+            shortcut::set_post_process_selected_prompt,
+            shortcut::update_custom_words,
+            shortcut::suspend_all_bindings,
+            shortcut::resume_all_bindings,
+            shortcut::change_mute_while_recording_setting,
+            shortcut::change_append_trailing_space_setting,
+            shortcut::change_lazy_stream_close_setting,
+            shortcut::change_vad_enabled_setting,
+            shortcut::change_long_form_chunking_setting,
+            shortcut::change_vad_backend_setting,
+            shortcut::change_filler_word_removal_enabled_setting,
+            shortcut::change_chinese_script_setting,
+            shortcut::change_app_language_setting,
+            shortcut::change_update_checks_setting,
+            shortcut::change_show_whats_new_on_update_setting,
+            shortcut::change_whats_new_last_seen_version_setting,
+            shortcut::change_keyboard_implementation_setting,
+            shortcut::get_keyboard_implementation,
+            shortcut::change_show_tray_icon_setting,
+            shortcut::change_transcribe_accelerator_setting,
+            shortcut::change_transcribe_gpu_device,
+            shortcut::get_available_accelerators,
+            shortcut::handy_keys::start_handy_keys_recording,
+            shortcut::handy_keys::stop_handy_keys_recording,
+            secure_input::get_secure_input_status,
+            secure_input::run_keyboard_diagnostic,
+            trigger_update_check,
+            show_main_window_command,
+            commands::cancel_operation,
+            commands::is_portable,
+            commands::is_update_checks_locked,
+            commands::get_app_dir_path,
+            commands::get_app_settings,
+            commands::get_default_settings,
+            commands::get_log_dir_path,
+            commands::set_log_level,
+            commands::open_recordings_folder,
+            commands::open_log_dir,
+            commands::open_app_data_dir,
+            commands::check_apple_intelligence_available,
+            commands::initialize_enigo,
+            commands::initialize_shortcuts,
+            commands::complete_onboarding,
+            commands::models::get_available_models,
+            commands::models::get_model_info,
+            commands::models::download_model,
+            commands::models::download_language_detector,
+            commands::models::is_language_detector_downloaded,
+            commands::models::delete_model,
+            commands::models::get_retired_models,
+            commands::models::delete_retired_model,
+            commands::models::cancel_download,
+            commands::models::set_active_model,
+            commands::models::get_current_model,
+            commands::models::get_transcription_model_status,
+            commands::models::is_model_loading,
+            commands::models::rescan_local_models,
+            commands::audio::update_microphone_mode,
+            commands::audio::get_microphone_mode,
+            commands::audio::get_windows_microphone_permission_status,
+            commands::audio::open_microphone_privacy_settings,
+            commands::audio::get_available_microphones,
+            commands::audio::set_selected_microphone,
+            commands::audio::get_selected_microphone,
+            commands::audio::get_available_output_devices,
+            commands::audio::set_selected_output_device,
+            commands::audio::get_selected_output_device,
+            commands::audio::play_test_sound,
+            commands::audio::check_custom_sounds,
+            commands::audio::set_clamshell_microphone,
+            commands::audio::get_clamshell_microphone,
+            commands::audio::is_recording,
+            commands::audio::get_microphone_channels,
+            commands::audio::set_selected_channel,
+            commands::transcription::set_model_unload_timeout,
+            commands::transcription::get_model_load_status,
+            commands::transcription::get_language_status,
+            commands::transcription::unload_model_manually,
+            commands::history::get_history_entries,
+            commands::history::toggle_history_entry_saved,
+            commands::history::get_audio_file_path,
+            commands::history::delete_history_entry,
+            commands::history::retry_history_entry_transcription,
+            commands::history::cancel_history_entry_transcription,
+            commands::history::transcribe_file,
+            commands::history::update_history_limit,
+            commands::history::update_recording_retention_period,
+            commands::meeting::start_meeting,
+            commands::meeting::stop_meeting,
+            commands::meeting::cancel_meeting,
+            commands::meeting::get_meeting_status,
+            helpers::clamshell::is_laptop,
+        ])
+        .events(collect_events![
+            managers::history::HistoryUpdatePayload,
+            managers::transcription_jobs::TranscriptionJob,
+            managers::transcription::StreamTextEvent,
+            managers::transcription::StreamPhaseEvent,
+            transcription_coordinator::RecordingStateEvent,
+            actions::TranscriptionCompleteEvent,
+            managers::meeting::MeetingStateEvent,
+        ])
+}
+
+/// `src/bindings.ts` is a build artifact the debug app refreshes on startup.
+/// This test rebuilds it headlessly — no GUI, no microphone — so the
+/// checked-in file can't drift from the commands and events the app
+/// registers. To refresh it by hand, copy the generated file the test leaves
+/// at `$TMPDIR/flowstate-bindings.ts` over `src/bindings.ts`.
+#[cfg(all(test, debug_assertions))]
+mod bindings_tests {
+    use super::specta_builder;
+    use specta_typescript::{BigIntExportBehavior, Typescript};
+
+    #[test]
+    fn generated_bindings_match_the_checked_in_file() {
+        let generated_path = std::env::temp_dir().join("flowstate-bindings.ts");
+        specta_builder()
+            .export(
+                Typescript::default().bigint(BigIntExportBehavior::Number),
+                &generated_path,
+            )
+            .expect("Failed to export typescript bindings");
+        let generated = std::fs::read_to_string(&generated_path).expect("read generated bindings");
+        let checked_in =
+            std::fs::read_to_string("../src/bindings.ts").expect("read checked-in bindings");
+        let first_diff = generated
+            .lines()
+            .zip(checked_in.lines())
+            .position(|(generated, checked_in)| generated != checked_in);
+        assert!(
+            generated == checked_in,
+            "src/bindings.ts is stale (first differing line: {first_diff:?}). Regenerate it by running the debug app, or copy {} over it.",
+            generated_path.display()
+        );
+    }
 }
 
 fn show_main_window(app: &AppHandle) {
@@ -217,6 +404,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(history_manager.clone());
     app_handle.manage(tray::TrayState::new());
     app_handle.manage(TranscriptionJobManager::new(app_handle));
+    app_handle.manage(MeetingManager::new(app_handle));
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -658,146 +846,7 @@ pub fn run(cli_args: CliArgs) {
     // when the variable is unset
     let console_filter = build_console_filter();
 
-    let specta_builder = Builder::<tauri::Wry>::new()
-        .commands(collect_commands![
-            shortcut::change_binding,
-            shortcut::reset_binding,
-            shortcut::change_shortcut_activation_setting,
-            shortcut::change_hold_threshold_ms_setting,
-            shortcut::change_audio_feedback_setting,
-            shortcut::change_audio_feedback_volume_setting,
-            shortcut::change_sound_theme_setting,
-            shortcut::change_theme_setting,
-            shortcut::change_start_hidden_setting,
-            shortcut::change_autostart_setting,
-            shortcut::change_translate_to_english_setting,
-            shortcut::change_selected_language_setting,
-            shortcut::change_spoken_languages_setting,
-            shortcut::change_overlay_position_setting,
-            shortcut::change_overlay_style_setting,
-            shortcut::change_debug_mode_setting,
-            shortcut::change_word_correction_threshold_setting,
-            shortcut::change_extra_recording_buffer_setting,
-            shortcut::change_language_detection_setting,
-            shortcut::change_language_detection_window_setting,
-            shortcut::change_paste_delay_ms_setting,
-            shortcut::change_paste_delay_after_ms_setting,
-            shortcut::change_reliable_paste_setting,
-            shortcut::change_paste_method_setting,
-            shortcut::get_available_typing_tools,
-            shortcut::change_typing_tool_setting,
-            shortcut::change_external_script_path_setting,
-            shortcut::change_clipboard_handling_setting,
-            shortcut::change_auto_submit_setting,
-            shortcut::change_auto_submit_key_setting,
-            shortcut::change_post_process_enabled_setting,
-            shortcut::change_experimental_enabled_setting,
-            shortcut::change_post_process_base_url_setting,
-            shortcut::change_post_process_api_format_setting,
-            shortcut::change_post_process_api_key_setting,
-            shortcut::change_post_process_model_setting,
-            shortcut::set_post_process_provider,
-            shortcut::fetch_post_process_models,
-            shortcut::add_post_process_prompt,
-            shortcut::update_post_process_prompt,
-            shortcut::delete_post_process_prompt,
-            shortcut::set_post_process_selected_prompt,
-            shortcut::update_custom_words,
-            shortcut::suspend_all_bindings,
-            shortcut::resume_all_bindings,
-            shortcut::change_mute_while_recording_setting,
-            shortcut::change_append_trailing_space_setting,
-            shortcut::change_lazy_stream_close_setting,
-            shortcut::change_vad_enabled_setting,
-            shortcut::change_long_form_chunking_setting,
-            shortcut::change_vad_backend_setting,
-            shortcut::change_filler_word_removal_enabled_setting,
-            shortcut::change_chinese_script_setting,
-            shortcut::change_app_language_setting,
-            shortcut::change_update_checks_setting,
-            shortcut::change_show_whats_new_on_update_setting,
-            shortcut::change_whats_new_last_seen_version_setting,
-            shortcut::change_keyboard_implementation_setting,
-            shortcut::get_keyboard_implementation,
-            shortcut::change_show_tray_icon_setting,
-            shortcut::change_transcribe_accelerator_setting,
-            shortcut::change_transcribe_gpu_device,
-            shortcut::get_available_accelerators,
-            shortcut::handy_keys::start_handy_keys_recording,
-            shortcut::handy_keys::stop_handy_keys_recording,
-            secure_input::get_secure_input_status,
-            secure_input::run_keyboard_diagnostic,
-            trigger_update_check,
-            show_main_window_command,
-            commands::cancel_operation,
-            commands::is_portable,
-            commands::is_update_checks_locked,
-            commands::get_app_dir_path,
-            commands::get_app_settings,
-            commands::get_default_settings,
-            commands::get_log_dir_path,
-            commands::set_log_level,
-            commands::open_recordings_folder,
-            commands::open_log_dir,
-            commands::open_app_data_dir,
-            commands::check_apple_intelligence_available,
-            commands::initialize_enigo,
-            commands::initialize_shortcuts,
-            commands::complete_onboarding,
-            commands::models::get_available_models,
-            commands::models::get_model_info,
-            commands::models::download_model,
-            commands::models::download_language_detector,
-            commands::models::is_language_detector_downloaded,
-            commands::models::delete_model,
-            commands::models::get_retired_models,
-            commands::models::delete_retired_model,
-            commands::models::cancel_download,
-            commands::models::set_active_model,
-            commands::models::get_current_model,
-            commands::models::get_transcription_model_status,
-            commands::models::is_model_loading,
-            commands::models::rescan_local_models,
-            commands::audio::update_microphone_mode,
-            commands::audio::get_microphone_mode,
-            commands::audio::get_windows_microphone_permission_status,
-            commands::audio::open_microphone_privacy_settings,
-            commands::audio::get_available_microphones,
-            commands::audio::set_selected_microphone,
-            commands::audio::get_selected_microphone,
-            commands::audio::get_available_output_devices,
-            commands::audio::set_selected_output_device,
-            commands::audio::get_selected_output_device,
-            commands::audio::play_test_sound,
-            commands::audio::check_custom_sounds,
-            commands::audio::set_clamshell_microphone,
-            commands::audio::get_clamshell_microphone,
-            commands::audio::is_recording,
-            commands::audio::get_microphone_channels,
-            commands::audio::set_selected_channel,
-            commands::transcription::set_model_unload_timeout,
-            commands::transcription::get_model_load_status,
-            commands::transcription::get_language_status,
-            commands::transcription::unload_model_manually,
-            commands::history::get_history_entries,
-            commands::history::toggle_history_entry_saved,
-            commands::history::get_audio_file_path,
-            commands::history::delete_history_entry,
-            commands::history::retry_history_entry_transcription,
-            commands::history::cancel_history_entry_transcription,
-            commands::history::transcribe_file,
-            commands::history::update_history_limit,
-            commands::history::update_recording_retention_period,
-            helpers::clamshell::is_laptop,
-        ])
-        .events(collect_events![
-            managers::history::HistoryUpdatePayload,
-            managers::transcription_jobs::TranscriptionJob,
-            managers::transcription::StreamTextEvent,
-            managers::transcription::StreamPhaseEvent,
-            transcription_coordinator::RecordingStateEvent,
-            actions::TranscriptionCompleteEvent,
-        ]);
+    let specta_builder = specta_builder();
 
     #[cfg(debug_assertions)] // <- Only export on non-release builds
     specta_builder

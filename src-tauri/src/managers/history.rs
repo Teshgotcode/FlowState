@@ -37,12 +37,18 @@ static MIGRATIONS: &[M] = &[
 
 /// Nullable columns added outside [`MIGRATIONS`]; see
 /// [`HistoryManager::apply_migrations`].
-const ADDED_COLUMNS: &[&str] = &["source_name", "language", "language_source"];
+const ADDED_COLUMNS: &[&str] = &[
+    "source_name",
+    "language",
+    "language_source",
+    "source",
+    "metadata",
+];
 
 /// Every column a [`HistoryEntry`] is read from.
 const ENTRY_COLUMNS: &str = "id, file_name, timestamp, saved, title, transcription_text, \
     post_processed_text, post_process_prompt, post_process_requested, source_name, language, \
-    language_source";
+    language_source, source, metadata";
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type)]
 pub struct PaginatedHistory {
@@ -81,6 +87,47 @@ pub struct HistoryEntry {
     pub language: Option<String>,
     /// How that language was chosen; `None` before it was recorded.
     pub language_source: Option<LanguageSource>,
+    /// Where the audio came from, when it wasn't a dictation take; `None` on
+    /// old entries and dictations.
+    pub source: Option<HistorySource>,
+    /// Extra facts kept beside the transcription (a meeting's duration), as
+    /// JSON; `None` on old entries.
+    pub metadata: Option<HistoryMetadata>,
+}
+
+/// Where a history entry's audio came from, beyond a dictation take. Old
+/// entries predate the field and read as `None`; a value this build doesn't
+/// know also reads as `None`, so a newer database still opens cleanly.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(rename_all = "lowercase")]
+pub enum HistorySource {
+    /// A meeting session: an explicit start/stop recording, not a hotkey take.
+    Meeting,
+}
+
+impl HistorySource {
+    pub fn as_str(self) -> &'static str {
+        match self {
+            HistorySource::Meeting => "meeting",
+        }
+    }
+
+    /// Parse a stored value; unknown values read as `None`.
+    pub fn parse(value: &str) -> Option<Self> {
+        match value {
+            "meeting" => Some(HistorySource::Meeting),
+            _ => None,
+        }
+    }
+}
+
+/// Extra facts kept beside an entry's transcription, stored as JSON in the
+/// `metadata` column. Every field is optional so the shape can grow.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, Type)]
+pub struct HistoryMetadata {
+    /// Seconds the recording ran (a meeting), when it is known.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub duration_secs: Option<u64>,
 }
 
 pub struct HistoryManager {
@@ -166,7 +213,9 @@ impl HistoryManager {
             Err(rusqlite_migration::Error::MigrationDefinition(
                 MigrationDefinitionError::DatabaseTooFarAhead,
             )) => {
-                warn!("history.db is from a newer version of FlowState; opening it without migrating")
+                warn!(
+                    "history.db is from a newer version of FlowState; opening it without migrating"
+                )
             }
             other => other?,
         }
@@ -272,6 +321,13 @@ impl HistoryManager {
                 .get::<_, Option<String>>("language_source")?
                 .as_deref()
                 .and_then(LanguageSource::parse),
+            source: row
+                .get::<_, Option<String>>("source")?
+                .as_deref()
+                .and_then(HistorySource::parse),
+            metadata: row
+                .get::<_, Option<String>>("metadata")?
+                .and_then(|value| serde_json::from_str(&value).ok()),
         })
     }
 
@@ -304,6 +360,8 @@ impl HistoryManager {
             source_name: None,
             language,
             language_source,
+            source: None,
+            metadata: None,
         })?;
 
         self.cleanup_old_entries()?;
@@ -328,7 +386,43 @@ impl HistoryManager {
             source_name: Some(source_name),
             language: None,
             language_source: None,
+            source: None,
+            metadata: None,
         })
+    }
+
+    /// Save the entry for a meeting whose audio is already at `file_name`,
+    /// renamed from its working file. The entry starts with no transcription —
+    /// the background job adds it — and is never post-processed. `timestamp`
+    /// is when the meeting started, and the duration is kept in its metadata.
+    pub fn save_meeting_entry(
+        &self,
+        file_name: String,
+        started_at: i64,
+        duration_secs: u64,
+    ) -> Result<HistoryEntry> {
+        let entry = self.insert_entry(HistoryEntry {
+            id: 0,
+            file_name,
+            timestamp: started_at,
+            saved: false,
+            title: String::new(),
+            transcription_text: String::new(),
+            post_processed_text: None,
+            post_process_prompt: None,
+            post_process_requested: false,
+            source_name: None,
+            language: None,
+            language_source: None,
+            source: Some(HistorySource::Meeting),
+            metadata: Some(HistoryMetadata {
+                duration_secs: Some(duration_secs),
+            }),
+        })?;
+
+        self.cleanup_old_entries()?;
+
+        Ok(entry)
     }
 
     /// Insert `entry`, filling in its id and title, and announce it.
@@ -348,8 +442,10 @@ impl HistoryManager {
                 post_process_requested,
                 source_name,
                 language,
-                language_source
-            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+                language_source,
+                source,
+                metadata
+            ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13)",
             params![
                 &entry.file_name,
                 entry.timestamp,
@@ -362,6 +458,11 @@ impl HistoryManager {
                 &entry.source_name,
                 &entry.language,
                 entry.language_source.map(LanguageSource::as_str),
+                entry.source.map(HistorySource::as_str),
+                entry
+                    .metadata
+                    .as_ref()
+                    .and_then(|metadata| serde_json::to_string(metadata).ok()),
             ],
         )?;
         entry.id = conn.last_insert_rowid();
@@ -736,24 +837,10 @@ mod tests {
     use rusqlite::{params, Connection};
 
     fn setup_conn() -> Connection {
-        let conn = Connection::open_in_memory().expect("open in-memory db");
-        conn.execute_batch(
-            "CREATE TABLE transcription_history (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                file_name TEXT NOT NULL,
-                timestamp INTEGER NOT NULL,
-                saved BOOLEAN NOT NULL DEFAULT 0,
-                title TEXT NOT NULL,
-                transcription_text TEXT NOT NULL,
-                post_processed_text TEXT,
-                post_process_prompt TEXT,
-                post_process_requested BOOLEAN NOT NULL DEFAULT 0,
-                source_name TEXT,
-                language TEXT,
-                language_source TEXT
-            );",
-        )
-        .expect("create transcription_history table");
+        // The real schema comes from the app's migrations, so the test reads
+        // and writes through the same columns production does.
+        let mut conn = Connection::open_in_memory().expect("open in-memory db");
+        HistoryManager::apply_migrations(&mut conn).expect("migrate");
         conn
     }
 
