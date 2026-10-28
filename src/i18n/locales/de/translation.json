@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Besprechung",
+      "sessionTitle": "Besprechungsaufnahme",
+      "description": "Starte eine Aufnahme, die läuft, bis du sie stoppst. Sie wird mit ihrem Transkript im Verlauf gespeichert.",
+      "start": "Besprechung starten",
+      "recording": "Aufnahme läuft",
+      "stop": "Stoppen",
+      "cancel": "Abbrechen",
+      "cancelTitle": "Besprechung abbrechen?",
+      "cancelDescription": "Die Aufnahme wird gelöscht und nichts im Verlauf gespeichert.",
+      "cancelKeep": "Aufnahme fortsetzen",
+      "cancelConfirm": "Aufnahme abbrechen",
+      "startFailed": "Die Besprechung konnte nicht gestartet werden.",
+      "stopFailed": "Die Besprechung konnte nicht gestoppt werden.",
+      "cancelFailed": "Die Besprechung konnte nicht abgebrochen werden.",
+      "stopped": "Die Besprechung wurde im Verlauf gespeichert."
+    },
     "models": {
       "title": "Modelle",
       "changeLanguages": "Sprachen ändern",

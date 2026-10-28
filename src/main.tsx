@@ -25,8 +25,10 @@ import "./i18n";
 // Initialize model store (loads models and sets up event listeners)
 import { useModelStore } from "./stores/modelStore";
 import { useTranscriptionJobsStore } from "./stores/transcriptionJobsStore";
+import { useMeetingStore } from "./stores/meetingStore";
 useModelStore.getState().initialize();
 useTranscriptionJobsStore.getState().initialize();
+useMeetingStore.getState().initialize();
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

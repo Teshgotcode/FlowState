@@ -22,3 +22,8 @@ export const formatModelSize = (sizeMb: number | null | undefined): string => {
 
   return `${formatter.format(sizeMb)} MB`;
 };
+
+/** Seconds as `mm:ss` (12:05). Minutes past 59 keep counting (75:30) rather
+ * than growing a third unit, so any length of meeting stays readable. */
+export const formatDurationClock = (seconds: number): string =>
+  `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, "0")}`;

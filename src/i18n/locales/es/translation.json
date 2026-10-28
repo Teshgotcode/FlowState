@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Sesión de reunión",
+      "sessionTitle": "Grabación de reunión",
+      "description": "Inicia una grabación que sigue hasta que la detengas. Se guarda en el Historial con su transcripción.",
+      "start": "Iniciar reunión",
+      "recording": "Grabando",
+      "stop": "Detener",
+      "cancel": "Cancelar",
+      "cancelTitle": "¿Cancelar la reunión?",
+      "cancelDescription": "La grabación se elimina y no se guarda nada en el Historial.",
+      "cancelKeep": "Seguir grabando",
+      "cancelConfirm": "Cancelar la grabación",
+      "startFailed": "No se pudo iniciar la reunión.",
+      "stopFailed": "No se pudo detener la reunión.",
+      "cancelFailed": "No se pudo cancelar la reunión.",
+      "stopped": "La reunión se guardó en el Historial."
+    },
     "models": {
       "title": "Modelos",
       "changeLanguages": "Cambiar idiomas",

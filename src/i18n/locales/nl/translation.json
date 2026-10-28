@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Vergadering",
+      "sessionTitle": "Vergaderopname",
+      "description": "Start een opname die loopt tot je hem stopt. Hij wordt met de transcriptie in de Geschiedenis opgeslagen.",
+      "start": "Vergadering starten",
+      "recording": "Opnemen",
+      "stop": "Stoppen",
+      "cancel": "Annuleren",
+      "cancelTitle": "Vergadering annuleren?",
+      "cancelDescription": "De opname wordt verwijderd en er wordt niets in de Geschiedenis opgeslagen.",
+      "cancelKeep": "Opname voortzetten",
+      "cancelConfirm": "Opname annuleren",
+      "startFailed": "De vergadering kon niet worden gestart.",
+      "stopFailed": "De vergadering kon niet worden gestopt.",
+      "cancelFailed": "De vergadering kon niet worden geannuleerd.",
+      "stopped": "De vergadering is in de Geschiedenis opgeslagen."
+    },
     "models": {
       "title": "Modellen",
       "changeLanguages": "Talen wijzigen",

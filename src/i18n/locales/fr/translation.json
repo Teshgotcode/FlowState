@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Réunion",
+      "sessionTitle": "Enregistrement de réunion",
+      "description": "Démarrez un enregistrement qui dure jusqu'à ce que vous l'arrêtiez. Il est enregistré dans l'Historique avec sa transcription.",
+      "start": "Démarrer la réunion",
+      "recording": "Enregistrement en cours",
+      "stop": "Arrêter",
+      "cancel": "Annuler",
+      "cancelTitle": "Annuler la réunion ?",
+      "cancelDescription": "L'enregistrement est supprimé et rien n'est enregistré dans l'Historique.",
+      "cancelKeep": "Poursuivre l'enregistrement",
+      "cancelConfirm": "Annuler l'enregistrement",
+      "startFailed": "La réunion n'a pas pu démarrer.",
+      "stopFailed": "La réunion n'a pas pu être arrêtée.",
+      "cancelFailed": "La réunion n'a pas pu être annulée.",
+      "stopped": "La réunion a été enregistrée dans l'Historique."
+    },
     "models": {
       "title": "Modèles",
       "changeLanguages": "Modifier les langues",

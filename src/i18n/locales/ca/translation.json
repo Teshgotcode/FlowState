@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Sessió de reunió",
+      "sessionTitle": "Enregistrament de reunió",
+      "description": "Inicieu un enregistrament que corre fins que l'atureu. Es desa a l'Historial amb la seva transcripció.",
+      "start": "Inicia la reunió",
+      "recording": "Enregistrant",
+      "stop": "Atura",
+      "cancel": "Cancel·la",
+      "cancelTitle": "Cancel·lar la reunió?",
+      "cancelDescription": "S'elimina l'enregistrament i no es desa res a l'Historial.",
+      "cancelKeep": "Continua l'enregistrament",
+      "cancelConfirm": "Cancel·la l'enregistrament",
+      "startFailed": "No s'ha pogut iniciar la reunió.",
+      "stopFailed": "No s'ha pogut aturar la reunió.",
+      "cancelFailed": "No s'ha pogut cancel·lar la reunió.",
+      "stopped": "La reunió s'ha desat a l'Historial."
+    },
     "models": {
       "title": "Models",
       "changeLanguages": "Canvia les llengües",

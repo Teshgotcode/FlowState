@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "פגישה",
+      "sessionTitle": "הקלטת פגישה",
+      "description": "התחילו הקלטה שרצה עד שתעצרו אותה. היא נשמרת בהיסטוריה עם התמליל שלה.",
+      "start": "התחל פגישה",
+      "recording": "מקליט",
+      "stop": "עצור",
+      "cancel": "בטל",
+      "cancelTitle": "לבטל את הפגישה?",
+      "cancelDescription": "ההקלטה נמחקת ושום דבר לא נשמר בהיסטוריה.",
+      "cancelKeep": "המשך הקלטה",
+      "cancelConfirm": "בטל הקלטה",
+      "startFailed": "לא ניתן להתחיל את הפגישה.",
+      "stopFailed": "לא ניתן לעצור את הפגישה.",
+      "cancelFailed": "לא ניתן לבטל את הפגישה.",
+      "stopped": "הפגישה נשמרה בהיסטוריה."
+    },
     "models": {
       "title": "מודלים",
       "changeLanguages": "שנה שפות",

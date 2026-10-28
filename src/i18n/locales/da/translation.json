@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Møde",
+      "sessionTitle": "Mødeoptagelse",
+      "description": "Start en optagelse, der kører, indtil du stopper den. Den gemmes i Historikken med transskriptionen.",
+      "start": "Start møde",
+      "recording": "Optager",
+      "stop": "Stop",
+      "cancel": "Annuller",
+      "cancelTitle": "Annuller mødet?",
+      "cancelDescription": "Optagelsen slettes, og intet gemmes i Historikken.",
+      "cancelKeep": "Fortsæt optagelsen",
+      "cancelConfirm": "Annuller optagelsen",
+      "startFailed": "Mødet kunne ikke startes.",
+      "stopFailed": "Mødet kunne ikke stoppes.",
+      "cancelFailed": "Mødet kunne ikke annulleres.",
+      "stopped": "Mødet blev gemt i Historikken."
+    },
     "models": {
       "title": "Modeller",
       "changeLanguages": "Skift sprog",

@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Cuộc họp",
+      "sessionTitle": "Bản ghi cuộc họp",
+      "description": "Bắt đầu bản ghi chạy cho đến khi bạn dừng lại. Bản ghi được lưu vào Lịch sử cùng bản phiên âm.",
+      "start": "Bắt đầu cuộc họp",
+      "recording": "Đang ghi",
+      "stop": "Dừng",
+      "cancel": "Hủy",
+      "cancelTitle": "Hủy cuộc họp?",
+      "cancelDescription": "Bản ghi sẽ bị xóa và không có gì được lưu vào Lịch sử.",
+      "cancelKeep": "Tiếp tục ghi",
+      "cancelConfirm": "Hủy bản ghi",
+      "startFailed": "Không thể bắt đầu cuộc họp.",
+      "stopFailed": "Không thể dừng cuộc họp.",
+      "cancelFailed": "Không thể hủy cuộc họp.",
+      "stopped": "Cuộc họp đã được lưu vào Lịch sử."
+    },
     "models": {
       "title": "Mô hình",
       "changeLanguages": "Đổi ngôn ngữ",

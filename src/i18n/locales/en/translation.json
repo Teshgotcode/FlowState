@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Meeting Session",
+      "sessionTitle": "Meeting recording",
+      "description": "Start a recording that runs until you stop it. It is saved to History with its transcript.",
+      "start": "Start Meeting",
+      "recording": "Recording",
+      "stop": "Stop",
+      "cancel": "Cancel",
+      "cancelTitle": "Cancel Meeting?",
+      "cancelDescription": "The recording is deleted and nothing is saved to History.",
+      "cancelKeep": "Keep Recording",
+      "cancelConfirm": "Cancel Recording",
+      "startFailed": "The meeting could not be started.",
+      "stopFailed": "The meeting could not be stopped.",
+      "cancelFailed": "The meeting could not be cancelled.",
+      "stopped": "The meeting was saved to History."
+    },
     "models": {
       "title": "Models",
       "changeLanguages": "Change languages",
