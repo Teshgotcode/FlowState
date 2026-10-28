@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Rapat",
+      "sessionTitle": "Rekaman rapat",
+      "description": "Mulai rekaman yang berjalan sampai Anda menghentikannya. Rekaman disimpan ke Riwayat beserta transkripsinya.",
+      "start": "Mulai rapat",
+      "recording": "Merekam",
+      "stop": "Hentikan",
+      "cancel": "Batal",
+      "cancelTitle": "Batalkan rapat?",
+      "cancelDescription": "Rekaman dihapus dan tidak ada yang disimpan ke Riwayat.",
+      "cancelKeep": "Lanjutkan rekaman",
+      "cancelConfirm": "Batalkan rekaman",
+      "startFailed": "Rapat tidak dapat dimulai.",
+      "stopFailed": "Rapat tidak dapat dihentikan.",
+      "cancelFailed": "Rapat tidak dapat dibatalkan.",
+      "stopped": "Rapat telah disimpan ke Riwayat."
+    },
     "models": {
       "title": "Model",
       "changeLanguages": "Ubah bahasa",

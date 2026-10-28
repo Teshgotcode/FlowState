@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Toplantı",
+      "sessionTitle": "Toplantı kaydı",
+      "description": "Durdurana kadar süren bir kayıt başlat. Kayıt, dökümüyle birlikte Geçmiş'e kaydedilir.",
+      "start": "Toplantıyı başlat",
+      "recording": "Kaydediliyor",
+      "stop": "Durdur",
+      "cancel": "İptal",
+      "cancelTitle": "Toplantı iptal edilsin mi?",
+      "cancelDescription": "Kayıt silinir ve Geçmiş'e hiçbir şey kaydedilmez.",
+      "cancelKeep": "Kayda devam et",
+      "cancelConfirm": "Kaydı iptal et",
+      "startFailed": "Toplantı başlatılamadı.",
+      "stopFailed": "Toplantı durdurulamadı.",
+      "cancelFailed": "Toplantı iptal edilemedi.",
+      "stopped": "Toplantı Geçmiş'e kaydedildi."
+    },
     "models": {
       "title": "Modeller",
       "changeLanguages": "Dilleri değiştir",

@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Möte",
+      "sessionTitle": "Mötesinspelning",
+      "description": "Starta en inspelning som pågår tills du stoppar den. Den sparas i Historiken med sin transkription.",
+      "start": "Starta möte",
+      "recording": "Spelar in",
+      "stop": "Stoppa",
+      "cancel": "Avbryt",
+      "cancelTitle": "Avbryta mötet?",
+      "cancelDescription": "Inspelningen raderas och inget sparas i Historiken.",
+      "cancelKeep": "Fortsätt inspelningen",
+      "cancelConfirm": "Avbryt inspelningen",
+      "startFailed": "Mötet kunde inte startas.",
+      "stopFailed": "Mötet kunde inte stoppas.",
+      "cancelFailed": "Mötet kunde inte avbrytas.",
+      "stopped": "Mötet sparades i Historiken."
+    },
     "models": {
       "title": "Modeller",
       "changeLanguages": "Ändra språk",

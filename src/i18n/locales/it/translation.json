@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Riunione",
+      "sessionTitle": "Registrazione della riunione",
+      "description": "Avvia una registrazione che dura finché non la fermi. Viene salvata nella Cronologia con la sua trascrizione.",
+      "start": "Avvia riunione",
+      "recording": "Registrazione in corso",
+      "stop": "Ferma",
+      "cancel": "Annulla",
+      "cancelTitle": "Annullare la riunione?",
+      "cancelDescription": "La registrazione viene eliminata e nulla viene salvato nella Cronologia.",
+      "cancelKeep": "Continua la registrazione",
+      "cancelConfirm": "Annulla la registrazione",
+      "startFailed": "Impossibile avviare la riunione.",
+      "stopFailed": "Impossibile fermare la riunione.",
+      "cancelFailed": "Impossibile annullare la riunione.",
+      "stopped": "La riunione è stata salvata nella Cronologia."
+    },
     "models": {
       "title": "Modelli",
       "changeLanguages": "Cambia lingue",

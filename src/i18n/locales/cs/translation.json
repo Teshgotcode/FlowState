@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Porada",
+      "sessionTitle": "Nahrávka porady",
+      "description": "Spusťte nahrávání, které běží, dokud ho nezastavíte. Do Historie se uloží s přepisem.",
+      "start": "Spustit poradu",
+      "recording": "Nahrává se",
+      "stop": "Zastavit",
+      "cancel": "Zrušit",
+      "cancelTitle": "Zrušit poradu?",
+      "cancelDescription": "Nahrávka se smaže a do Historie se nic neuloží.",
+      "cancelKeep": "Pokračovat v nahrávání",
+      "cancelConfirm": "Zrušit nahrávání",
+      "startFailed": "Poradu nebylo možné spustit.",
+      "stopFailed": "Poradu nebylo možné zastavit.",
+      "cancelFailed": "Poradu nebylo možné zrušit.",
+      "stopped": "Porada byla uložena do Historie."
+    },
     "models": {
       "title": "Modely",
       "changeLanguages": "Změnit jazyky",

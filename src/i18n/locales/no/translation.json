@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Møteøkt",
+      "sessionTitle": "Møteopptak",
+      "description": "Start et opptak som varer til du stopper det. Det lagres i historikken med transkripsjonen.",
+      "start": "Start møteøkt",
+      "recording": "Tar opp",
+      "stop": "Stopp",
+      "cancel": "Avbryt",
+      "cancelTitle": "Avbryt møteøkten?",
+      "cancelDescription": "Opptaket slettes, og ingenting lagres i historikken.",
+      "cancelKeep": "Fortsett opptaket",
+      "cancelConfirm": "Avbryt opptaket",
+      "startFailed": "Møteøkten kunne ikke startes.",
+      "stopFailed": "Møteøkten kunne ikke stoppes.",
+      "cancelFailed": "Møteøkten kunne ikke avbrytes.",
+      "stopped": "Møteøkten ble lagret i historikken."
+    },
     "models": {
       "title": "Modeller",
       "changeLanguages": "Endre språk",

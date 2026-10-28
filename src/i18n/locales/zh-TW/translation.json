@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "會議",
+      "sessionTitle": "會議錄音",
+      "description": "開始一段持續到您手動停止的錄音。它將連同轉錄文字一起儲存到歷史紀錄。",
+      "start": "開始會議",
+      "recording": "錄音中",
+      "stop": "停止",
+      "cancel": "取消",
+      "cancelTitle": "取消會議？",
+      "cancelDescription": "錄音將被刪除，不會儲存到歷史紀錄。",
+      "cancelKeep": "繼續錄音",
+      "cancelConfirm": "取消錄音",
+      "startFailed": "無法開始會議。",
+      "stopFailed": "無法停止會議。",
+      "cancelFailed": "無法取消會議。",
+      "stopped": "會議已儲存到歷史紀錄。"
+    },
     "models": {
       "title": "模型",
       "changeLanguages": "變更語言",

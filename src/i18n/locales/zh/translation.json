@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "会议",
+      "sessionTitle": "会议录音",
+      "description": "开始一段持续到您手动停止的录音。它将连同转录文本一起保存到历史记录。",
+      "start": "开始会议",
+      "recording": "录音中",
+      "stop": "停止",
+      "cancel": "取消",
+      "cancelTitle": "取消会议？",
+      "cancelDescription": "录音将被删除，不会保存到历史记录。",
+      "cancelKeep": "继续录音",
+      "cancelConfirm": "取消录音",
+      "startFailed": "无法开始会议。",
+      "stopFailed": "无法停止会议。",
+      "cancelFailed": "无法取消会议。",
+      "stopped": "会议已保存到历史记录。"
+    },
     "models": {
       "title": "模型",
       "changeLanguages": "更改语言",

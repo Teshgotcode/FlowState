@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "Spotkanie",
+      "sessionTitle": "Nagranie spotkania",
+      "description": "Rozpocznij nagranie, które trwa, aż je zatrzymasz. Zostanie zapisane w Historii wraz z transkrypcją.",
+      "start": "Rozpocznij spotkanie",
+      "recording": "Nagrywanie",
+      "stop": "Zatrzymaj",
+      "cancel": "Anuluj",
+      "cancelTitle": "Anulować spotkanie?",
+      "cancelDescription": "Nagranie zostanie usunięte, a nic nie trafi do Historii.",
+      "cancelKeep": "Kontynuuj nagranie",
+      "cancelConfirm": "Anuluj nagranie",
+      "startFailed": "Nie udało się rozpocząć spotkania.",
+      "stopFailed": "Nie udało się zatrzymać spotkania.",
+      "cancelFailed": "Nie udało się anulować spotkania.",
+      "stopped": "Spotkanie zostało zapisane w Historii."
+    },
     "models": {
       "title": "Modele",
       "changeLanguages": "Zmień języki",

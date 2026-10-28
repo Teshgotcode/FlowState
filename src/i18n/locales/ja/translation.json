@@ -388,6 +388,23 @@
         }
       }
     },
+    "meeting": {
+      "title": "会議",
+      "sessionTitle": "会議の録音",
+      "description": "停止するまで続く録音を開始します。文字起こしとともに履歴に保存されます。",
+      "start": "会議を開始",
+      "recording": "録音中",
+      "stop": "停止",
+      "cancel": "キャンセル",
+      "cancelTitle": "会議をキャンセルしますか？",
+      "cancelDescription": "録音は削除され、履歴には何も保存されません。",
+      "cancelKeep": "録音を続ける",
+      "cancelConfirm": "録音をキャンセル",
+      "startFailed": "会議を開始できませんでした。",
+      "stopFailed": "会議を停止できませんでした。",
+      "cancelFailed": "会議をキャンセルできませんでした。",
+      "stopped": "会議は履歴に保存されました。"
+    },
     "models": {
       "title": "モデル",
       "changeLanguages": "言語を変更",

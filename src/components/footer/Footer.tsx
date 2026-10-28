@@ -4,6 +4,7 @@ import { getVersion } from "@tauri-apps/api/app";
 import ModelSelector from "../model-selector";
 import UpdateChecker from "../update-checker";
 import TranscriptionStatus from "./TranscriptionStatus";
+import MeetingIndicator from "./MeetingIndicator";
 
 interface FooterProps {
   onShowHistory: () => void;
@@ -32,6 +33,7 @@ const Footer: React.FC<FooterProps> = ({ onShowHistory }) => {
         <div className="flex items-center gap-4">
           <ModelSelector />
           <TranscriptionStatus onShowHistory={onShowHistory} />
+          <MeetingIndicator />
         </div>
 
         {/* Update Status */}
