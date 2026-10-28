@@ -437,6 +437,38 @@ fn open_microphone_on_channel(
 
 /* ──────────────────────────────────────────────────────────────── */
 
+/// Receives every frame of every recording while installed — the meeting
+/// session's working file. The frames are exactly the ones the sink keeps and
+/// the ones the stream router feeds, in order.
+pub type FrameTap = Arc<dyn Fn(&[f32]) + Send + Sync + 'static>;
+
+/// The installed [`FrameTap`], if any. A recording without one pays a single
+/// relaxed atomic load per frame; with one, the tap runs on the recorder's
+/// delivery thread, so it must stay cheap.
+#[derive(Default)]
+pub struct FrameTapSlot {
+    installed: AtomicBool,
+    tap: Mutex<Option<FrameTap>>,
+}
+
+impl FrameTapSlot {
+    fn feed(&self, frame: &[f32]) {
+        if !self.installed.load(Ordering::Relaxed) {
+            return;
+        }
+        if let Some(tap) = self.tap.lock().unwrap().as_ref() {
+            tap(frame);
+        }
+    }
+
+    /// Install `tap` (or clear the slot with `None`), returning the previous
+    /// one so an owner can restore it.
+    fn swap(&self, tap: Option<FrameTap>) -> Option<FrameTap> {
+        self.installed.store(tap.is_some(), Ordering::Relaxed);
+        std::mem::replace(&mut *self.tap.lock().unwrap(), tap)
+    }
+}
+
 /// One recording session's first-sample notification. Waiting on this never
 /// blocks the shortcut coordinator: callers hand it to a dedicated worker.
 pub struct RecordingReadiness {
@@ -497,6 +529,9 @@ pub struct AudioRecordingManager {
     cached_device: Arc<Mutex<Option<(String, String)>>>,
     /// The last recording was all-zero samples, not just audio without speech.
     last_input_silent: Arc<AtomicBool>,
+    /// A recording-independent frame tap (a meeting's working file), fed from
+    /// the same callback the stream router uses. Empty for dictations.
+    frame_tap: Arc<FrameTapSlot>,
 }
 
 impl AudioRecordingManager {
@@ -517,7 +552,12 @@ impl AudioRecordingManager {
             let app_handle = app.clone();
             Arc::new(move |levels| utils::emit_levels(&app_handle, &levels))
         };
-        let on_audio: AudioFrameCallback = Arc::new(move |frame| stream_router.feed(frame));
+        let frame_tap: Arc<FrameTapSlot> = Arc::default();
+        let tap_slot = Arc::clone(&frame_tap);
+        let on_audio: AudioFrameCallback = Arc::new(move |frame| {
+            stream_router.feed(frame);
+            tap_slot.feed(frame);
+        });
 
         let manager = Self {
             state: Arc::new(Mutex::new(RecordingState::Idle)),
@@ -538,6 +578,7 @@ impl AudioRecordingManager {
             capture_generation: Arc::new(AtomicU64::new(0)),
             cached_device: Arc::new(Mutex::new(None)),
             last_input_silent: Arc::new(AtomicBool::new(false)),
+            frame_tap,
         };
 
         // Always-on?  Open immediately.
@@ -1272,6 +1313,13 @@ impl AudioRecordingManager {
         // across a slow CoreAudio open/close → main-thread deadlock / UI
         // freeze).
         self.recording_active.load(Ordering::SeqCst)
+    }
+
+    /// Install the tap that receives every frame of every recording (a
+    /// meeting's working file), or remove it with `None`. Returns the tap it
+    /// replaced, so an owner that must not lose it can restore it.
+    pub fn set_frame_tap(&self, tap: Option<FrameTap>) -> Option<FrameTap> {
+        self.frame_tap.swap(tap)
     }
 
     /// Cancel any ongoing recording without returning audio samples

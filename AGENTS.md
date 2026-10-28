@@ -73,6 +73,7 @@ FlowState is a cross-platform desktop speech-to-text application built with Taur
   - `model.rs` - Model downloading and management
   - `transcription.rs` - Speech-to-text processing pipeline
   - `history.rs` - Transcription history storage
+  - `meeting.rs` - Meeting sessions: explicit start/stop recording, working file, transcription into history
 - `audio_toolkit/` - Low-level audio processing:
   - `audio/` - Recording sink (VAD, levels, live streaming feed), output devices, WAV I/O
   - `vad/` - Voice Activity Detection (Silero VAD)

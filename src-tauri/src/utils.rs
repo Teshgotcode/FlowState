@@ -1,4 +1,5 @@
 use crate::managers::audio::AudioRecordingManager;
+use crate::managers::meeting::MeetingManager;
 use crate::managers::transcription::TranscriptionManager;
 use crate::shortcut;
 use crate::TranscriptionCoordinator;
@@ -101,6 +102,19 @@ fn native_windows_machine() -> Option<u16> {
 /// Handles cancelling both recording and transcription operations and updates UI state.
 pub fn cancel_current_operation(app: &AppHandle) {
     info!("Initiating operation cancellation...");
+
+    // A meeting session is not a dictation take: it has no coordinator stage
+    // and owns a working file, so its cancel goes to the session that can
+    // clean up after it. The dictation path below stays untouched when no
+    // meeting is recording.
+    if let Some(meetings) = app.try_state::<Arc<MeetingManager>>() {
+        if meetings.is_recording() {
+            if let Err(e) = meetings.cancel() {
+                log::error!("Failed to cancel the meeting: {e}");
+            }
+            return;
+        }
+    }
 
     // Unregister the cancel shortcut asynchronously
     shortcut::unregister_cancel_shortcut(app);

@@ -1015,6 +1015,49 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * Start a meeting session: a recording that runs until it is stopped, not
+ * until a dictation hotkey comes up. Its audio is written to a working file
+ * while it records, and a live decode keeps a running transcript.
+ */
+async startMeeting() : Promise<Result<MeetingStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("start_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stop the meeting: save its recording as a history entry with
+ * `source: "meeting"` and its duration in the entry's metadata, and queue
+ * the entry's transcription. The text arrives when the background job runs.
+ */
+async stopMeeting() : Promise<Result<StoppedMeeting, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("stop_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Cancel the meeting: remove its working file and save no history entry.
+ */
+async cancelMeeting() : Promise<Result<MeetingStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("cancel_meeting") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The meeting session's stage right now, for a window that needs no event.
+ */
+async getMeetingStatus() : Promise<MeetingStatus> {
+    return await TAURI_INVOKE("get_meeting_status");
+},
+/**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
  * This uses pmset to check for battery information.
@@ -1035,6 +1078,7 @@ async isLaptop() : Promise<Result<boolean, string>> {
 
 export const events = __makeEvents__<{
 historyUpdatePayload: HistoryUpdatePayload,
+meetingStateEvent: MeetingStateEvent,
 recordingStateEvent: RecordingStateEvent,
 streamPhaseEvent: StreamPhaseEvent,
 streamTextEvent: StreamTextEvent,
@@ -1042,6 +1086,7 @@ transcriptionCompleteEvent: TranscriptionCompleteEvent,
 transcriptionJob: TranscriptionJob
 }>({
 historyUpdatePayload: "history-update-payload",
+meetingStateEvent: "meeting-state-event",
 recordingStateEvent: "recording-state-event",
 streamPhaseEvent: "stream-phase-event",
 streamTextEvent: "stream-text-event",
@@ -1189,7 +1234,36 @@ language: string | null;
 /**
  * How that language was chosen; `None` before it was recorded.
  */
-language_source: LanguageSource | null }
+language_source: LanguageSource | null; 
+/**
+ * Where the audio came from, when it wasn't a dictation take; `None` on
+ * old entries and dictations.
+ */
+source: HistorySource | null; 
+/**
+ * Extra facts kept beside the transcription (a meeting's duration), as
+ * JSON; `None` on old entries.
+ */
+metadata: HistoryMetadata | null }
+/**
+ * Extra facts kept beside an entry's transcription, stored as JSON in the
+ * `metadata` column. Every field is optional so the shape can grow.
+ */
+export type HistoryMetadata = { 
+/**
+ * Seconds the recording ran (a meeting), when it is known.
+ */
+duration_secs?: number | null }
+/**
+ * Where a history entry's audio came from, beyond a dictation take. Old
+ * entries predate the field and read as `None`; a value this build doesn't
+ * know also reads as `None`, so a newer database still opens cleanly.
+ */
+export type HistorySource = 
+/**
+ * A meeting session: an explicit start/stop recording, not a hotkey take.
+ */
+"meeting"
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * Result of changing keyboard implementation
@@ -1265,6 +1339,24 @@ export type LanguageStatus =
  */
 { kind: "auto_unavailable"; language: string; reason: AutoUnavailableReason }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * Emitted whenever the meeting session's stage changes, so a window can
+ * follow along without polling.
+ */
+export type MeetingStateEvent = { status: MeetingStatus }
+/**
+ * The meeting session's stage, for the frontend.
+ */
+export type MeetingStatus = 
+/**
+ * No meeting is recording.
+ */
+{ state: "idle" } | 
+/**
+ * A meeting is recording, started at `started_at` (unix seconds);
+ * `duration_secs` have passed so far.
+ */
+{ state: "recording"; started_at: number; duration_secs: number }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**
@@ -1397,6 +1489,24 @@ export type ShortcutActivation =
 "hold_or_toggle"
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
 export type SoundTheme = "marimba" | "pop" | "custom"
+/**
+ * What a finished meeting reports: the history entry it saved (when it
+ * captured audio) and how long it ran.
+ */
+export type StoppedMeeting = { 
+/**
+ * The new history entry's id; `None` when nothing was captured, in which
+ * case no entry exists.
+ */
+entry_id: number | null; 
+/**
+ * Unix seconds the meeting started.
+ */
+started_at: number; 
+/**
+ * Seconds from start to stop.
+ */
+duration_secs: number }
 /**
  * Phase of the streaming overlay card, emitted to drive its UI state.
  */
