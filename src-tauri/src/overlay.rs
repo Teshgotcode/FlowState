@@ -1,7 +1,9 @@
 use crate::input;
+use crate::managers::meeting::MeetingManager;
 use crate::settings;
 use crate::settings::{OverlayPosition, OverlayStyle};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
@@ -53,20 +55,50 @@ const OVERLAY_HEIGHT: f64 = 50.0;
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;
 const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
 
+// Meeting bar (the Flow-style floating bar): the idle disc is a 40x40 circle
+// with a mic icon; the window carries a little slack so the hover scale and the
+// pop-in never clip it. The recording pill shares the compact dictation
+// footprint, and so does the short "Saving" pill the frontend shows while a
+// stop is in flight.
+const MEETING_DISC_WIDTH: f64 = 48.0;
+const MEETING_DISC_HEIGHT: f64 = 48.0;
+
+/// The meeting bar's own `show-overlay` states. The dictation states
+/// ("recording" | "streaming" | "transcribing" | "processing") are unchanged;
+/// these are the only additions to the one shared overlay window.
+pub const MEETING_BAR_IDLE: &str = "meeting-idle";
+pub const MEETING_BAR_RECORDING: &str = "meeting-recording";
+
 /// Overlay window size (logical) for a given UI state.
 fn overlay_dimensions(state: &str) -> (f64, f64) {
-    if state == "streaming" {
-        (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT)
-    } else {
-        (OVERLAY_WIDTH, OVERLAY_HEIGHT)
+    match state {
+        "streaming" => (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT),
+        MEETING_BAR_IDLE => (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT),
+        // The recording pill and the frontend's "Saving" pill share one
+        // footprint with the compact dictation pill.
+        _ => (OVERLAY_WIDTH, OVERLAY_HEIGHT),
     }
+}
+
+/// Whether `state` is one of the dictation overlay's own states. The meeting
+/// bar's states are everything else.
+fn is_dictation_state(state: &str) -> bool {
+    matches!(
+        state,
+        "recording" | "streaming" | "transcribing" | "processing"
+    )
 }
 
 static LAST_MIC_LEVEL_EMIT: AtomicU64 = AtomicU64::new(0);
 const EMIT_THROTTLE_MS: u64 = 33; // ~30 FPS
 
+// macOS measures every offset from `NSScreen.visibleFrame` (Tauri's
+// work_area), so the bar clears the Dock and the menu bar without hardcoding
+// their heights. The other platforms keep full monitor bounds with fixed
+// offsets (work_area is unreliable on Wayland; Windows' bottom offset clears
+// the taskbar).
 #[cfg(target_os = "macos")]
-const OVERLAY_TOP_OFFSET: f64 = 46.0;
+const OVERLAY_TOP_OFFSET: f64 = 12.0;
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const OVERLAY_TOP_OFFSET: f64 = 4.0;
 
@@ -76,6 +108,9 @@ const OVERLAY_BOTTOM_OFFSET: f64 = 15.0;
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const OVERLAY_BOTTOM_OFFSET: f64 = 40.0;
 
+// Left / Right placement: the gap from the chosen side's edge.
+const OVERLAY_SIDE_OFFSET: f64 = 12.0;
+
 /// Configures the edge and offset of a GTK layer surface. gtk-layer-shell
 /// commits anchor and margin changes itself, including while the surface is
 /// mapped, so changing position does not require a manual hide/show cycle.
@@ -84,6 +119,9 @@ fn configure_layer_shell_position(gtk_window: &gtk::ApplicationWindow, position:
     let (edge, opposite_edge, margin) = match position {
         OverlayPosition::Top => (Edge::Top, Edge::Bottom, OVERLAY_TOP_OFFSET),
         OverlayPosition::Bottom => (Edge::Bottom, Edge::Top, OVERLAY_BOTTOM_OFFSET),
+        // Anchoring one side edge centers the bar on the other axis for free.
+        OverlayPosition::Left => (Edge::Left, Edge::Right, OVERLAY_SIDE_OFFSET),
+        OverlayPosition::Right => (Edge::Right, Edge::Left, OVERLAY_SIDE_OFFSET),
     };
 
     gtk_window.set_anchor(edge, true);
@@ -250,28 +288,46 @@ fn calculate_overlay_position(
 ) -> Option<(f64, f64)> {
     let monitor = get_monitor_with_cursor(app_handle)?;
     let scale = monitor.scale_factor();
-    let monitor_x = monitor.position().x as f64 / scale;
-    let monitor_y = monitor.position().y as f64 / scale;
-    let monitor_width = monitor.size().width as f64 / scale;
 
     let settings = settings::get_settings(app_handle);
 
-    let x = monitor_x + (monitor_width - width) / 2.0;
-    let y = match settings.overlay_position {
-        OverlayPosition::Top => monitor_y + OVERLAY_TOP_OFFSET,
-        OverlayPosition::Bottom => {
-            // work_area.position shares monitor.position's global coordinate
-            // space, so no monitor offset is added.
-            #[cfg(target_os = "macos")]
-            let bottom = {
-                let wa = monitor.work_area();
-                (wa.position.y as f64 + wa.size.height as f64) / scale
-            };
-            #[cfg(not(target_os = "macos"))]
-            let bottom = monitor_y + monitor.size().height as f64 / scale;
+    // macOS anchors every edge to the work area (NSScreen.visibleFrame — the
+    // Dock- and menu-bar-aware region), so Top/Left/Right/Bottom all keep the
+    // bar out of the Dock and the menu bar without hardcoded pixel guesses.
+    // The other platforms keep full monitor bounds: work_area is unreliable on
+    // Wayland, and Windows' fixed offsets already clear the taskbar.
+    #[cfg(target_os = "macos")]
+    let (area_x, area_y, area_w, area_h) = {
+        let wa = monitor.work_area();
+        (
+            wa.position.x as f64 / scale,
+            wa.position.y as f64 / scale,
+            wa.size.width as f64 / scale,
+            wa.size.height as f64 / scale,
+        )
+    };
+    #[cfg(not(target_os = "macos"))]
+    let (area_x, area_y, area_w, area_h) = (
+        monitor.position().x as f64 / scale,
+        monitor.position().y as f64 / scale,
+        monitor.size().width as f64 / scale,
+        monitor.size().height as f64 / scale,
+    );
 
-            bottom - height - OVERLAY_BOTTOM_OFFSET
-        }
+    let (x, y) = match settings.overlay_position {
+        OverlayPosition::Top => (area_x + (area_w - width) / 2.0, area_y + OVERLAY_TOP_OFFSET),
+        OverlayPosition::Bottom => (
+            area_x + (area_w - width) / 2.0,
+            area_y + area_h - height - OVERLAY_BOTTOM_OFFSET,
+        ),
+        OverlayPosition::Left => (
+            area_x + OVERLAY_SIDE_OFFSET,
+            area_y + (area_h - height) / 2.0,
+        ),
+        OverlayPosition::Right => (
+            area_x + area_w - width - OVERLAY_SIDE_OFFSET,
+            area_y + (area_h - height) / 2.0,
+        ),
     };
 
     Some((x, y))
@@ -285,9 +341,6 @@ fn current_overlay_logical_size(window: &tauri::webview::WebviewWindow) -> Optio
     let scale = window.scale_factor().ok()?;
     Some((size.width as f64 / scale, size.height as f64 / scale))
 }
-
-#[cfg(target_os = "windows")]
-static WINDOWS_OVERLAY_IS_STREAMING: AtomicBool = AtomicBool::new(false);
 
 /// Windows accessibility text size (Settings > Accessibility > Text size), a
 /// separate axis from display scaling that WebView2 applies as a document zoom.
@@ -318,16 +371,33 @@ fn windows_overlay_bounds(
     let content_scale = scale * text_scale;
     let width = (logical_width * content_scale).round().max(1.0) as i32;
     let height = (logical_height * content_scale).round().max(1.0) as i32;
-    let x = (monitor_position.x as f64 + (monitor_size.width as f64 - width as f64) / 2.0).round()
-        as i32;
-    let y = match overlay_position {
-        OverlayPosition::Top => {
-            (monitor_position.y as f64 + OVERLAY_TOP_OFFSET * scale).round() as i32
-        }
-        OverlayPosition::Bottom => (monitor_position.y as f64 + monitor_size.height as f64
-            - height as f64
-            - OVERLAY_BOTTOM_OFFSET * scale)
-            .round() as i32,
+    let center_x = (monitor_position.x as f64 + (monitor_size.width as f64 - width as f64) / 2.0)
+        .round() as i32;
+    let center_y = (monitor_position.y as f64 + (monitor_size.height as f64 - height as f64) / 2.0)
+        .round() as i32;
+    let (x, y) = match overlay_position {
+        OverlayPosition::Top => (
+            center_x,
+            (monitor_position.y as f64 + OVERLAY_TOP_OFFSET * scale).round() as i32,
+        ),
+        OverlayPosition::Bottom => (
+            center_x,
+            (monitor_position.y as f64 + monitor_size.height as f64
+                - height as f64
+                - OVERLAY_BOTTOM_OFFSET * scale)
+                .round() as i32,
+        ),
+        OverlayPosition::Left => (
+            (monitor_position.x as f64 + OVERLAY_SIDE_OFFSET * scale).round() as i32,
+            center_y,
+        ),
+        OverlayPosition::Right => (
+            (monitor_position.x as f64 + monitor_size.width as f64
+                - width as f64
+                - OVERLAY_SIDE_OFFSET * scale)
+                .round() as i32,
+            center_y,
+        ),
     };
 
     (x, y, width, height)
@@ -486,14 +556,26 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
 }
 
 fn show_overlay_state(app_handle: &AppHandle, state: &str) {
-    // Whether the overlay shows at all is governed by overlay_style; position
-    // only chooses Top vs Bottom placement. Checked here (off the main thread)
-    // so the common overlay-disabled case never pays for a main-thread hop.
+    // Whether the dictation overlay shows at all is governed by overlay_style;
+    // position only chooses which edge it sits on. Checked here (off the main
+    // thread) so the common overlay-disabled case never pays for a
+    // main-thread hop.
     let settings = settings::get_settings(app_handle);
     if settings.overlay_style == OverlayStyle::None {
         return;
     }
 
+    queue_overlay_state(app_handle, state);
+}
+
+/// Queue a meeting-bar view (the idle disc or the recording pill) into the one
+/// shared overlay window. The bar is the meeting feature's own UI, so it shows
+/// regardless of `overlay_style`, which governs only the dictation overlay.
+pub fn show_meeting_bar_state(app_handle: &AppHandle, state: &str) {
+    queue_overlay_state(app_handle, state);
+}
+
+fn queue_overlay_state(app_handle: &AppHandle, state: &str) {
     // The rest queries monitors and the cursor and mutates window geometry. On
     // Linux the monitor/cursor lookups hit GDK/Xlib on the process's shared X11
     // connection, which is only safe from the GTK main thread — running them on
@@ -508,6 +590,12 @@ fn show_overlay_state(app_handle: &AppHandle, state: &str) {
 }
 
 fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
+    // Remember which view owns the window: the position updater re-applies the
+    // right geometry per state, and the meeting refresh defers while a
+    // dictation view is showing.
+    *CURRENT_OVERLAY_STATE.lock().unwrap() = state.to_string();
+    DICTATION_OVERLAY_ACTIVE.store(is_dictation_state(state), Ordering::SeqCst);
+
     // Size the overlay for this state (compact vs. streaming), then position it.
     let (width, height) = overlay_dimensions(state);
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
@@ -537,8 +625,6 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
             #[cfg(not(target_os = "windows"))]
             let _ =
                 overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
-            #[cfg(target_os = "windows")]
-            WINDOWS_OVERLAY_IS_STREAMING.store(state == "streaming", Ordering::Relaxed);
             let size_elapsed = size_started.elapsed();
 
             let pos_started = std::time::Instant::now();
@@ -647,17 +733,14 @@ fn update_overlay_position_on_main(app_handle: &AppHandle) {
                 Ok(gtk_window) => configure_layer_shell_position(&gtk_window, position),
                 Err(error) => log::error!("Failed to access GTK overlay window: {error}"),
             }
+            let _ = overlay_window.emit("overlay-position-changed", ());
             return;
         }
 
         #[cfg(target_os = "windows")]
         {
-            let state = if WINDOWS_OVERLAY_IS_STREAMING.load(Ordering::Relaxed) {
-                "streaming"
-            } else {
-                "recording"
-            };
-            let (width, height) = overlay_dimensions(state);
+            let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+            let (width, height) = overlay_dimensions(&state);
             if let Err(error) = place_windows_overlay(app_handle, &overlay_window, width, height) {
                 log::error!("Failed to update recording overlay position: {error}");
             }
@@ -674,6 +757,11 @@ fn update_overlay_position_on_main(app_handle: &AppHandle) {
                     .set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
             }
         }
+
+        // Tell the webview to re-read its placement: the meeting bar is a
+        // persistent view and must re-anchor to the new edge without waiting
+        // for the next state change.
+        let _ = overlay_window.emit("overlay-position-changed", ());
     }
 }
 
@@ -685,6 +773,17 @@ fn update_overlay_position_on_main(app_handle: &AppHandle) {
 /// the instant it drained, well inside the 300 ms hide delay.
 static OVERLAY_SHOW_GENERATION: AtomicU64 = AtomicU64::new(0);
 
+/// Whether a dictation view (recording/streaming/transcribing/processing)
+/// currently owns the overlay window. The meeting bar yields to dictation:
+/// its refresh is skipped while this is set, and the dictation hide path
+/// refreshes again once the window is free, so the bar always comes back.
+static DICTATION_OVERLAY_ACTIVE: AtomicBool = AtomicBool::new(false);
+
+/// The state `show-overlay` last showed ("meeting-idle", "recording", ...).
+/// The position updater re-applies the geometry that belongs to this state —
+/// the meeting disc is a different footprint than the dictation pill.
+static CURRENT_OVERLAY_STATE: Mutex<String> = Mutex::new(String::new());
+
 /// Hides the recording overlay window with fade-out animation
 pub fn hide_recording_overlay(app_handle: &AppHandle) {
     // Always hide the overlay regardless of settings - if setting was changed while recording,
@@ -695,18 +794,47 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
         let scheduled_at = OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst);
         // Emit event to trigger fade-out animation
         let _ = overlay_window.emit("hide-overlay", ());
-        // Hide the window after a short delay to allow animation to complete,
-        // unless a newer session has shown the overlay again by then.
-        let window_clone = overlay_window.clone();
+        // After the fade delay the dictation view is done. The meeting bar is a
+        // persistent fixture of this window, so hand the window back to it —
+        // the recording pill while a meeting records, the idle disc otherwise —
+        // instead of unmapping the window. A newer dictation session that
+        // showed the overlay in the meantime still wins (generation check).
+        let app_for_thread = app_handle.clone();
         std::thread::spawn(move || {
             std::thread::sleep(std::time::Duration::from_millis(300));
             if OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst) != scheduled_at {
                 log::debug!("Skipping stale overlay hide: a newer session is showing the overlay");
                 return;
             }
-            let _ = window_clone.hide();
+            DICTATION_OVERLAY_ACTIVE.store(false, Ordering::SeqCst);
+            refresh_meeting_bar(&app_for_thread);
         });
     }
+}
+
+/// Show the meeting-bar view that matches the meeting session right now: the
+/// recording pill while a meeting records, the idle disc otherwise. Called when
+/// the app starts, whenever the session's stage changes, and when a dictation
+/// view gives the window back — so the bar is effectively always present.
+/// Skipped while a dictation view owns the window: the dictation hide path
+/// calls this again once it is done.
+pub fn refresh_meeting_bar(app_handle: &AppHandle) {
+    if DICTATION_OVERLAY_ACTIVE.load(Ordering::SeqCst) {
+        return;
+    }
+
+    let recording = app_handle
+        .try_state::<Arc<MeetingManager>>()
+        .map(|meetings| meetings.is_recording())
+        .unwrap_or(false);
+    show_meeting_bar_state(
+        app_handle,
+        if recording {
+            MEETING_BAR_RECORDING
+        } else {
+            MEETING_BAR_IDLE
+        },
+    );
 }
 
 // Cached "overlay is enabled" flag, kept in sync with overlay_style. Avoids
@@ -769,6 +897,20 @@ pub fn emit_levels(app_handle: &AppHandle, levels: &[f32]) {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn meeting_bar_views_have_their_own_footprints() {
+        // The idle disc is a small square window sized for the 40x40 circle.
+        assert_eq!(
+            overlay_dimensions(MEETING_BAR_IDLE),
+            (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT)
+        );
+        // The recording pill shares the compact dictation pill's footprint.
+        assert_eq!(
+            overlay_dimensions(MEETING_BAR_RECORDING),
+            (OVERLAY_WIDTH, OVERLAY_HEIGHT)
+        );
+    }
 
     #[test]
     fn monitor_hit_test_uses_half_open_physical_bounds() {
@@ -854,6 +996,37 @@ mod tests {
                 OverlayPosition::Bottom,
             ),
             (-1530, 1040, 500, 150)
+        );
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn windows_overlay_bounds_anchor_left_and_right_at_their_edges() {
+        // Same monitor as the negative-origin case: 2560x1440 at (-2560, -200),
+        // 1.25 DPI, streaming footprint 400x120 logical (500x150 physical).
+        assert_eq!(
+            windows_overlay_bounds(
+                PhysicalPosition::new(-2560, -200),
+                PhysicalSize::new(2560, 1440),
+                1.25,
+                1.0,
+                OVERLAY_STREAM_WIDTH,
+                OVERLAY_STREAM_HEIGHT,
+                OverlayPosition::Left,
+            ),
+            (-2545, 445, 500, 150)
+        );
+        assert_eq!(
+            windows_overlay_bounds(
+                PhysicalPosition::new(-2560, -200),
+                PhysicalSize::new(2560, 1440),
+                1.25,
+                1.0,
+                OVERLAY_STREAM_WIDTH,
+                OVERLAY_STREAM_HEIGHT,
+                OverlayPosition::Right,
+            ),
+            (-515, 445, 500, 150)
         );
     }
 

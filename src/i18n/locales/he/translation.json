@@ -532,7 +532,9 @@
           "description": "הצג שכבת משוב חזותית בזמן הקלטה ותמלול. בלינוקס מומלץ לבחור 'ללא'.",
           "options": {
             "bottom": "למטה",
-            "top": "למעלה"
+            "top": "למעלה",
+            "left": "שמאל",
+            "right": "ימין"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "מתמלל...",
     "processing": "מעבד...",
-    "loadingModel": "טוען מודל..."
+    "loadingModel": "טוען מודל...",
+    "meeting": {
+      "start": "התחל פגישה",
+      "stop": "עצור",
+      "saving": "שומר…",
+      "recording": "מקליט"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "ייתכן ש-{{name}} חוסם קיצור דרך אחד",

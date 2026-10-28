@@ -532,7 +532,9 @@
           "description": "عرض تراكب الملاحظات المرئية أثناء التسجيل والتفريغ. على نظام Linux يوصى بـ 'بلا'.",
           "options": {
             "bottom": "أسفل",
-            "top": "أعلى"
+            "top": "أعلى",
+            "left": "يسار",
+            "right": "يمين"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "جاري التفريغ...",
     "processing": "جاري المعالجة...",
-    "loadingModel": "جارٍ تحميل النموذج..."
+    "loadingModel": "جارٍ تحميل النموذج...",
+    "meeting": {
+      "start": "بدء الاجتماع",
+      "stop": "إيقاف",
+      "saving": "جارٍ الحفظ…",
+      "recording": "جارٍ التسجيل"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "قد يحظر {{name}} اختصارًا واحدًا",

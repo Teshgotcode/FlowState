@@ -532,7 +532,9 @@
           "description": "Lokasi overlay muncul di layar selama perekaman dan transkripsi.",
           "options": {
             "bottom": "Bawah",
-            "top": "Atas"
+            "top": "Atas",
+            "left": "Kiri",
+            "right": "Kanan"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Mentranskripsikan...",
     "processing": "Memproses...",
-    "loadingModel": "Memuat model..."
+    "loadingModel": "Memuat model...",
+    "meeting": {
+      "start": "Mulai rapat",
+      "stop": "Hentikan",
+      "saving": "Menyimpan…",
+      "recording": "Merekam"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} mungkin memblokir 1 pintasan",

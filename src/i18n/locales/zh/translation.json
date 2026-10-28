@@ -532,7 +532,9 @@
           "description": "在录制和转录期间显示可视反馈悬浮窗。在 Linux 上建议选择「无」。",
           "options": {
             "bottom": "底部",
-            "top": "顶部"
+            "top": "顶部",
+            "left": "左侧",
+            "right": "右侧"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "正在转录...",
     "processing": "处理中...",
-    "loadingModel": "正在加载模型..."
+    "loadingModel": "正在加载模型...",
+    "meeting": {
+      "start": "开始会议",
+      "stop": "停止",
+      "saving": "保存中…",
+      "recording": "录音中"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 可能正在阻止 1 个快捷键",

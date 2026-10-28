@@ -532,7 +532,9 @@
           "description": "Hiển thị lớp phủ phản hồi trực quan trong quá trình ghi âm và chuyển đổi. Trên Linux, 'Không có' được khuyến nghị.",
           "options": {
             "bottom": "Dưới",
-            "top": "Trên"
+            "top": "Trên",
+            "left": "Trái",
+            "right": "Phải"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Đang chuyển đổi...",
     "processing": "Đang xử lý...",
-    "loadingModel": "Đang tải mô hình..."
+    "loadingModel": "Đang tải mô hình...",
+    "meeting": {
+      "start": "Bắt đầu cuộc họp",
+      "stop": "Dừng",
+      "saving": "Đang lưu…",
+      "recording": "Đang ghi"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} có thể đang chặn 1 phím tắt",

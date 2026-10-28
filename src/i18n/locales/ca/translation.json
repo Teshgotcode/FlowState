@@ -532,7 +532,9 @@
           "description": "On apareix la finestra superposada a la pantalla durant l'enregistrament i la transcripció.",
           "options": {
             "bottom": "A baix",
-            "top": "A dalt"
+            "top": "A dalt",
+            "left": "Esquerra",
+            "right": "Dreta"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "S'està transcrivint...",
     "processing": "S'està processant...",
-    "loadingModel": "S'està carregant el model..."
+    "loadingModel": "S'està carregant el model...",
+    "meeting": {
+      "start": "Inicia la reunió",
+      "stop": "Atura",
+      "saving": "S'està desant…",
+      "recording": "Enregistrant"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} pot estar blocant 1 drecera",

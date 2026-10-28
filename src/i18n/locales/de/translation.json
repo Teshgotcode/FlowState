@@ -532,7 +532,9 @@
           "description": "Visuelles Feedback-Overlay während Aufnahme und Transkription anzeigen. Unter Linux wird 'Keine' empfohlen.",
           "options": {
             "bottom": "Unten",
-            "top": "Oben"
+            "top": "Oben",
+            "left": "Links",
+            "right": "Rechts"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transkribiere...",
     "processing": "Verarbeite...",
-    "loadingModel": "Modell wird geladen..."
+    "loadingModel": "Modell wird geladen...",
+    "meeting": {
+      "start": "Besprechung starten",
+      "stop": "Stoppen",
+      "saving": "Wird gespeichert …",
+      "recording": "Aufnahme läuft"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blockiert möglicherweise 1 Tastenkürzel",

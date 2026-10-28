@@ -532,7 +532,9 @@
           "description": "Waar de overlay op het scherm verschijnt tijdens het opnemen en transcriberen.",
           "options": {
             "bottom": "Onderkant",
-            "top": "Bovenkant"
+            "top": "Bovenkant",
+            "left": "Links",
+            "right": "Rechts"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transcriberen...",
     "processing": "Verwerken...",
-    "loadingModel": "Model laden..."
+    "loadingModel": "Model laden...",
+    "meeting": {
+      "start": "Vergadering starten",
+      "stop": "Stoppen",
+      "saving": "Opslaan …",
+      "recording": "Opnemen"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkeert mogelijk 1 sneltoets",

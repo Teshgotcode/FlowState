@@ -557,6 +557,11 @@ fn initialize_core_logic(app_handle: &AppHandle) {
 
     // Create the recording overlay window (hidden by default)
     utils::create_recording_overlay(app_handle);
+
+    // The meeting bar (the Flow-style floating bar) lives in that same overlay
+    // window: show its idle disc from the start, so a meeting can be started
+    // with one click while the app is in the background.
+    crate::overlay::refresh_meeting_bar(app_handle);
 }
 
 #[tauri::command]

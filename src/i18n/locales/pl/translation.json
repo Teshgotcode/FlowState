@@ -532,7 +532,9 @@
           "description": "Wyświetlaj wizualną nakładkę podczas nagrywania i transkrypcji. Na Linuxie zalecane 'Brak'.",
           "options": {
             "bottom": "Dół",
-            "top": "Góra"
+            "top": "Góra",
+            "left": "Po lewej",
+            "right": "Po prawej"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transkrypcja...",
     "processing": "Przetwarzanie...",
-    "loadingModel": "Wczytywanie modelu..."
+    "loadingModel": "Wczytywanie modelu...",
+    "meeting": {
+      "start": "Rozpocznij spotkanie",
+      "stop": "Zatrzymaj",
+      "saving": "Zapisywanie…",
+      "recording": "Nagrywanie"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} może blokować 1 skrót",
