@@ -532,7 +532,9 @@
           "description": "Mostra un feedback visivo in sovrimpressione durante la registrazione e la trascrizione. Su Linux si raccomanda 'Nessuna'.",
           "options": {
             "bottom": "In basso",
-            "top": "In alto"
+            "top": "In alto",
+            "left": "Sinistra",
+            "right": "Destra"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Trascrizione...",
     "processing": "Elaborazione...",
-    "loadingModel": "Caricamento del modello..."
+    "loadingModel": "Caricamento del modello...",
+    "meeting": {
+      "start": "Avvia riunione",
+      "stop": "Ferma",
+      "saving": "Salvataggio…",
+      "recording": "Registrazione in corso"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} potrebbe bloccare 1 scorciatoia",

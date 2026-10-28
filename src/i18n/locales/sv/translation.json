@@ -532,7 +532,9 @@
           "description": "Visa visuell återkoppling under inspelning och transkription. På Linux rekommenderas 'Ingen'.",
           "options": {
             "bottom": "Nederst",
-            "top": "Överst"
+            "top": "Överst",
+            "left": "Vänster",
+            "right": "Höger"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transkriberar...",
     "processing": "Bearbetar...",
-    "loadingModel": "Laddar modell..."
+    "loadingModel": "Laddar modell...",
+    "meeting": {
+      "start": "Starta möte",
+      "stop": "Stoppa",
+      "saving": "Sparar …",
+      "recording": "Spelar in"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} kanske blockerar 1 kortkommando",

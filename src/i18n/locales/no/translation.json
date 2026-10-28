@@ -532,7 +532,9 @@
           "description": "Hvor overlegget vises på skjermen under opptak og transkripsjon.",
           "options": {
             "bottom": "Nederst",
-            "top": "Øverst"
+            "top": "Øverst",
+            "left": "Venstre",
+            "right": "Høyre"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transkriberer...",
     "processing": "Behandler...",
-    "loadingModel": "Laster inn modell..."
+    "loadingModel": "Laster inn modell...",
+    "meeting": {
+      "start": "Start møteøkt",
+      "stop": "Stopp",
+      "saving": "Lagrer …",
+      "recording": "Tar opp"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkerer kanskje 1 snarvei",

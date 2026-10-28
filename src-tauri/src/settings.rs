@@ -131,6 +131,8 @@ pub enum OverlayPosition {
     // raw stored string to recover the old "hidden" intent as `OverlayStyle::None`.
     #[serde(alias = "none")]
     Bottom,
+    Left,
+    Right,
 }
 
 /// Which recording overlay to display. `Minimal` and `Live` share one base

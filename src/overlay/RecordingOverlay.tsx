@@ -9,11 +9,28 @@ import type {
   StreamTextEvent,
   StreamWorkKind,
 } from "@/bindings";
+import { useMeetingClock } from "@/hooks/useMeetingClock";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import type { ModelStateEvent } from "@/lib/types/events";
+import { formatDurationClock } from "@/lib/utils/format";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 
 type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
+
+// The meeting bar's views — the Flow-style floating bar that shares this
+// window with the dictation overlay. "recording" and "idle" follow the
+// backend's meeting state; "wrapping" is frontend-only: the short "Saving…"
+// pill shown while `stop_meeting` is in flight, until the history entry is
+// in place.
+type MeetingSession = "idle" | "recording";
+
+// `show-overlay` carries the dictation states and the meeting bar's two
+// backend-driven views.
+const isDictationState = (state: string): state is OverlayState =>
+  state === "recording" ||
+  state === "streaming" ||
+  state === "transcribing" ||
+  state === "processing";
 
 // Number of reactive bars in the waveform (the simple, smoothed style shared by
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
@@ -55,12 +72,26 @@ const RecordingOverlay: React.FC = () => {
   // Bumped on each new streaming session so the Live card remounts fresh (replays
   // the pop-in, and never animates in from the previous panel's open size).
   const [session, setSession] = useState(0);
-  // Overlay placement (top vs bottom of the screen). The Live panel grows downward
-  // from a top overlay (oldest line under the pill) and upward from a bottom one.
-  const [position, setPosition] = useState<"top" | "bottom">("bottom");
+  // Overlay placement (which edge of the screen). The Live panel grows downward
+  // from a top overlay (oldest line under the pill) and upward from a bottom one;
+  // left/right anchor the card to that edge and center it vertically.
+  const [position, setPosition] = useState<"top" | "bottom" | "left" | "right">(
+    "bottom",
+  );
   // True once live text overflows the cap. A top overlay fades its top edge only
   // while overflowing, so the resting first line stays crisp flush under the pill.
   const [overflowing, setOverflowing] = useState(false);
+
+  // ---- Meeting bar (the Flow-style floating bar) ----
+  // The backend owns the session; this mirrors the meeting state it emits so
+  // every window follows one session. `null` until the first status arrives.
+  const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(
+    null,
+  );
+  // Set while a stop started from this bar is in flight: the "Saving…" pill
+  // until the history entry is in place, then the idle disc again.
+  const [meetingWrapping, setMeetingWrapping] = useState(false);
+  const [meetingStartedAt, setMeetingStartedAt] = useState(0);
 
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
   // Live-text scroll-back: the text region "sticks" to the newest line while the
@@ -70,10 +101,25 @@ const RecordingOverlay: React.FC = () => {
   const pinnedRef = useRef(true);
   const direction = getLanguageDirection(i18n.language);
 
+  // The recording pill's clock, from the session's start time. Ticks only
+  // while the pill is the active view.
+  const meetingRecording = meetingSession === "recording" && !meetingWrapping;
+  const meetingElapsed = useMeetingClock(
+    meetingRecording ? meetingStartedAt : 0,
+    meetingRecording,
+  );
+
   useEffect(() => {
     const setupEventListeners = async () => {
       const unlistenShow = await listen("show-overlay", async (event) => {
-        const overlayState = event.payload as OverlayState;
+        const overlayState = event.payload as string;
+        // A meeting-bar view owns the window: stop rendering the dictation
+        // card (the bar — which follows the meeting state — takes over). A
+        // dictation state arriving later re-shows the card as before.
+        if (!isDictationState(overlayState)) {
+          setIsVisible(false);
+          return;
+        }
         // Reset synchronously before settings I/O. A fast microphone can emit
         // recording-ready while the awaits below are in flight; resetting after
         // them would overwrite that event and leave the overlay stuck arming.
@@ -90,9 +136,7 @@ const RecordingOverlay: React.FC = () => {
         try {
           const settings = await commands.getAppSettings();
           if (settings.status === "ok") {
-            setPosition(
-              settings.data.overlay_position === "top" ? "top" : "bottom",
-            );
+            setPosition(settings.data.overlay_position ?? "bottom");
           }
         } catch {
           // Keep the previous/default placement if settings can't be read.
@@ -140,6 +184,64 @@ const RecordingOverlay: React.FC = () => {
         if (payload.kind) setWorkKind(payload.kind);
       });
 
+      // The meeting bar follows the session wherever it changes — a click on
+      // this bar, the Settings window, anywhere: the pill while a meeting
+      // records, the idle disc once it stops or is cancelled.
+      const unlistenMeeting = await events.meetingStateEvent.listen(
+        ({ payload }) => {
+          const status = payload.status;
+          if (status.state === "recording") {
+            setMeetingStartedAt(status.started_at);
+            setMeetingSession("recording");
+          } else {
+            // The stop's history entry is in place by the time Idle arrives;
+            // the "Saving…" pill ends with it.
+            setMeetingWrapping(false);
+            setMeetingSession("idle");
+          }
+        },
+      );
+
+      // The window moves when the placement setting changes; the bar is a
+      // persistent view, so re-read the edge to re-anchor without waiting for
+      // the next state change.
+      const unlistenPosition = await listen(
+        "overlay-position-changed",
+        async () => {
+          try {
+            const settings = await commands.getAppSettings();
+            if (settings.status === "ok") {
+              setPosition(settings.data.overlay_position ?? "bottom");
+            }
+          } catch {
+            // Keep the previous placement if settings can't be read.
+          }
+        },
+      );
+
+      // The backend shows the window before this webview has finished loading,
+      // so the state events above may have been missed. Ask once, after the
+      // listeners are in place, and paint the bar for the current session.
+      try {
+        const [status, settings] = await Promise.all([
+          commands.getMeetingStatus(),
+          commands.getAppSettings(),
+        ]);
+        if (settings.status === "ok") {
+          setPosition(settings.data.overlay_position ?? "bottom");
+        }
+        if (status.state === "recording") {
+          setMeetingStartedAt(status.started_at);
+          setMeetingSession("recording");
+        } else {
+          setMeetingSession("idle");
+        }
+      } catch (err) {
+        // Without a status the bar still starts meetings from the disc.
+        console.warn("Failed to read the meeting status:", err);
+        setMeetingSession("idle");
+      }
+
       // The backend ends every `loading_started` with exactly one of completed
       // or failed, so only those end a load. Other events (e.g. `unloaded` from
       // the idle watcher) aren't ordered against an in-flight load and must not
@@ -174,6 +276,8 @@ const RecordingOverlay: React.FC = () => {
         unlistenLevel();
         unlistenStream();
         unlistenPhase();
+        unlistenMeeting();
+        unlistenPosition();
         unlistenModel();
         clearTimeout(modelLoadTimerRef.current);
       };
@@ -211,7 +315,106 @@ const RecordingOverlay: React.FC = () => {
     setOverflowing(false);
   }, [session]);
 
-  if (!isVisible) return null;
+  // ---- Meeting bar handlers ----
+  // A click on the disc starts the meeting; the state event turns the bar
+  // into the pill. A failed start (e.g. a dictation holds the microphone)
+  // leaves the disc as it was.
+  const startMeeting = async () => {
+    try {
+      await commands.startMeeting();
+    } catch (err) {
+      console.warn("Failed to start the meeting:", err);
+    }
+  };
+
+  // Wispr-style stop: save immediately, no confirmation dialog — the
+  // recording lands in History. The pill shows "Saving…" until the stop
+  // resolves (the history entry is in place by then) and the idle event
+  // returns the bar to the disc.
+  const stopMeeting = async () => {
+    setMeetingWrapping(true);
+    try {
+      await commands.stopMeeting();
+      // The Idle event usually arrived during the await; this is the net.
+      setMeetingWrapping(false);
+      setMeetingSession("idle");
+    } catch (err) {
+      console.warn("Failed to stop the meeting:", err);
+      setMeetingWrapping(false);
+    }
+  };
+
+  // ---- View routing ----
+  // A dictation view always wins the window while it shows; the meeting bar
+  // fills it otherwise (the bar is the window's resting state).
+  if (!isVisible) {
+    if (meetingSession === null) return null;
+
+    // Saving…: the pill keeps its footprint while the stop is in flight.
+    if (meetingWrapping) {
+      return (
+        <div dir={direction} className={`ov-stage ${position}`}>
+          <div className="mcard">
+            <span className="sspinner" />
+            <span className="mlabel">{t("overlay.meeting.saving")}</span>
+          </div>
+        </div>
+      );
+    }
+
+    // Recording: red pulsing dot + running clock (mm:ss) + Stop.
+    if (meetingSession === "recording") {
+      return (
+        <div dir={direction} className={`ov-stage ${position}`}>
+          <div
+            className="mcard"
+            role="status"
+            aria-label={t("overlay.meeting.recording")}
+          >
+            <span className="mdot" aria-hidden="true" />
+            <span className="mtimer">
+              {formatDurationClock(meetingElapsed)}
+            </span>
+            <button type="button" className="mstop" onClick={stopMeeting}>
+              {t("overlay.meeting.stop")}
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Idle: the disc with a mic, visible while the app is in the background;
+    // one click starts the meeting without opening the app window.
+    return (
+      <div dir={direction} className={`ov-stage ${position}`}>
+        <button
+          type="button"
+          className="mdisc"
+          aria-label={t("overlay.meeting.start")}
+          title={t("overlay.meeting.start")}
+          onClick={startMeeting}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="9" y="2.5" width="6" height="11" rx="3" />
+            <path
+              d="M5.5 11.5a6.5 6.5 0 0 0 13 0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+            />
+            <path
+              d="M12 18v3.5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.7"
+              strokeLinecap="round"
+            />
+          </svg>
+        </button>
+      </div>
+    );
+  }
 
   // Re-pin when the user is within ~a line of the bottom; unpin otherwise.
   const handleStreamScroll = () => {

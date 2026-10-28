@@ -532,7 +532,9 @@
           "description": "Exibir sobreposição de feedback visual durante gravação e transcrição. No Linux, 'Nenhum' é recomendado.",
           "options": {
             "bottom": "Inferior",
-            "top": "Superior"
+            "top": "Superior",
+            "left": "Esquerda",
+            "right": "Direita"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transcrevendo...",
     "processing": "Processando...",
-    "loadingModel": "Carregando modelo..."
+    "loadingModel": "Carregando modelo...",
+    "meeting": {
+      "start": "Iniciar reunião",
+      "stop": "Parar",
+      "saving": "A guardar…",
+      "recording": "A gravar"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} pode estar bloqueando 1 atalho",

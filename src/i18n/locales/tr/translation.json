@@ -532,7 +532,9 @@
           "description": "Ekran katmanının kayıt ve transkripsiyon sırasında nerede görüneceğini belirler.",
           "options": {
             "bottom": "Alt",
-            "top": "Üst"
+            "top": "Üst",
+            "left": "Sol",
+            "right": "Sağ"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transkribe ediliyor...",
     "processing": "İşleniyor...",
-    "loadingModel": "Model yükleniyor..."
+    "loadingModel": "Model yükleniyor...",
+    "meeting": {
+      "start": "Toplantıyı başlat",
+      "stop": "Durdur",
+      "saving": "Kaydediliyor…",
+      "recording": "Kaydediliyor"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 1 kısayolu engelliyor olabilir",

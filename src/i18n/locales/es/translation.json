@@ -532,7 +532,9 @@
           "description": "Dónde aparece la superposición en la pantalla durante la grabación y la transcripción.",
           "options": {
             "bottom": "Abajo",
-            "top": "Arriba"
+            "top": "Arriba",
+            "left": "Izquierda",
+            "right": "Derecha"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transcribiendo...",
     "processing": "Procesando...",
-    "loadingModel": "Cargando modelo..."
+    "loadingModel": "Cargando modelo...",
+    "meeting": {
+      "start": "Iniciar reunión",
+      "stop": "Detener",
+      "saving": "Guardando…",
+      "recording": "Grabando"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} puede estar bloqueando 1 atajo",

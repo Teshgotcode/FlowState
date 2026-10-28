@@ -532,7 +532,9 @@
           "description": "Hvor overlayet vises på skærmen under optagelse og transskription.",
           "options": {
             "bottom": "Bund",
-            "top": "Top"
+            "top": "Top",
+            "left": "Venstre",
+            "right": "Højre"
           }
         }
       },
@@ -981,7 +983,13 @@
   "overlay": {
     "transcribing": "Transskriberer...",
     "processing": "Behandler...",
-    "loadingModel": "Indlæser model..."
+    "loadingModel": "Indlæser model...",
+    "meeting": {
+      "start": "Start møde",
+      "stop": "Stop",
+      "saving": "Gemmer …",
+      "recording": "Optager"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokerer muligvis 1 genvej",

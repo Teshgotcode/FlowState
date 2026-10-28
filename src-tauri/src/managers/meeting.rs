@@ -486,6 +486,8 @@ impl MeetingManager {
 
         debug!("Meeting recording started: {}", working_path.display());
         emit_meeting_state(app, &status);
+        // The floating bar follows the session: the disc becomes the pill.
+        crate::overlay::refresh_meeting_bar(app);
         Ok(status)
     }
 
@@ -540,6 +542,10 @@ impl MeetingManager {
             decision.duration_secs, entry_id
         );
         emit_meeting_state(app, &MeetingStatus::Idle);
+        // The history entry is in place: the pill gives the window back to the
+        // idle disc. Skipped while a dictation overlay owns the window — its
+        // hide path refreshes the bar when it is done.
+        crate::overlay::refresh_meeting_bar(app);
         Ok(StoppedMeeting {
             entry_id,
             started_at: decision.started_at_unix,
@@ -575,6 +581,7 @@ impl MeetingManager {
 
         info!("Meeting cancelled; the working file was removed");
         emit_meeting_state(app, &MeetingStatus::Idle);
+        crate::overlay::refresh_meeting_bar(app);
         Ok(())
     }
 
