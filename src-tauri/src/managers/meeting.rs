@@ -486,6 +486,9 @@ impl MeetingManager {
 
         debug!("Meeting recording started: {}", working_path.display());
         emit_meeting_state(app, &status);
+        // Starting from Settings also dismisses the disc's "hide for an
+        // hour": a live session always brings the bar back.
+        crate::overlay::unhide_meeting_bar();
         // The floating bar follows the session: the disc becomes the pill.
         crate::overlay::refresh_meeting_bar(app);
         Ok(status)

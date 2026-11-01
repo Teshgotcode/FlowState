@@ -39,3 +39,26 @@ pub fn cancel_meeting(app: AppHandle) -> Result<MeetingStatus, String> {
 pub fn get_meeting_status(app: AppHandle) -> MeetingStatus {
     app.state::<Arc<MeetingManager>>().status()
 }
+
+/// Begin dragging the floating meeting bar (idle disc or recording pill).
+/// The frontend calls this once the pointer has crossed its click/drag
+/// threshold, so a plain click still starts or stops the meeting; the native
+/// drag carries the window with the pointer, and the bar docks to the
+/// nearest screen edge when it settles — the choice is saved and resumed on
+/// restart (Wispr's statusDockEdge).
+#[tauri::command]
+#[specta::specta]
+pub fn start_meeting_bar_drag(app: AppHandle) -> Result<(), String> {
+    crate::overlay::begin_meeting_bar_drag(&app);
+    Ok(())
+}
+
+/// Pop the meeting bar's context menu at the cursor (right-click on the idle
+/// disc): "Hide for 1 hour". Native, because the disc's window is exactly the
+/// disc — no room for HTML.
+#[tauri::command]
+#[specta::specta]
+pub fn open_meeting_bar_menu(app: AppHandle) -> Result<(), String> {
+    crate::overlay::show_meeting_bar_menu(&app);
+    Ok(())
+}

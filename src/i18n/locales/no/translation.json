@@ -7,7 +7,8 @@
     "model": "Modell",
     "quit": "Avslutt",
     "cancel": "Avbryt",
-    "secureInputWarning": "⚠ Snarveier blokkert av Secure Input"
+    "secureInputWarning": "⚠ Snarveier blokkert av Secure Input",
+    "meetingBarHideForHour": "Skjul i 1 time"
   },
   "sidebar": {
     "general": "Generelt",

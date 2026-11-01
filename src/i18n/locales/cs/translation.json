@@ -7,7 +7,8 @@
     "model": "Model",
     "quit": "Ukončit",
     "cancel": "Zrušit",
-    "secureInputWarning": "⚠ Zkratky blokuje Secure Input"
+    "secureInputWarning": "⚠ Zkratky blokuje Secure Input",
+    "meetingBarHideForHour": "Skrýt na 1 hodinu"
   },
   "sidebar": {
     "general": "Obecné",

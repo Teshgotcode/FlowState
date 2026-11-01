@@ -7,7 +7,8 @@
     "model": "モデル",
     "quit": "終了",
     "cancel": "キャンセル",
-    "secureInputWarning": "⚠ Secure Input でショートカットがブロック中"
+    "secureInputWarning": "⚠ Secure Input でショートカットがブロック中",
+    "meetingBarHideForHour": "1時間非表示にする"
   },
   "sidebar": {
     "general": "一般",

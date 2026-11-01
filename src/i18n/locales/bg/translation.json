@@ -7,7 +7,8 @@
     "model": "Модел",
     "quit": "Изход",
     "cancel": "Отказ",
-    "secureInputWarning": "⚠ Бързите клавиши са блокирани от Secure Input"
+    "secureInputWarning": "⚠ Бързите клавиши са блокирани от Secure Input",
+    "meetingBarHideForHour": "Скрий за 1 час"
   },
   "sidebar": {
     "general": "Общи",

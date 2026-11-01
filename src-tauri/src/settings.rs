@@ -457,6 +457,12 @@ pub struct AppSettings {
     pub spoken_languages: Vec<String>,
     #[serde(default = "default_overlay_position")]
     pub overlay_position: OverlayPosition,
+    /// Which screen edge the floating meeting bar docks on — Wispr's
+    /// `statusDockEdge`. `None` (the default) keeps the bar on the dictation
+    /// overlay's edge (`overlay_position`); dragging the bar to an edge pins
+    /// it there, and the pinned choice persists across restarts.
+    #[serde(default)]
+    pub meeting_bar_position: Option<OverlayPosition>,
     #[serde(default = "default_debug_mode")]
     pub debug_mode: bool,
     #[serde(default = "default_log_level")]
@@ -1060,6 +1066,7 @@ pub fn get_default_settings() -> AppSettings {
         translate_to_english: false,
         selected_language: "auto".to_string(),
         overlay_position: default_overlay_position(),
+        meeting_bar_position: None,
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),

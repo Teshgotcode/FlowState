@@ -239,6 +239,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::stop_meeting,
             commands::meeting::cancel_meeting,
             commands::meeting::get_meeting_status,
+            commands::meeting::start_meeting_bar_drag,
+            commands::meeting::open_meeting_bar_menu,
             helpers::clamshell::is_laptop,
         ])
         .events(collect_events![
@@ -1185,7 +1187,22 @@ pub fn run(cli_args: CliArgs) {
                 // Re-apply the current tray state with the new theme's icon set
                 utils::refresh_tray_icon(window.app_handle());
             }
+            // The overlay window moves for two reasons: a programmatic dock
+            // (no-op in the watcher) and a native drag of the meeting bar,
+            // which docks to the nearest edge once the window goes still.
+            tauri::WindowEvent::Moved(_) if window.label() == "recording_overlay" => {
+                crate::overlay::on_overlay_window_moved(window.app_handle());
+            }
             _ => {}
+        })
+        .on_menu_event(|app, event| {
+            // The meeting bar's context menu item; the tray's own menu keeps
+            // its dedicated handler below the tray icon.
+            if event.id.as_ref() == crate::overlay::MEETING_BAR_HIDE_FOR_HOUR_ID {
+                // Wispr's "Hide for 1 hour": the idle disc goes away for an
+                // hour, until restart, or until a meeting starts.
+                crate::overlay::hide_meeting_bar_for(app, 3600);
+            }
         })
         .invoke_handler(invoke_handler)
         .build(tauri::generate_context!())

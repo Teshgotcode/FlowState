@@ -49,6 +49,19 @@
   --s-border: var(--light-s-border);
   --s-hair: var(--light-s-hair);
 
+  /* Meeting bar surface — Wispr Flow Bar polish (research §9): the bar is a
+     calm, SOLID pill rather than the dictation card's slightly translucent
+     surface — "sand", a warm-neutral light pill in light mode, and "vast", a
+     touch-deeper navy than the canvas, in dark. Still derived from the brand
+     palette via color-mix(); the bar never introduces a sixth hue. */
+  --light-mb-surface: color-mix(
+    in srgb,
+    var(--color-background) 96%,
+    var(--color-mid-gray)
+  );
+  --dark-mb-surface: color-mix(in srgb, var(--color-background) 96%, black);
+  --mb-surface: var(--light-mb-surface);
+
   /* Card geometry — single source of truth for the visible overlay sizes. The
      native overlay window (overlay.rs) is sized from these: it must be at least
      the card's max footprint (--ov-work-w for compact, --ov-open-w for Live),
@@ -71,6 +84,7 @@
     --s-faint: var(--dark-s-faint);
     --s-border: var(--dark-s-border);
     --s-hair: var(--dark-s-hair);
+    --mb-surface: var(--dark-mb-surface);
   }
 }
 
@@ -91,6 +105,7 @@
   --s-faint: var(--light-s-faint);
   --s-border: var(--light-s-border);
   --s-hair: var(--light-s-hair);
+  --mb-surface: var(--light-mb-surface);
 }
 
 :root[data-theme="dark"] {
@@ -100,6 +115,7 @@
   --s-faint: var(--dark-s-faint);
   --s-border: var(--dark-s-border);
   --s-hair: var(--dark-s-hair);
+  --mb-surface: var(--dark-mb-surface);
 }
 
 /* ============================================================
