@@ -730,7 +730,19 @@
       "showMore": "Mostrar mais",
       "showLess": "Mostrar menos",
       "dropTitle": "Solte para transcrever",
-      "dropDescription": "Ele aparecerá no histórico."
+      "dropDescription": "Ele aparecerá no histórico.",
+      "transcript": "Transcrição",
+      "meeting": "Reunião",
+      "date": "Data",
+      "duration": "Duração",
+      "transcriptSearchPlaceholder": "Pesquisar na transcrição",
+      "transcriptNoMatches": "Nenhum segmento corresponde a \"{{query}}\".",
+      "transcriptEmpty": "Esta entrada não tem segmentos com marcações de tempo.",
+      "copyTranscript": "Copiar a transcrição",
+      "exportMarkdown": "Exportar como Markdown",
+      "markdownFile": "Documento Markdown",
+      "exportSaved": "Transcrição guardada como {{name}}.",
+      "exportFailed": "Não foi possível exportar a transcrição."
     },
     "debug": {
       "title": "Depuração",

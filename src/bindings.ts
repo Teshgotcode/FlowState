@@ -939,6 +939,21 @@ async unloadModelManually() : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Writes UTF-8 `contents` to `path`.
+ * 
+ * For exports the user asked for: the frontend shows a save dialog and hands
+ * the chosen path to this command, so the destination is always the user's
+ * own pick and nothing leaves the machine.
+ */
+async exportTextFile(path: string, contents: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("export_text_file", { path, contents }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getHistoryEntries(cursor: number | null, limit: number | null) : Promise<Result<PaginatedHistory, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_history_entries", { cursor, limit }) };

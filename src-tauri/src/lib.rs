@@ -226,6 +226,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::transcription::get_model_load_status,
             commands::transcription::get_language_status,
             commands::transcription::unload_model_manually,
+            commands::export::export_text_file,
             commands::history::get_history_entries,
             commands::history::toggle_history_entry_saved,
             commands::history::get_audio_file_path,

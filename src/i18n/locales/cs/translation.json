@@ -730,7 +730,19 @@
       "showMore": "Zobrazit více",
       "showLess": "Zobrazit méně",
       "dropTitle": "Pusťte pro přepis",
-      "dropDescription": "Zobrazí se v historii."
+      "dropDescription": "Zobrazí se v historii.",
+      "transcript": "Přepis",
+      "meeting": "Schůzka",
+      "date": "Datum",
+      "duration": "Délka",
+      "transcriptSearchPlaceholder": "Hledat v přepisu",
+      "transcriptNoMatches": "Žádné segmenty neodpovídají „{{query}}“.",
+      "transcriptEmpty": "Tato položka nemá žádné segmenty s časovými razítky.",
+      "copyTranscript": "Zkopírovat přepis",
+      "exportMarkdown": "Exportovat jako Markdown",
+      "markdownFile": "Dokument Markdown",
+      "exportSaved": "Přepis byl uložen jako {{name}}.",
+      "exportFailed": "Přepis se nepodařilo exportovat."
     },
     "debug": {
       "title": "Ladění",

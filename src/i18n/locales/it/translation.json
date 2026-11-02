@@ -730,7 +730,19 @@
       "showMore": "Mostra di più",
       "showLess": "Mostra di meno",
       "dropTitle": "Rilascia per trascrivere",
-      "dropDescription": "Comparirà nella cronologia."
+      "dropDescription": "Comparirà nella cronologia.",
+      "transcript": "Trascrizione",
+      "meeting": "Riunione",
+      "date": "Data",
+      "duration": "Durata",
+      "transcriptSearchPlaceholder": "Cerca nella trascrizione",
+      "transcriptNoMatches": "Nessun segmento corrisponde a \"{{query}}\".",
+      "transcriptEmpty": "Questa voce non ha segmenti con timestamp.",
+      "copyTranscript": "Copia la trascrizione",
+      "exportMarkdown": "Esporta come Markdown",
+      "markdownFile": "Documento Markdown",
+      "exportSaved": "Trascrizione salvata come {{name}}.",
+      "exportFailed": "Impossibile esportare la trascrizione."
     },
     "debug": {
       "title": "Debug",

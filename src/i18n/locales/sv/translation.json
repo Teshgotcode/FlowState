@@ -730,7 +730,19 @@
       "showMore": "Visa mer",
       "showLess": "Visa mindre",
       "dropTitle": "Släpp för att transkribera",
-      "dropDescription": "Den visas i historiken."
+      "dropDescription": "Den visas i historiken.",
+      "transcript": "Transkript",
+      "meeting": "Möte",
+      "date": "Datum",
+      "duration": "Längd",
+      "transcriptSearchPlaceholder": "Sök i transkriptet",
+      "transcriptNoMatches": "Inga segment matchar \"{{query}}\".",
+      "transcriptEmpty": "Detta inlägg har inga tidsstämplade segment.",
+      "copyTranscript": "Kopiera transkriptet",
+      "exportMarkdown": "Exportera som Markdown",
+      "markdownFile": "Markdown-dokument",
+      "exportSaved": "Transkriptet sparades som {{name}}.",
+      "exportFailed": "Transkriptet kunde inte exporteras."
     },
     "debug": {
       "title": "Felsökning",

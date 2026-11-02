@@ -730,7 +730,19 @@
       "showMore": "Pokaż więcej",
       "showLess": "Pokaż mniej",
       "dropTitle": "Upuść, aby transkrybować",
-      "dropDescription": "Pojawi się w historii."
+      "dropDescription": "Pojawi się w historii.",
+      "transcript": "Transkrypcja",
+      "meeting": "Spotkanie",
+      "date": "Data",
+      "duration": "Czas trwania",
+      "transcriptSearchPlaceholder": "Szukaj w transkrypcji",
+      "transcriptNoMatches": "Żaden segment nie pasuje do \"{{query}}\".",
+      "transcriptEmpty": "Ten wpis nie ma segmentów ze znacznikami czasu.",
+      "copyTranscript": "Skopiuj transkrypcję",
+      "exportMarkdown": "Eksportuj jako Markdown",
+      "markdownFile": "Dokument Markdown",
+      "exportSaved": "Transkrypcja została zapisana jako {{name}}.",
+      "exportFailed": "Nie udało się wyeksportować transkrypcji."
     },
     "debug": {
       "title": "Debugowanie",

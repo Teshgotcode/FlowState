@@ -730,7 +730,19 @@
       "showMore": "Vis mere",
       "showLess": "Vis mindre",
       "dropTitle": "Slip for at transskribere",
-      "dropDescription": "Den vises i historikken."
+      "dropDescription": "Den vises i historikken.",
+      "transcript": "Transskription",
+      "meeting": "Møde",
+      "date": "Dato",
+      "duration": "Varighed",
+      "transcriptSearchPlaceholder": "Søg i transskriptionen",
+      "transcriptNoMatches": "Ingen segmenter matcher \"{{query}}\".",
+      "transcriptEmpty": "Denne post har ingen tidsstemplede segmenter.",
+      "copyTranscript": "Kopier transskriptionen",
+      "exportMarkdown": "Eksporter som Markdown",
+      "markdownFile": "Markdown-dokument",
+      "exportSaved": "Transskriptionen blev gemt som {{name}}.",
+      "exportFailed": "Transskriptionen kunne ikke eksporteres."
     },
     "debug": {
       "title": "Fejlfinding",

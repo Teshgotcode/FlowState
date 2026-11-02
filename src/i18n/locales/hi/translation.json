@@ -730,7 +730,19 @@
       "showMore": "और दिखाएँ",
       "showLess": "कम दिखाएँ",
       "dropTitle": "ट्रांसक्राइब करने के लिए छोड़ें",
-      "dropDescription": "यह इतिहास में दिखाई देगा।"
+      "dropDescription": "यह इतिहास में दिखाई देगा।",
+      "transcript": "प्रतिलिपि",
+      "meeting": "बैठक",
+      "date": "तारीख",
+      "duration": "अवधि",
+      "transcriptSearchPlaceholder": "प्रतिलिपि में खोजें",
+      "transcriptNoMatches": "\"{{query}}\" से मेल खाता कोई खंड नहीं है।",
+      "transcriptEmpty": "इस प्रविष्टि में समय-चिह्नित खंड नहीं हैं।",
+      "copyTranscript": "प्रतिलिपि कॉपी करें",
+      "exportMarkdown": "Markdown के रूप में निर्यात करें",
+      "markdownFile": "Markdown दस्तावेज़",
+      "exportSaved": "प्रतिलिपि {{name}} के रूप में सहेज दी गई।",
+      "exportFailed": "प्रतिलिपि निर्यात नहीं की जा सकी।"
     },
     "debug": {
       "title": "डिबग",

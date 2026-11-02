@@ -730,7 +730,19 @@
       "showMore": "عرض المزيد",
       "showLess": "عرض أقل",
       "dropTitle": "أفلت الملف لنسخه",
-      "dropDescription": "سيظهر في السجل."
+      "dropDescription": "سيظهر في السجل.",
+      "transcript": "التفريغ النصي",
+      "meeting": "اجتماع",
+      "date": "التاريخ",
+      "duration": "المدة",
+      "transcriptSearchPlaceholder": "البحث في التفريغ النصي",
+      "transcriptNoMatches": "لا توجد مقاطع تطابق «{{query}}».",
+      "transcriptEmpty": "لا توجد مقاطع بطوابع زمنية في هذا الإدخال.",
+      "copyTranscript": "نسخ التفريغ النصي",
+      "exportMarkdown": "تصدير بصيغة Markdown",
+      "markdownFile": "مستند Markdown",
+      "exportSaved": "تم حفظ التفريغ النصي باسم {{name}}.",
+      "exportFailed": "تعذّر تصدير التفريغ النصي."
     },
     "debug": {
       "title": "تصحيح الأخطاء",

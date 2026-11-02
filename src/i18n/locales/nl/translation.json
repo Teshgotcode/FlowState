@@ -730,7 +730,19 @@
       "showMore": "Meer tonen",
       "showLess": "Minder tonen",
       "dropTitle": "Loslaten om te transcriberen",
-      "dropDescription": "Het verschijnt in de geschiedenis."
+      "dropDescription": "Het verschijnt in de geschiedenis.",
+      "transcript": "Transcript",
+      "meeting": "Vergadering",
+      "date": "Datum",
+      "duration": "Duur",
+      "transcriptSearchPlaceholder": "Zoeken in het transcript",
+      "transcriptNoMatches": "Geen segmenten komen overeen met \"{{query}}\".",
+      "transcriptEmpty": "Dit item heeft geen segmenten met tijdstempels.",
+      "copyTranscript": "Transcript kopiëren",
+      "exportMarkdown": "Exporteren als Markdown",
+      "markdownFile": "Markdown-document",
+      "exportSaved": "Transcript opgeslagen als {{name}}.",
+      "exportFailed": "Het transcript kon niet worden geëxporteerd."
     },
     "debug": {
       "title": "Probleemoplossing",

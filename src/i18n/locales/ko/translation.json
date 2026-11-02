@@ -730,7 +730,19 @@
       "showMore": "더 보기",
       "showLess": "간략히 보기",
       "dropTitle": "놓아서 받아쓰기",
-      "dropDescription": "기록에 표시됩니다."
+      "dropDescription": "기록에 표시됩니다.",
+      "transcript": "전사",
+      "meeting": "회의",
+      "date": "날짜",
+      "duration": "길이",
+      "transcriptSearchPlaceholder": "전사 검색",
+      "transcriptNoMatches": "\"{{query}}\"와 일치하는 구간이 없습니다.",
+      "transcriptEmpty": "이 항목에는 타임스탬프가 있는 구간이 없습니다.",
+      "copyTranscript": "전사 복사",
+      "exportMarkdown": "Markdown으로 내보내기",
+      "markdownFile": "Markdown 문서",
+      "exportSaved": "전사가 {{name}}(으)로 저장되었습니다.",
+      "exportFailed": "전사를 내보내지 못했습니다."
     },
     "debug": {
       "title": "디버그",

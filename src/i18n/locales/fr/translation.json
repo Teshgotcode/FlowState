@@ -730,7 +730,19 @@
       "showMore": "Afficher plus",
       "showLess": "Afficher moins",
       "dropTitle": "Déposez pour transcrire",
-      "dropDescription": "Il apparaîtra dans l'historique."
+      "dropDescription": "Il apparaîtra dans l'historique.",
+      "transcript": "Transcription",
+      "meeting": "Réunion",
+      "date": "Date",
+      "duration": "Durée",
+      "transcriptSearchPlaceholder": "Rechercher dans la transcription",
+      "transcriptNoMatches": "Aucun segment ne correspond à « {{query}} ».",
+      "transcriptEmpty": "Cette entrée n'a pas de segments horodatés.",
+      "copyTranscript": "Copier la transcription",
+      "exportMarkdown": "Exporter en Markdown",
+      "markdownFile": "Document Markdown",
+      "exportSaved": "Transcription enregistrée sous {{name}}.",
+      "exportFailed": "La transcription n'a pas pu être exportée."
     },
     "debug": {
       "title": "Débogage",

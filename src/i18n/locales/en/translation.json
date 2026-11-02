@@ -730,7 +730,19 @@
       "showMore": "Show more",
       "showLess": "Show less",
       "dropTitle": "Drop to transcribe",
-      "dropDescription": "It'll show up in History."
+      "dropDescription": "It'll show up in History.",
+      "transcript": "Transcript",
+      "meeting": "Meeting",
+      "date": "Date",
+      "duration": "Duration",
+      "transcriptSearchPlaceholder": "Search the transcript",
+      "transcriptNoMatches": "No segments match \"{{query}}\".",
+      "transcriptEmpty": "This entry has no timed segments.",
+      "copyTranscript": "Copy transcript",
+      "exportMarkdown": "Export as Markdown",
+      "markdownFile": "Markdown document",
+      "exportSaved": "Transcript saved as {{name}}.",
+      "exportFailed": "The transcript could not be exported."
     },
     "debug": {
       "title": "Debug",
