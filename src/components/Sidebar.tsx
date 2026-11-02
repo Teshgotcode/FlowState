@@ -1,6 +1,14 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Cog, FlaskConical, History, Info, Sparkles, Cpu } from "lucide-react";
+import {
+  Cable,
+  Cog,
+  FlaskConical,
+  History,
+  Info,
+  Sparkles,
+  Cpu,
+} from "lucide-react";
 import FlowStateLogo from "./icons/FlowStateLogo";
 import FlowStateMark from "./icons/FlowStateMark";
 import { useSettings } from "../hooks/useSettings";
@@ -8,6 +16,7 @@ import {
   GeneralSettings,
   AdvancedSettings,
   HistorySettings,
+  IntegrationsSettings,
   AboutSettings,
   PostProcessingSettings,
   ModelsSettings,
@@ -54,6 +63,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.advanced",
     icon: Cog,
     component: AdvancedSettings,
+    enabled: () => true,
+  },
+  integrations: {
+    labelKey: "sidebar.integrations",
+    icon: Cable,
+    component: IntegrationsSettings,
     enabled: () => true,
   },
   postprocessing: {

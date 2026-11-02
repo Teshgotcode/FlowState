@@ -16,6 +16,7 @@ mod input;
 mod language_detection;
 mod llm_client;
 mod managers;
+pub mod mcp;
 mod memory;
 mod overlay;
 mod paste_tx;
@@ -241,6 +242,10 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::history::transcribe_file,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
+            commands::mcp::change_mcp_enabled_setting,
+            commands::mcp::change_mcp_port_setting,
+            commands::mcp::regenerate_mcp_token,
+            commands::mcp::get_mcp_status,
             commands::word_suggestions::get_word_suggestions,
             commands::word_suggestions::accept_word_suggestion,
             commands::word_suggestions::ignore_word_suggestion,
@@ -428,6 +433,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(tray::TrayState::new());
     app_handle.manage(TranscriptionJobManager::new(app_handle));
     app_handle.manage(MeetingManager::new(app_handle));
+    app_handle.manage(mcp::manager::McpManager::new(app_handle));
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command

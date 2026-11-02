@@ -1,6 +1,7 @@
 pub mod audio;
 pub mod export;
 pub mod history;
+pub mod mcp;
 pub mod meeting;
 pub mod models;
 pub mod transcription;

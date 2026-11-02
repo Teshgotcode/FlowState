@@ -1067,6 +1067,52 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * Turn the MCP server on or off. The first time it is turned on, a random
+ * per-user token is generated; the Integrations panel shows it that once,
+ * and the server will not start without one.
+ * 
+ * Returns the settings so the panel can show the freshly generated token
+ * immediately, without waiting for the settings-changed round-trip.
+ */
+async changeMcpEnabledSetting(enabled: boolean) : Promise<Result<AppSettings, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_mcp_enabled_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Change the loopback port the MCP server listens on. Port 0 is refused: it
+ * would hand the choice to the OS, and the panel could not show it.
+ */
+async changeMcpPortSetting(port: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_mcp_port_setting", { port }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Generate a fresh token, invalidating the old one. Returns the settings so
+ * the panel can show the new token once, right where it was requested.
+ */
+async regenerateMcpToken() : Promise<Result<AppSettings, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("regenerate_mcp_token") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Whether the MCP server is currently listening, for the Integrations panel.
+ */
+async getMcpStatus() : Promise<McpStatus> {
+    return await TAURI_INVOKE("get_mcp_status");
+},
+/**
  * The words worth adding to the dictionary, most-corrected first. Empty
  * while learning is switched off — an off switch means nothing is learned,
  * not that learned data is hidden.
@@ -1390,7 +1436,21 @@ language_detection_window_secs?: number;
  * not gated on this — that follows model capability. Migrated from the old
  * `overlay_position` (position `none` → style `None`).
  */
-overlay_style?: OverlayStyle }
+overlay_style?: OverlayStyle; 
+/**
+ * Whether the local MCP server (Settings → Integrations) is running.
+ * Off by default: nothing listens until the user turns it on.
+ */
+mcp_enabled?: boolean; 
+/**
+ * The loopback port the MCP server listens on when enabled.
+ */
+mcp_port?: number; 
+/**
+ * The per-user token guarding the MCP server, generated the first time
+ * the user enables it. `None` until then.
+ */
+mcp_token?: string | null }
 export type AudioDevice = { index: string; name: string; is_default: boolean }
 export type AutoSubmitKey = "enter" | "ctrl_enter" | "cmd_enter"
 export type AutoUnavailableReason = 
@@ -1559,6 +1619,11 @@ export type LanguageStatus =
  */
 { kind: "auto_unavailable"; language: string; reason: AutoUnavailableReason }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * What the Integrations panel asks about the server: only whether it is up.
+ * Everything else (enabled, port, token) is plain settings.
+ */
+export type McpStatus = { running: boolean }
 /**
  * One action item from the meeting: what to do, and who owns it. The owner is
  * the name the transcript itself mentions as responsible; an empty string
