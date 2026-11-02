@@ -15,13 +15,13 @@ The corpus and the harness live outside the repo. Reproduce it with 30 recording
 
 ## Results
 
-| Model | Norwegian WER | English WER | Combined WER | Norwegian latency | English latency | Norwegian RTF | English RTF |
-|---|---|---|---|---|---|---|---|
-| whisper-large-v3-turbo | 6.1% | 1.0% | 3.5% | 1085 ms | 1048 ms | 0.20 | 0.28 |
-| whisper-small | 19.9% | 0.5% | 9.9% | 341 ms | 287 ms | 0.07 | 0.08 |
-| parakeet-tdt-0.6b-v3 | not supported | 1.0% | n/a | n/a | 150 ms | n/a | 0.04 |
-| nemotron-3.5-asr-streaming-0.6b | 72.4% (autodetect) | 1.6% | n/a | 336 ms | 270 ms | 0.06 | 0.07 |
-| whisper-medium | not measured | not measured | n/a | n/a | n/a | n/a | n/a |
+| Model                           | Norwegian WER      | English WER  | Combined WER | Norwegian latency | English latency | Norwegian RTF | English RTF |
+| ------------------------------- | ------------------ | ------------ | ------------ | ----------------- | --------------- | ------------- | ----------- |
+| whisper-large-v3-turbo          | 6.1%               | 1.0%         | 3.5%         | 1085 ms           | 1048 ms         | 0.20          | 0.28        |
+| whisper-small                   | 19.9%              | 0.5%         | 9.9%         | 341 ms            | 287 ms          | 0.07          | 0.08        |
+| parakeet-tdt-0.6b-v3            | not supported      | 1.0%         | n/a          | n/a               | 150 ms          | n/a           | 0.04        |
+| nemotron-3.5-asr-streaming-0.6b | 72.4% (autodetect) | 1.6%         | n/a          | 336 ms            | 270 ms          | 0.06          | 0.07        |
+| whisper-medium                  | not measured       | not measured | n/a          | n/a               | n/a             | n/a           | n/a         |
 
 Notes on the rows:
 
@@ -33,13 +33,13 @@ Notes on the rows:
 
 The model package ships measured error rates on FLEURS test data. They rank the same way as our corpus:
 
-| Model | English error | Norwegian (nb) error |
-|---|---|---|
-| whisper-large-v3 | 4.03% | 8.19% |
-| whisper-large-v3-turbo | 4.38% | 9.10% |
-| whisper-medium | 4.64% | 13.66% |
-| nemotron-3.5-asr-streaming-0.6b | 7.90% | 19.24% |
-| whisper-small | 6.51% | 25.53% |
+| Model                           | English error | Norwegian (nb) error |
+| ------------------------------- | ------------- | -------------------- |
+| whisper-large-v3                | 4.03%         | 8.19%                |
+| whisper-large-v3-turbo          | 4.38%         | 9.10%                |
+| whisper-medium                  | 4.64%         | 13.66%               |
+| nemotron-3.5-asr-streaming-0.6b | 7.90%         | 19.24%               |
+| whisper-small                   | 6.51%         | 25.53%               |
 
 Source: `src-tauri/src/catalog/catalog.json`, `results` section. FLEURS is read speech with accents and noise, so its absolute numbers are higher than clean TTS audio. The ordering is what matters.
 
@@ -49,10 +49,10 @@ The app seeds an ES vocabulary list (Solan, aksjekapital, pitchdeck, and so on).
 
 Measured on whisper-large-v3-turbo with the seeded list:
 
-| Run | Norwegian WER | English WER |
-|---|---|---|
-| No vocabulary | 6.1% | 1.0% |
-| ES vocabulary on every run | 4.4% | 15.6% |
+| Run                        | Norwegian WER | English WER |
+| -------------------------- | ------------- | ----------- |
+| No vocabulary              | 6.1%          | 1.0%        |
+| ES vocabulary on every run | 4.4%          | 15.6%       |
 
 One English sentence decoded as "gl gustado kbre mene", and "cheap tools" became "Cheek Tools". The list helps Norwegian and damages English. `vocabulary_for_model` therefore sends the list only when the run language is known to be Norwegian. On auto the language is not known before the run, so the fuzzy post-correction applies the custom words afterwards instead. Users who pick Norwegian explicitly get the 4.4% result.
 
