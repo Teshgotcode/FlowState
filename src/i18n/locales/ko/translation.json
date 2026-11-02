@@ -604,6 +604,28 @@
         "remove": "{{word}} 제거",
         "duplicate": "\"{{word}}\"이(가) 이미 존재합니다"
       },
+      "snippets": {
+        "title": "Snippets",
+        "description": "Say a trigger word (e.g. \"signatur\") and the dictation gets the full expansion instead. Triggers only match whole words.",
+        "triggerLabel": "Trigger",
+        "triggerPlaceholder": "signatur",
+        "expansionLabel": "Expansion",
+        "expansionPlaceholder": "Med vennlig hilsen…",
+        "caseSensitive": "Case sensitive",
+        "add": "Add",
+        "remove": "Remove snippet",
+        "duplicate": "\"{{trigger}}\" already exists",
+        "import": "Import",
+        "export": "Export",
+        "exportSaved": "Snippets exported",
+        "exportFailed": "Could not export snippets",
+        "imported": "Imported {{count}} snippets",
+        "importEmpty": "The file contains no snippets",
+        "importReadFailed": "Could not read the file",
+        "invalidJson": "The file is not valid JSON",
+        "notSnippets": "The file does not contain a snippets list",
+        "badEntry": "Snippet {{index}} is missing its {{field}}"
+      },
       "voiceActivityDetection": {
         "title": "음성 활동 감지",
         "description": "녹음에서 무음 구간을 걸러냅니다. 스트리밍 지원 모델은 더 긴 VAD 테일을 사용하며, VAD를 끄면 원본 오디오가 그대로 녹음됩니다."

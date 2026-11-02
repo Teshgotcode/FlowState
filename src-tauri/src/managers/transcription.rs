@@ -1,6 +1,6 @@
 use crate::audio_toolkit::chunking;
 use crate::audio_toolkit::{
-    apply_custom_words, detect_output_language, normalize_transcription_output,
+    apply_custom_words, apply_snippets, detect_output_language, normalize_transcription_output,
     remove_filler_words, OutputLanguageEvidence,
 };
 use crate::chinese_script::{convert_chinese_script, ChineseVariety};
@@ -1754,7 +1754,29 @@ fn post_process_transcription_text(
             settings.filler_word_removal_enabled,
         );
 
-        normalize_transcription_output(&without_fillers)
+        let normalized = normalize_transcription_output(&without_fillers);
+
+        // Snippet expansion runs last in this local cleanup, and always before
+        // the LLM post-processing that `process_transcription_output` runs
+        // afterwards — the model polish sees the already-expanded text.
+        // Pipeline order, and why:
+        // 1. Chinese script conversion — triggers match the script the user
+        //    writes in.
+        // 2. custom-word fuzzy correction — proper nouns are spelled right
+        //    before triggers try to match them.
+        // 3. filler-word removal — the spoken trigger keeps clean word
+        //    boundaries.
+        // 4. whitespace normalization — the text is tidy before insertion.
+        // 5. snippet expansion — expansions are inserted verbatim, never
+        //    rewritten by the steps above.
+        // Translate mode is unaffected: whisper's translation happens inside
+        // the model, on the audio, so this only ever expands text that has
+        // already been translated.
+        if settings.snippets.is_empty() {
+            normalized
+        } else {
+            apply_snippets(&normalized, &settings.snippets)
+        }
     })
 }
 
@@ -2042,6 +2064,7 @@ pub fn get_available_accelerators(tm: &TranscriptionManager) -> AvailableAcceler
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::settings::Snippet;
     use transcribe_cpp::Segment;
 
     fn languages(codes: &[&str]) -> Vec<String> {
@@ -2442,6 +2465,44 @@ mod tests {
             &supported,
         );
         assert_eq!(corrected, "i use FlowState every day");
+    }
+
+    #[test]
+    fn snippets_expand_whole_words_after_transcription() {
+        let settings = AppSettings {
+            selected_language: "en".to_string(),
+            snippets: vec![Snippet {
+                trigger: "signatur".to_string(),
+                expansion: "Med vennlig hilsen\nOla".to_string(),
+                case_sensitive: false,
+            }],
+            ..Default::default()
+        };
+        let evidence = OutputLanguageEvidence::UserSelected("en".to_string());
+        let supported = languages(&["en"]);
+
+        // Mid-sentence, the whole word expands.
+        let expanded = post_process_transcription_text(
+            "kan du sette inn signatur her tack".to_string(),
+            &settings,
+            false,
+            &evidence,
+            &supported,
+        );
+        assert_eq!(
+            expanded,
+            "kan du sette inn Med vennlig hilsen\nOla her tack"
+        );
+
+        // A trigger that is part of a bigger word never fires.
+        let untouched = post_process_transcription_text(
+            "signaturen kom feil".to_string(),
+            &settings,
+            false,
+            &evidence,
+            &supported,
+        );
+        assert_eq!(untouched, "signaturen kom feil");
     }
 
     #[test]

@@ -106,6 +106,19 @@ pub enum PostProcessApiFormat {
     Anthropic,
 }
 
+/// One spoken template: say the `trigger` as its own word or phrase and the
+/// final text gets the `expansion` instead. `case_sensitive` decides whether
+/// "Signatur" matches trigger "signatur".
+#[derive(Serialize, Deserialize, Debug, Clone, PartialEq, Type)]
+pub struct Snippet {
+    /// The spoken word or phrase to listen for, e.g. "signatur".
+    pub trigger: String,
+    /// The text the trigger is replaced with, verbatim.
+    pub expansion: String,
+    #[serde(default)]
+    pub case_sensitive: bool,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Type)]
 pub struct PostProcessProvider {
     pub id: String,
@@ -469,6 +482,10 @@ pub struct AppSettings {
     pub log_level: LogLevel,
     #[serde(default = "default_custom_words")]
     pub custom_words: Vec<String>,
+    /// Spoken text templates ("say trigger, get expansion"), expanded after
+    /// transcription in [`post_process_transcription_text`].
+    #[serde(default = "default_snippets")]
+    pub snippets: Vec<Snippet>,
     #[serde(default)]
     pub model_unload_timeout: ModelUnloadTimeout,
     #[serde(default = "default_word_correction_threshold")]
@@ -743,6 +760,17 @@ fn default_custom_words() -> Vec<String> {
 
 /// FlowState: lokal-first standard — Apple Intelligence på ARM64-Mac,
 /// Ollama (localhost:11434) ellers. Sky-leverandører forblir opt-in.
+/// Seeded so the feature is discoverable out of the box: say "signatur" and
+/// the signature block appears. Removing it writes `snippets: []` to the
+/// store, which persists — serde defaults only apply to missing keys.
+fn default_snippets() -> Vec<Snippet> {
+    vec![Snippet {
+        trigger: "signatur".to_string(),
+        expansion: "Med vennlig hilsen\nEntreprenørskolen-gründeren".to_string(),
+        case_sensitive: false,
+    }]
+}
+
 fn default_post_process_provider_id() -> String {
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     {
@@ -1070,6 +1098,7 @@ pub fn get_default_settings() -> AppSettings {
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),
+        snippets: Vec::new(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),
         history_limit: default_history_limit(),

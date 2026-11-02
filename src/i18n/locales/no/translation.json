@@ -604,6 +604,28 @@
         "remove": "Fjern {{word}}",
         "duplicate": "«{{word}}» finnes allerede"
       },
+      "snippets": {
+        "title": "Tekstmaler",
+        "description": "Si et utløserord (f.eks. «signatur») og dikteringen får hele ekspansjonen i stedet. Utløsere matcher kun hele ord.",
+        "triggerLabel": "Utløser",
+        "triggerPlaceholder": "signatur",
+        "expansionLabel": "Ekspansjon",
+        "expansionPlaceholder": "Med vennlig hilsen…",
+        "caseSensitive": "Skill store/små bokstaver",
+        "add": "Legg til",
+        "remove": "Fjern tekstmal",
+        "duplicate": "«{{trigger}}» finnes allerede",
+        "import": "Importer",
+        "export": "Eksporter",
+        "exportSaved": "Tekstmaler eksportert",
+        "exportFailed": "Kunne ikke eksportere tekstmalene",
+        "imported": "Importerte {{count}} tekstmaler",
+        "importEmpty": "Filen inneholder ingen tekstmaler",
+        "importReadFailed": "Kunne ikke lese filen",
+        "invalidJson": "Filen er ikke gyldig JSON",
+        "notSnippets": "Filen inneholder ikke en liste med tekstmaler",
+        "badEntry": "Tekstmal {{index}} mangler {{field}}"
+      },
       "voiceActivityDetection": {
         "title": "Taleaktivitetsdeteksjon",
         "description": "Filtrerer bort stillheten fra opptaket. Modeller med streaming-støtte bruker en lengre VAD-hale. Slår du av VAD, blir alt tatt opp rått uten filtrering."
