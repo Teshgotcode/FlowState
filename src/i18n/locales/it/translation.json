@@ -800,7 +800,8 @@
         "failedNoTranscript": "Non c'è una trascrizione da cui creare una nota.",
         "failedNotMeeting": "Solo le registrazioni di riunioni possono avere una nota.",
         "cancelled": "La nota della riunione è stata annullata. La trascrizione è invariata.",
-        "failed": "Impossibile generare la nota della riunione."
+        "failed": "Impossibile generare la nota della riunione.",
+        "tab": "Nota"
       },
       "copyTranscript": "Copia la trascrizione",
       "exportFormatLabel": "Formato di esportazione",
@@ -818,7 +819,25 @@
       "correctSave": "Salva",
       "correctCancel": "Annulla",
       "correctSaved": "Trascrizione corretta",
-      "correctError": "Impossibile salvare la correzione"
+      "correctError": "Impossibile salvare la correzione",
+      "meetingAsk": {
+        "tab": "Chiedi",
+        "description": "Fai una domanda sulla riunione; l'LLM locale risponde dalla trascrizione, con citazioni su cui puoi fare clic.",
+        "placeholder": "Chiedi qualcosa sulla riunione…",
+        "ask": "Chiedi",
+        "searching": "Lettura della trascrizione…",
+        "generatedLabel": "Generato localmente da {{model}} — da verificare nella trascrizione",
+        "showInTranscript": "Mostra questa parte nella trascrizione",
+        "notFound": "La trascrizione non risponde a questo.",
+        "cancelled": "La domanda è stata annullata.",
+        "failedNoLocalLlm": "Per fare domande serve un LLM locale, ad esempio Ollama su http://localhost:11434/v1. Configuralo in Post Process, nelle impostazioni.",
+        "failedUnreachable": "Nessuna risposta dall'LLM locale. Controlla che sia in esecuzione.",
+        "failedInvalidResponse": "L'LLM locale ha risposto, ma la risposta non era utilizzabile.",
+        "failedNoTranscript": "Non c'è una trascrizione su cui chiedere.",
+        "failedNotMeeting": "Si può chiedere solo delle registrazioni di riunioni.",
+        "failedEmptyQuestion": "Scrivi prima una domanda.",
+        "failed": "Non è stato possibile rispondere alla domanda."
+      }
     },
     "debug": {
       "title": "Debug",

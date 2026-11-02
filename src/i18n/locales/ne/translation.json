@@ -800,7 +800,8 @@
         "failedNoTranscript": "नोट बनाउने ट्रान्सक्रिप्ट छैन।",
         "failedNotMeeting": "बैठक रेकर्डिङले मात्र नोट पाउन सक्छ।",
         "cancelled": "बैठक नोट रद्द गरियो। ट्रान्सक्रिप्ट अपरिवर्तित छ।",
-        "failed": "बैठक नोट बनाउन सकिएन।"
+        "failed": "बैठक नोट बनाउन सकिएन।",
+        "tab": "टिप्पणी"
       },
       "copyTranscript": "ट्रान्सक्रिप्ट कपी गर्नुहोस्",
       "exportFormatLabel": "निर्यात ढाँचा",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "सोध्नुहोस्",
+        "description": "बैठकबारे प्रश्न सोध्नुहोस्; स्थानीय LLM ट्रान्सक्रिप्टबाट उत्तर दिन्छ, क्लिक गर्न मिल्ने उद्धरणहरूसहित।",
+        "placeholder": "बैठकबारे केही सोध्नुहोस्…",
+        "ask": "सोध्नुहोस्",
+        "searching": "ट्रान्सक्रिप्ट पढ्दै…",
+        "generatedLabel": "{{model}} ले स्थानीय रूपमा बनाएको — ट्रान्सक्रिप्टसँग जाँच्नुहोस्",
+        "showInTranscript": "यो भाग ट्रान्सक्रिप्टमा देखाउनुहोस्",
+        "notFound": "ट्रान्सक्रिप्टले यसको उत्तर दिँदैन।",
+        "cancelled": "प्रश्न रद्द गरियो।",
+        "failedNoLocalLlm": "सोध्नका लागि स्थानीय LLM चाहिन्छ, जस्तै http://localhost:11434/v1 मा Ollama। सेटिङको Post Process मुनि मिलाउनुहोस्।",
+        "failedUnreachable": "स्थानीय LLM बाट उत्तर आएन। चलिरहेको छ कि छैन जाँच्नुहोस्।",
+        "failedInvalidResponse": "स्थानीय LLM ले उत्तर दियो, तर उत्तर प्रयोग गर्न सकिएन।",
+        "failedNoTranscript": "सोध्नुपर्ने कुनै ट्रान्सक्रिप्ट छैन।",
+        "failedNotMeeting": "बैठक रेकर्डिङबारे मात्र सोध्न सकिन्छ।",
+        "failedEmptyQuestion": "पहिले एउटा प्रश्न लेख्नुहोस्।",
+        "failed": "प्रश्नको उत्तर दिन सकिएन।"
+      }
     },
     "debug": {
       "title": "डिबग",

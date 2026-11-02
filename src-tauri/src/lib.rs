@@ -39,11 +39,11 @@ pub use utils::{env_flag_enabled, flowstate_env_flag_enabled};
 use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::history::HistoryManager;
-use managers::word_suggestions::WordSuggestionLearner;
 use managers::meeting::MeetingManager;
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
 use managers::transcription_jobs::TranscriptionJobManager;
+use managers::word_suggestions::WordSuggestionLearner;
 use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
 use std::sync::Arc;
 use tauri::image::Image;
@@ -251,6 +251,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::get_meeting_status,
             commands::meeting::generate_meeting_note,
             commands::meeting::cancel_meeting_note,
+            commands::meeting::ask_meeting_transcript,
+            commands::meeting::cancel_meeting_ask,
             commands::meeting::start_meeting_bar_drag,
             commands::meeting::open_meeting_bar_menu,
             helpers::clamshell::is_laptop,

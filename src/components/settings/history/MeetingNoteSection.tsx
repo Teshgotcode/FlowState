@@ -10,6 +10,7 @@ import {
 } from "@/bindings";
 import { Button } from "../../ui/Button";
 import { Spinner } from "../../ui/Spinner";
+import { MeetingAskPanel } from "./MeetingAskPanel";
 
 /** The message each failure reason shows. The three "no local LLM"
  * reasons share one message: the fix is the same. */
@@ -27,16 +28,23 @@ const FAILURE_MESSAGE_KEYS: Record<MeetingNoteFailure, string> = {
 
 interface MeetingNoteSectionProps {
   entry: HistoryEntry;
+  /** Scroll the transcript to the segment starting at this timestamp; the
+   * "Ask" tab's quotes click through to their place in the transcript. */
+  onJumpToSegment: (t0Ms: number) => void;
 }
 
 /** The meeting note: a draft a local LLM writes over this meeting's
- * transcript, only when the user clicks for it. The note sits above the
- * transcript in the transcript window, marked as a draft the user must check;
- * it is never sent, uploaded or shared anywhere by the app. */
+ * transcript, only when the user clicks for it, and the "Ask" tab, where the
+ * same local LLM answers questions about the meeting with quotes back into
+ * the transcript. The note sits above the transcript in the transcript
+ * window, marked as a draft the user must check; it is never sent, uploaded
+ * or shared anywhere by the app. */
 export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
   entry,
+  onJumpToSegment,
 }) => {
   const { t } = useTranslation();
+  const [tab, setTab] = useState<"note" | "ask">("note");
   const [generating, setGenerating] = useState(false);
 
   const note = entry.metadata?.meeting_note ?? null;
@@ -97,34 +105,61 @@ export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
       className="mb-4 rounded-lg border border-line bg-wash p-3 space-y-3"
     >
       <div className="flex items-center justify-between gap-2">
-        <h3 className="text-xs font-medium text-ink-3 uppercase tracking-wide">
-          {t("settings.history.meetingNote.title")}
-        </h3>
-        {generating ? (
-          <div className="flex items-center gap-2">
-            <Spinner />
-            <span className="text-sm text-ink-3">
-              {t("settings.history.meetingNote.generating")}
-            </span>
-            <Button variant="secondary" size="sm" onClick={handleCancel}>
-              {t("settings.history.meetingNote.cancel")}
+        <div
+          role="tablist"
+          aria-label={t("settings.history.meetingNote.title")}
+          className="flex items-center gap-0.5 rounded-lg border border-line-strong bg-wash p-0.5"
+        >
+          {(
+            [
+              ["note", "settings.history.meetingNote.tab"],
+              ["ask", "settings.history.meetingAsk.tab"],
+            ] as const
+          ).map(([id, labelKey]) => (
+            <button
+              key={id}
+              type="button"
+              role="tab"
+              aria-selected={tab === id}
+              onClick={() => setTab(id)}
+              className={`cursor-pointer rounded-md px-2 py-1 text-xs font-semibold transition-colors ${
+                tab === id
+                  ? "bg-logo-primary/20 text-text"
+                  : "text-ink-3 hover:bg-line"
+              }`}
+            >
+              {t(labelKey)}
+            </button>
+          ))}
+        </div>
+        {tab === "note" &&
+          (generating ? (
+            <div className="flex items-center gap-2">
+              <Spinner />
+              <span className="text-sm text-ink-3">
+                {t("settings.history.meetingNote.generating")}
+              </span>
+              <Button variant="secondary" size="sm" onClick={handleCancel}>
+                {t("settings.history.meetingNote.cancel")}
+              </Button>
+            </div>
+          ) : (
+            <Button
+              variant={note ? "secondary" : "primary"}
+              size="sm"
+              onClick={handleGenerate}
+              title={t("settings.history.meetingNote.description")}
+            >
+              {note
+                ? t("settings.history.meetingNote.regenerate")
+                : t("settings.history.meetingNote.generate")}
             </Button>
-          </div>
-        ) : (
-          <Button
-            variant={note ? "secondary" : "primary"}
-            size="sm"
-            onClick={handleGenerate}
-            title={t("settings.history.meetingNote.description")}
-          >
-            {note
-              ? t("settings.history.meetingNote.regenerate")
-              : t("settings.history.meetingNote.generate")}
-          </Button>
-        )}
+          ))}
       </div>
 
-      {note ? (
+      {tab === "ask" ? (
+        <MeetingAskPanel entry={entry} onJumpToSegment={onJumpToSegment} />
+      ) : note ? (
         <div className="space-y-3">
           <p className="flex items-center gap-1.5 text-xs text-warning">
             <AlertTriangle

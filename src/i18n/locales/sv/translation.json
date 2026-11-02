@@ -800,7 +800,8 @@
         "failedNoTranscript": "Det finns ingen transkription att göra anteckning av.",
         "failedNotMeeting": "Endast mötesinspelningar kan få en anteckning.",
         "cancelled": "Mötesanteckningen avbröts. Transkriptionen är oförändrad.",
-        "failed": "Mötesanteckningen kunde inte skapas."
+        "failed": "Mötesanteckningen kunde inte skapas.",
+        "tab": "Anteckning"
       },
       "copyTranscript": "Kopiera transkriptet",
       "exportFormatLabel": "Exportformat",
@@ -818,7 +819,25 @@
       "correctSave": "Spara",
       "correctCancel": "Avbryt",
       "correctSaved": "Transkriptionen har rättats",
-      "correctError": "Kunde inte spara rättningen"
+      "correctError": "Kunde inte spara rättningen",
+      "meetingAsk": {
+        "tab": "Fråga",
+        "description": "Ställ en fråga om mötet; den lokala LLM:en svarar från transkriptionen, med citat du kan klicka på.",
+        "placeholder": "Fråga något om mötet…",
+        "ask": "Fråga",
+        "searching": "Läser transkriptionen…",
+        "generatedLabel": "Genererat lokalt av {{model}} — kontrollera mot transkriptionen",
+        "showInTranscript": "Visa den här delen i transkriptionen",
+        "notFound": "Transkriptionen svarar inte på det.",
+        "cancelled": "Frågan avbröts.",
+        "failedNoLocalLlm": "Att fråga kräver en lokal LLM, till exempel Ollama på http://localhost:11434/v1. Konfigurera den under Post Process i inställningarna.",
+        "failedUnreachable": "Inget svar från den lokala LLM:en. Kontrollera att den körs.",
+        "failedInvalidResponse": "Den lokala LLM:en svarade, men svaret kunde inte användas.",
+        "failedNoTranscript": "Det finns ingen transkription att fråga om.",
+        "failedNotMeeting": "Bara mötesinspelningar kan frågas om.",
+        "failedEmptyQuestion": "Skriv en fråga först.",
+        "failed": "Frågan kunde inte besvaras."
+      }
     },
     "debug": {
       "title": "Felsökning",

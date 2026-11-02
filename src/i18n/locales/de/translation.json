@@ -800,7 +800,8 @@
         "failedNoTranscript": "Es gibt kein Transkript, aus dem eine Notiz erstellt werden kann.",
         "failedNotMeeting": "Nur Besprechungsaufnahmen können eine Notiz erhalten.",
         "cancelled": "Die Besprechungsnotiz wurde abgebrochen. Das Transkript ist unverändert.",
-        "failed": "Die Besprechungsnotiz konnte nicht erstellt werden."
+        "failed": "Die Besprechungsnotiz konnte nicht erstellt werden.",
+        "tab": "Notiz"
       },
       "copyTranscript": "Transkript kopieren",
       "exportFormatLabel": "Exportformat",
@@ -818,7 +819,25 @@
       "correctSave": "Speichern",
       "correctCancel": "Abbrechen",
       "correctSaved": "Transkription korrigiert",
-      "correctError": "Die Korrektur konnte nicht gespeichert werden"
+      "correctError": "Die Korrektur konnte nicht gespeichert werden",
+      "meetingAsk": {
+        "tab": "Fragen",
+        "description": "Stelle eine Frage zum Meeting; das lokale LLM antwortet aus dem Transkript, mit Zitaten zum Anklicken.",
+        "placeholder": "Etwas zum Meeting fragen…",
+        "ask": "Fragen",
+        "searching": "Liest das Transkript…",
+        "generatedLabel": "Lokal generiert von {{model}} — mit dem Transkript abgleichen",
+        "showInTranscript": "Diese Stelle im Transkript zeigen",
+        "notFound": "Das Transkript beantwortet das nicht.",
+        "cancelled": "Die Frage wurde abgebrochen.",
+        "failedNoLocalLlm": "Fragen braucht ein lokales LLM, zum Beispiel Ollama unter http://localhost:11434/v1. Richte es unter Post Process in den Einstellungen ein.",
+        "failedUnreachable": "Keine Antwort vom lokalen LLM. Prüfe, ob es läuft.",
+        "failedInvalidResponse": "Das lokale LLM hat geantwortet, aber die Antwort war nicht verwertbar.",
+        "failedNoTranscript": "Es gibt kein Transkript zum Fragen.",
+        "failedNotMeeting": "Nur Meeting-Aufnahmen können befragt werden.",
+        "failedEmptyQuestion": "Schreibe zuerst eine Frage.",
+        "failed": "Die Frage konnte nicht beantwortet werden."
+      }
     },
     "debug": {
       "title": "Debug",

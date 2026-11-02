@@ -800,7 +800,8 @@
         "failedNoTranscript": "Tidak ada transkrip untuk dibuat catatan.",
         "failedNotMeeting": "Hanya rekaman rapat yang bisa mendapat catatan.",
         "cancelled": "Pembuatan catatan rapat dibatalkan. Transkrip tidak berubah.",
-        "failed": "Catatan rapat tidak dapat dibuat."
+        "failed": "Catatan rapat tidak dapat dibuat.",
+        "tab": "Catatan"
       },
       "copyTranscript": "Salin transkrip",
       "exportFormatLabel": "Format ekspor",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Tanya",
+        "description": "Ajukan pertanyaan tentang rapat; LLM lokal menjawab dari transkrip, dengan kutipan yang bisa diklik.",
+        "placeholder": "Tanyakan sesuatu tentang rapat…",
+        "ask": "Tanya",
+        "searching": "Membaca transkrip…",
+        "generatedLabel": "Dihasilkan secara lokal oleh {{model}} — periksa terhadap transkrip",
+        "showInTranscript": "Tampilkan bagian ini di transkrip",
+        "notFound": "Transkrip tidak menjawab itu.",
+        "cancelled": "Pertanyaan dibatalkan.",
+        "failedNoLocalLlm": "Untuk bertanya diperlukan LLM lokal, misalnya Ollama di http://localhost:11434/v1. Atur di Post Process pada pengaturan.",
+        "failedUnreachable": "Tidak ada jawaban dari LLM lokal. Periksa apakah sedang berjalan.",
+        "failedInvalidResponse": "LLM lokal menjawab, tetapi jawabannya tidak dapat digunakan.",
+        "failedNoTranscript": "Tidak ada transkrip untuk ditanyakan.",
+        "failedNotMeeting": "Hanya rekaman rapat yang bisa ditanya.",
+        "failedEmptyQuestion": "Tulis pertanyaan dulu.",
+        "failed": "Pertanyaan tidak dapat dijawab."
+      }
     },
     "debug": {
       "title": "Debug",

@@ -800,7 +800,8 @@
         "failedNoTranscript": "Não há transcrição para criar uma nota.",
         "failedNotMeeting": "Só gravações de reuniões podem ter uma nota.",
         "cancelled": "A nota da reunião foi cancelada. A transcrição ficou igual.",
-        "failed": "Não foi possível gerar a nota da reunião."
+        "failed": "Não foi possível gerar a nota da reunião.",
+        "tab": "Nota"
       },
       "copyTranscript": "Copiar a transcrição",
       "exportFormatLabel": "Formato de exportação",
@@ -818,7 +819,25 @@
       "correctSave": "Guardar",
       "correctCancel": "Cancelar",
       "correctSaved": "Transcrição corrigida",
-      "correctError": "Não foi possível guardar a correção"
+      "correctError": "Não foi possível guardar a correção",
+      "meetingAsk": {
+        "tab": "Perguntar",
+        "description": "Faz uma pergunta sobre a reunião; o LLM local responde a partir da transcrição, com citações onde pode clicar.",
+        "placeholder": "Pergunta algo sobre a reunião…",
+        "ask": "Perguntar",
+        "searching": "A ler a transcrição…",
+        "generatedLabel": "Gerado localmente por {{model}} — confere com a transcrição",
+        "showInTranscript": "Mostrar esta parte na transcrição",
+        "notFound": "A transcrição não responde a isso.",
+        "cancelled": "A pergunta foi cancelada.",
+        "failedNoLocalLlm": "Para perguntar é preciso um LLM local, por exemplo o Ollama em http://localhost:11434/v1. Configura-o em Post Process, nas definições.",
+        "failedUnreachable": "Sem resposta do LLM local. Verifica se está a correr.",
+        "failedInvalidResponse": "O LLM local respondeu, mas a resposta não pôde ser usada.",
+        "failedNoTranscript": "Não há transcrição sobre a qual perguntar.",
+        "failedNotMeeting": "Só gravações de reuniões podem ser consultadas.",
+        "failedEmptyQuestion": "Escreve primeiro uma pergunta.",
+        "failed": "Não foi possível responder à pergunta."
+      }
     },
     "debug": {
       "title": "Depuração",

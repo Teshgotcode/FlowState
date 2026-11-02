@@ -14,7 +14,7 @@
 //! the note can never leave the machine even if the provider list holds a
 //! cloud API.
 
-use crate::actions::{complete_unless_cancelled, strip_invisible_chars, strip_think_block};
+use crate::actions::{complete_unless_cancelled, first_json_object};
 use crate::llm_client;
 use crate::managers::history::{HistoryEntry, HistoryManager, HistorySource};
 use crate::settings::{get_settings, AppSettings, PostProcessApiFormat, PostProcessProvider};
@@ -122,18 +122,18 @@ pub enum MeetingNoteOutcome {
 /// post-processing settings. The same LLM the user configured for dictation
 /// cleanup writes the notes; there is no separate note configuration.
 #[derive(Clone, Debug)]
-struct NoteLlm {
-    provider: PostProcessProvider,
-    model: String,
-    api_key: String,
-    disable_reasoning: bool,
+pub(crate) struct NoteLlm {
+    pub(crate) provider: PostProcessProvider,
+    pub(crate) model: String,
+    pub(crate) api_key: String,
+    pub(crate) disable_reasoning: bool,
 }
 
 impl NoteLlm {
     /// Resolve the note's LLM from the post-processing settings, refusing
     /// everything that is not a local OpenAI-compatible endpoint. This is the
     /// privacy gate of the feature: a run can only ever reach loopback.
-    fn resolve(settings: &AppSettings) -> Result<Self, MeetingNoteFailure> {
+    pub(crate) fn resolve(settings: &AppSettings) -> Result<Self, MeetingNoteFailure> {
         let provider = settings
             .active_post_process_provider()
             .cloned()
@@ -202,7 +202,7 @@ pub fn is_local_llm_endpoint(base_url: &str) -> bool {
 
 /// Split `text` into sentences, keeping the punctuation. A sentence ends at
 /// `.`, `!`, `?` or a line break; whitespace around the pieces is trimmed.
-fn sentences(text: &str) -> Vec<String> {
+pub(crate) fn sentences(text: &str) -> Vec<String> {
     let mut pieces = Vec::new();
     let mut current = String::new();
     for character in text.chars() {
@@ -278,7 +278,7 @@ fn split_long_piece(text: &str, target: usize) -> Vec<String> {
 /// Pack the transcript's ordered pieces into chunks of at most `target`
 /// characters. A piece is kept whole when it fits; only a piece longer than
 /// the target is cut, and then on sentence boundaries.
-fn pack_chunks(pieces: &[String], target: usize) -> Vec<String> {
+pub(crate) fn pack_chunks(pieces: &[String], target: usize) -> Vec<String> {
     let mut sized: Vec<String> = Vec::new();
     for piece in pieces {
         let piece = piece.trim();
@@ -404,39 +404,11 @@ struct NoteFields {
 /// Read a note out of a model answer: JSON when structured output held, and
 /// the first JSON object in the text when it did not. Returns `None` when no
 /// note can be read without inventing one.
+/// Read a note out of a model answer: JSON when structured output held, and
+/// the first JSON object in the text when it did not. Returns `None` when no
+/// note can be read without inventing one.
 fn parse_note_fields(content: &str) -> Option<NoteFields> {
-    let cleaned = strip_invisible_chars(strip_think_block(content));
-    let trimmed = cleaned.trim();
-    // A markdown fence around the JSON is common when the endpoint ignores
-    // the schema; the fence itself is not JSON.
-    let unfenced = trimmed
-        .strip_prefix("```json")
-        .or_else(|| trimmed.strip_prefix("```"))
-        .and_then(|rest| rest.strip_suffix("```"))
-        .map(str::trim)
-        .unwrap_or(trimmed);
-    if let Ok(fields) = serde_json::from_str::<NoteFields>(unfenced) {
-        return Some(fields);
-    }
-    // Free-form text: take the first balanced JSON object in it.
-    let start = unfenced.find('{')?;
-    let mut depth = 0usize;
-    let mut end = None;
-    for (offset, character) in unfenced[start..].char_indices() {
-        match character {
-            '{' => depth += 1,
-            '}' => {
-                depth = depth.saturating_sub(1);
-                if depth == 0 {
-                    end = Some(start + offset + 1);
-                    break;
-                }
-            }
-            _ => {}
-        }
-    }
-    let object = &unfenced[start..end?];
-    serde_json::from_str::<NoteFields>(object).ok()
+    first_json_object(content).and_then(|object| serde_json::from_str(&object).ok())
 }
 
 /* ---------- the run: extract per chunk, merge to one note --------------- */

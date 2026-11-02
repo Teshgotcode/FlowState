@@ -800,7 +800,8 @@
         "failedNoTranscript": "नोट बनाने के लिए कोई ट्रांसक्रिप्ट नहीं है।",
         "failedNotMeeting": "सिर्फ़ मीटिंग रिकॉर्डिंग का नोट बन सकता है।",
         "cancelled": "मीटिंग नोट रद्द कर दिया गया। ट्रांसक्रिप्ट नहीं बदला।",
-        "failed": "मीटिंग नोट नहीं बन पाया।"
+        "failed": "मीटिंग नोट नहीं बन पाया।",
+        "tab": "नोट"
       },
       "copyTranscript": "प्रतिलिपि कॉपी करें",
       "exportFormatLabel": "निर्यात प्रारूप",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "पूछें",
+        "description": "बैठक के बारे में सवाल पूछें; स्थानीय LLM ट्रांसक्रिप्ट से उत्तर देता है, ऐसे उद्धरणों के साथ जिन पर क्लिक किया जा सकता है।",
+        "placeholder": "बैठक के बारे में कुछ पूछें…",
+        "ask": "पूछें",
+        "searching": "ट्रांसक्रिप्ट पढ़ा जा रहा है…",
+        "generatedLabel": "{{model}} द्वारा स्थानीय रूप से बनाया गया — ट्रांसक्रिप्ट से जाँचें",
+        "showInTranscript": "यह हिस्सा ट्रांसक्रिप्ट में दिखाएँ",
+        "notFound": "ट्रांसक्रिप्ट इसका उत्तर नहीं देता।",
+        "cancelled": "सवाल रद्द कर दिया गया।",
+        "failedNoLocalLlm": "पूछने के लिए स्थानीय LLM चाहिए, जैसे http://localhost:11434/v1 पर Ollama। इसे सेटिंग्स के Post Process में सेट करें।",
+        "failedUnreachable": "स्थानीय LLM से कोई उत्तर नहीं मिला। जाँचें कि वह चल रहा है।",
+        "failedInvalidResponse": "स्थानीय LLM ने उत्तर दिया, लेकिन उत्तर उपयोग नहीं हो सका।",
+        "failedNoTranscript": "पूछने के लिए कोई ट्रांसक्रिप्ट नहीं है।",
+        "failedNotMeeting": "केवल बैठक रिकॉर्डिंग के बारे में पूछा जा सकता है।",
+        "failedEmptyQuestion": "पहले एक सवाल लिखें।",
+        "failed": "सवाल का उत्तर नहीं दिया जा सका।"
+      }
     },
     "debug": {
       "title": "डिबग",

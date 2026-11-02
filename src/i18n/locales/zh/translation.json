@@ -800,7 +800,8 @@
         "failedNoTranscript": "没有可用于生成纪要的转录文本。",
         "failedNotMeeting": "只有会议录音才能生成纪要。",
         "cancelled": "会议纪要已取消。转录文本未更改。",
-        "failed": "无法生成会议纪要。"
+        "failed": "无法生成会议纪要。",
+        "tab": "笔记"
       },
       "copyTranscript": "复制转录文本",
       "exportFormatLabel": "导出格式",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "提问",
+        "description": "就会议提问;本地 LLM 会根据转录内容回答,并附带可点击的引文。",
+        "placeholder": "就会议提问…",
+        "ask": "提问",
+        "searching": "正在读取转录…",
+        "generatedLabel": "由 {{model}} 本地生成 — 请对照转录核实",
+        "showInTranscript": "在转录中显示此处",
+        "notFound": "转录中没有回答这个问题。",
+        "cancelled": "问题已取消。",
+        "failedNoLocalLlm": "提问需要本地 LLM,例如运行在 http://localhost:11434/v1 的 Ollama。请在设置的 Post Process 中配置。",
+        "failedUnreachable": "本地 LLM 没有回应。请检查它是否在运行。",
+        "failedInvalidResponse": "本地 LLM 已回答,但答案无法使用。",
+        "failedNoTranscript": "没有可提问的转录。",
+        "failedNotMeeting": "只能对会议录音提问。",
+        "failedEmptyQuestion": "请先输入问题。",
+        "failed": "无法回答这个问题。"
+      }
     },
     "debug": {
       "title": "调试",

@@ -800,7 +800,8 @@
         "failedNoTranscript": "Er is geen transcriptie om een notitie van te maken.",
         "failedNotMeeting": "Alleen vergaderopnames kunnen een notitie krijgen.",
         "cancelled": "De vergadernotitie is geannuleerd. De transcriptie is ongewijzigd.",
-        "failed": "De vergadernotitie kon niet worden gegenereerd."
+        "failed": "De vergadernotitie kon niet worden gegenereerd.",
+        "tab": "Notitie"
       },
       "copyTranscript": "Transcript kopiëren",
       "exportFormatLabel": "Exportformaat",
@@ -818,7 +819,25 @@
       "correctSave": "Opslaan",
       "correctCancel": "Annuleren",
       "correctSaved": "Transcriptie gecorrigeerd",
-      "correctError": "De correctie kon niet worden opgeslagen"
+      "correctError": "De correctie kon niet worden opgeslagen",
+      "meetingAsk": {
+        "tab": "Vragen",
+        "description": "Stel een vraag over de vergadering; de lokale LLM antwoordt vanuit het transcript, met citaten waar je op kunt klikken.",
+        "placeholder": "Vraag iets over de vergadering…",
+        "ask": "Vragen",
+        "searching": "Leest het transcript…",
+        "generatedLabel": "Lokaal gegenereerd door {{model}} — controleer tegen het transcript",
+        "showInTranscript": "Toon dit deel in het transcript",
+        "notFound": "Het transcript beantwoordt dat niet.",
+        "cancelled": "De vraag is geannuleerd.",
+        "failedNoLocalLlm": "Vragen stellen vereist een lokale LLM, bijvoorbeeld Ollama op http://localhost:11434/v1. Stel die in onder Post Process in de instellingen.",
+        "failedUnreachable": "Geen antwoord van de lokale LLM. Controleer of die draait.",
+        "failedInvalidResponse": "De lokale LLM antwoordde, maar het antwoord was niet te gebruiken.",
+        "failedNoTranscript": "Er is geen transcript om over te vragen.",
+        "failedNotMeeting": "Alleen vergaderopnames kunnen bevraagd worden.",
+        "failedEmptyQuestion": "Schrijf eerst een vraag.",
+        "failed": "De vraag kon niet beantwoord worden."
+      }
     },
     "debug": {
       "title": "Probleemoplossing",

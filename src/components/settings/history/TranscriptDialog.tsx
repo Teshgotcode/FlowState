@@ -76,6 +76,13 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
   const [exporting, setExporting] = useState(false);
   const [format, setFormat] = useState<TranscriptExportFormat>("markdown");
   const searchRef = useRef<HTMLInputElement>(null);
+  const transcriptRef = useRef<HTMLOListElement>(null);
+  // A quote clicked in the note's "Ask" tab: the segment to jump to, cleared
+  // once the jump has been made. The search is dropped first, so a hidden
+  // segment can still be jumped to.
+  const [pendingJump, setPendingJump] = useState<number | null>(null);
+  const [highlightT0, setHighlightT0] = useState<number | null>(null);
+  const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const segments = useMemo(
     () => entry.metadata?.segments ?? [],
@@ -95,10 +102,39 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
       setQuery("");
       setCopied(false);
       setFormat("markdown");
+      setPendingJump(null);
+      setHighlightT0(null);
+    } else if (highlightTimer.current) {
+      clearTimeout(highlightTimer.current);
+      highlightTimer.current = null;
     }
   }, [open]);
 
+  // Bring one segment into view and let it glow for a moment: the "Ask"
+  // tab's quotes land here. The search is cleared first so the segment is
+  // rendered even when the current filter hid it; the effect below runs
+  // once that has happened.
+  const jumpToSegment = (t0Ms: number) => {
+    setQuery("");
+    setPendingJump(t0Ms);
+  };
+
   const needle = query.trim().toLowerCase();
+
+  // Make the pending jump once the cleared search has re-rendered the
+  // transcript, so a segment the old filter hid can still be jumped to.
+  useEffect(() => {
+    if (pendingJump === null) return;
+    const row = transcriptRef.current?.querySelector<HTMLElement>(
+      `[data-t0="${pendingJump}"]`,
+    );
+    setPendingJump(null);
+    if (!row) return;
+    row.scrollIntoView({ behavior: "smooth", block: "center" });
+    setHighlightT0(pendingJump);
+    if (highlightTimer.current) clearTimeout(highlightTimer.current);
+    highlightTimer.current = setTimeout(() => setHighlightT0(null), 2400);
+  }, [pendingJump, needle]);
   const visibleSegments = useMemo(
     () =>
       needle
@@ -249,7 +285,9 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
         </>
       }
     >
-      {isMeeting && <MeetingNoteSection entry={entry} />}
+      {isMeeting && (
+        <MeetingNoteSection entry={entry} onJumpToSegment={jumpToSegment} />
+      )}
 
       <div className="relative">
         <Search
@@ -287,11 +325,16 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
               : t("settings.history.transcriptEmpty")}
           </p>
         ) : (
-          <ol className="divide-y divide-line">
+          <ol ref={transcriptRef} className="divide-y divide-line">
             {visibleSegments.map((segment, index) => (
               <li
                 key={`${segment.t0_ms}-${index}`}
-                className="flex gap-3 py-2 first:pt-1 last:pb-1"
+                data-t0={segment.t0_ms}
+                className={`flex gap-3 py-2 first:pt-1 last:pb-1 ${
+                  highlightT0 === segment.t0_ms
+                    ? "-mx-2 rounded-md bg-logo-primary/15 px-2 transition-colors duration-500"
+                    : ""
+                }`}
               >
                 <span className="w-12 shrink-0 pt-0.5 text-xs font-semibold tabular-nums text-ink-3 select-none">
                   {formatSegmentTimestamp(segment.t0_ms)}

@@ -800,7 +800,8 @@
         "failedNoTranscript": "אין תמליל ליצירת סיכום ממנו.",
         "failedNotMeeting": "רק הקלטות פגישה יכולות לקבל סיכום.",
         "cancelled": "יצירת הסיכום בוטלה. התמליל לא השתנה.",
-        "failed": "לא ניתן היה ליצור את סיכום הפגישה."
+        "failed": "לא ניתן היה ליצור את סיכום הפגישה.",
+        "tab": "פתק"
       },
       "copyTranscript": "העתקת התמליל",
       "exportFormatLabel": "פורמט ייצוא",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "שאל",
+        "description": "שאלו על הפגישה; ה־LLM המקומי עונה מהתמליל, עם ציטוטים שאפשר ללחוץ עליהם.",
+        "placeholder": "שאלו משהו על הפגישה…",
+        "ask": "שאל",
+        "searching": "קורא את התמליל…",
+        "generatedLabel": "נוצר מקומית על ידי {{model}} — בדקו מול התמליל",
+        "showInTranscript": "הצג את הקטע הזה בתמליל",
+        "notFound": "התמליל לא עונה על זה.",
+        "cancelled": "השאלה בוטלה.",
+        "failedNoLocalLlm": "כדי לשאול נדרש LLM מקומי, למשל Ollama בכתובת http://localhost:11434/v1. הגדירו אותו תחת Post Process בהגדרות.",
+        "failedUnreachable": "אין מענה מה־LLM המקומי. בדקו שהוא פועל.",
+        "failedInvalidResponse": "ה־LLM המקומי ענה, אך לא ניתן היה להשתמש בתשובה.",
+        "failedNoTranscript": "אין תמליל לשאול עליו.",
+        "failedNotMeeting": "אפשר לשאול רק על הקלטות פגישות.",
+        "failedEmptyQuestion": "קודם כתבו שאלה.",
+        "failed": "לא ניתן היה לענות על השאלה."
+      }
     },
     "debug": {
       "title": "ניפוי שגיאות",

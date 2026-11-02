@@ -800,7 +800,8 @@
         "failedNoTranscript": "Няма транскрипция, от която да се направи бележка.",
         "failedNotMeeting": "Само записи на срещи могат да получат бележка.",
         "cancelled": "Бележката от срещата е отказана. Транскрипцията е непроменена.",
-        "failed": "Бележката от срещата не можа да бъде генерирана."
+        "failed": "Бележката от срещата не можа да бъде генерирана.",
+        "tab": "Записка"
       },
       "copyTranscript": "Копиране на транскрипцията",
       "exportFormatLabel": "Формат за експортиране",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Запитай",
+        "description": "Задайте въпрос за срещата; локалният LLM отговаря от транскрипцията, с цитати, върху които можете да щракнете.",
+        "placeholder": "Запитайте нещо за срещата…",
+        "ask": "Запитай",
+        "searching": "Чете транскрипцията…",
+        "generatedLabel": "Генерирано локално от {{model}} — проверете срещу транскрипцията",
+        "showInTranscript": "Покажи това място в транскрипцията",
+        "notFound": "Транскрипцията не отговаря на това.",
+        "cancelled": "Въпросът беше отменен.",
+        "failedNoLocalLlm": "За да задавате въпроси, е нужен локален LLM, например Ollama на http://localhost:11434/v1. Настройте го в Post Process в настройките.",
+        "failedUnreachable": "Няма отговор от локалния LLM. Проверете дали работи.",
+        "failedInvalidResponse": "Локалният LLM отговори, но отговорът не можа да се използва.",
+        "failedNoTranscript": "Няма транскрипция, за която да питате.",
+        "failedNotMeeting": "Може да се пита само за записи на срещи.",
+        "failedEmptyQuestion": "Първо напишете въпрос.",
+        "failed": "На въпроса не можа да се отговори."
+      }
     },
     "debug": {
       "title": "Отстраняване",

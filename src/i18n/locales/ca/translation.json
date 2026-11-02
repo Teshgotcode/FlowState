@@ -800,7 +800,8 @@
         "failedNoTranscript": "No hi ha cap transcripció de la qual fer una nota.",
         "failedNotMeeting": "Només els enregistraments de reunions poden tenir una nota.",
         "cancelled": "S'ha cancel·lat la nota de reunió. La transcripció no ha canviat.",
-        "failed": "No s'ha pogut generar la nota de reunió."
+        "failed": "No s'ha pogut generar la nota de reunió.",
+        "tab": "Nota"
       },
       "copyTranscript": "Copia la transcripció",
       "exportFormatLabel": "Format d'exportació",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Pregunta",
+        "description": "Fes una pregunta sobre la reunió; el LLM local respon des de la transcripció, amb citacions on pots fer clic.",
+        "placeholder": "Pregunta alguna cosa sobre la reunió…",
+        "ask": "Pregunta",
+        "searching": "Llegint la transcripció…",
+        "generatedLabel": "Generat localment per {{model}} — comprova-ho amb la transcripció",
+        "showInTranscript": "Mostra aquesta part a la transcripció",
+        "notFound": "La transcripció no respon a això.",
+        "cancelled": "La pregunta s'ha cancel·lat.",
+        "failedNoLocalLlm": "Per preguntar cal un LLM local, per exemple Ollama a http://localhost:11434/v1. Configura'l a Post Process, a la configuració.",
+        "failedUnreachable": "Cap resposta del LLM local. Comprova que s'estigui executant.",
+        "failedInvalidResponse": "El LLM local ha respost, però la resposta no s'ha pogut fer servir.",
+        "failedNoTranscript": "No hi ha cap transcripció sobre la qual preguntar.",
+        "failedNotMeeting": "Només es poden consultar els enregistraments de reunions.",
+        "failedEmptyQuestion": "Escriu primer una pregunta.",
+        "failed": "No s'ha pogut respondre la pregunta."
+      }
     },
     "debug": {
       "title": "Depuració",

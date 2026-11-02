@@ -139,6 +139,38 @@ pub(crate) fn strip_think_block(s: &str) -> &str {
     s
 }
 
+/// The first balanced JSON object in a model answer, cleaned of invisible
+/// characters, a reasoning block and any markdown fence. The whole answer is
+/// returned when it is a single JSON object; `None` when there is no object to
+/// read. Callers parse the returned text into their own type.
+pub(crate) fn first_json_object(content: &str) -> Option<String> {
+    let cleaned = strip_invisible_chars(strip_think_block(content));
+    let trimmed = cleaned.trim();
+    // A markdown fence around the JSON is common when the endpoint ignores
+    // structured output; the fence itself is not JSON.
+    let unfenced = trimmed
+        .strip_prefix("```json")
+        .or_else(|| trimmed.strip_prefix("```"))
+        .and_then(|rest| rest.strip_suffix("```"))
+        .map(str::trim)
+        .unwrap_or(trimmed);
+    let start = unfenced.find('{')?;
+    let mut depth = 0usize;
+    for (offset, character) in unfenced[start..].char_indices() {
+        match character {
+            '{' => depth += 1,
+            '}' => {
+                depth = depth.saturating_sub(1);
+                if depth == 0 {
+                    return Some(unfenced[start..start + offset + 1].to_string());
+                }
+            }
+            _ => {}
+        }
+    }
+    None
+}
+
 /// Build a system prompt from the user's prompt template.
 /// Removes `${output}` placeholder since the transcription is sent as the user message.
 fn build_system_prompt(prompt_template: &str) -> String {
@@ -831,11 +863,13 @@ impl ShortcutAction for TranscribeAction {
                                             post_processed_text: None,
                                             post_process_prompt: None,
                                         })
-                                        .unwrap_or(ProcessedTranscription {
-                                            final_text: String::new(),
-                                            post_processed_text: None,
-                                            post_process_prompt: None,
-                                        })
+                                        .unwrap_or(
+                                            ProcessedTranscription {
+                                                final_text: String::new(),
+                                                post_processed_text: None,
+                                                post_process_prompt: None,
+                                            },
+                                        )
                                     },
                                     || rm.was_cancelled_since(cancel_generation),
                                 )
@@ -847,8 +881,7 @@ impl ShortcutAction for TranscribeAction {
                                 )
                                 .await
                             };
-                            let Some(processed) = processed_result
-                            else {
+                            let Some(processed) = processed_result else {
                                 debug!("Transcription operation cancelled during output handling");
                                 utils::hide_recording_overlay(&ah);
                                 set_tray_state(&ah, TrayIconState::Idle);
