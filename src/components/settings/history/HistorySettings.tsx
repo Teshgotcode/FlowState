@@ -14,6 +14,7 @@ import {
   FilePlus,
   FolderOpen,
   RotateCcw,
+  ScrollText,
   Star,
   Trash2,
   X,
@@ -35,6 +36,8 @@ import { formatDateTime } from "@/utils/dateFormat";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
 import { copyToClipboard } from "./clipboard";
+import { MeetingBadge } from "./MeetingBadge";
+import { TranscriptDialog } from "./TranscriptDialog";
 import { pickAndTranscribeFiles } from "./transcribeFiles";
 
 const IconButton: React.FC<{
@@ -359,6 +362,8 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const [showCopied, setShowCopied] = useState(false);
   // Pressed cancel: a running job stops after its current chunk.
   const [cancelling, setCancelling] = useState(false);
+  // The transcript window for this entry, with its timed segments.
+  const [showTranscript, setShowTranscript] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -370,6 +375,9 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   }, [retrying]);
   const hasTranscription = entry.transcription_text.trim().length > 0;
   const folded = hasTranscription && !retrying && !expanded;
+  // Only entries the model gave timed segments have a transcript to show;
+  // old dictations render exactly as before, without the button.
+  const hasSegments = (entry.metadata?.segments?.length ?? 0) > 0;
 
   // Offer "Show more" only when the folded text is actually cut off.
   useLayoutEffect(() => {
@@ -427,6 +435,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
       <div className="flex justify-between items-center gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <p className="text-sm font-medium shrink-0">{formattedDate}</p>
+          {entry.source === "meeting" && <MeetingBadge />}
           {entry.source_name && (
             <span
               className="flex items-center gap-1 min-w-0 text-sm text-ink-3"
@@ -438,6 +447,15 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
           )}
         </div>
         <div className="flex items-center shrink-0">
+          {hasSegments && (
+            <IconButton
+              onClick={() => setShowTranscript(true)}
+              disabled={retrying}
+              title={t("settings.history.transcript")}
+            >
+              <ScrollText width={16} height={16} />
+            </IconButton>
+          )}
           <IconButton
             onClick={handleCopyText}
             disabled={!hasTranscription || retrying}
@@ -546,6 +564,12 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
       </div>
 
       <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full" />
+
+      <TranscriptDialog
+        entry={entry}
+        open={showTranscript}
+        onOpenChange={setShowTranscript}
+      />
     </div>
   );
 };

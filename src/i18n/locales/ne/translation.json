@@ -730,7 +730,19 @@
       "showMore": "थप देखाउनुहोस्",
       "showLess": "कम देखाउनुहोस्",
       "dropTitle": "ट्रान्सक्राइब गर्न छोड्नुहोस्",
-      "dropDescription": "यो इतिहासमा देखिनेछ।"
+      "dropDescription": "यो इतिहासमा देखिनेछ।",
+      "transcript": "ट्रान्सक्रिप्ट",
+      "meeting": "बैठक",
+      "date": "मिति",
+      "duration": "अवधि",
+      "transcriptSearchPlaceholder": "ट्रान्सक्रिप्टमा खोज्नुहोस्",
+      "transcriptNoMatches": "\"{{query}}\" संग मिल्ने खण्डहरू छैनन्।",
+      "transcriptEmpty": "यो प्रविष्टिमा समय-चिह्न सहितका खण्डहरू छैनन्।",
+      "copyTranscript": "ट्रान्सक्रिप्ट कपी गर्नुहोस्",
+      "exportMarkdown": "Markdown का रूपमा निर्यात गर्नुहोस्",
+      "markdownFile": "Markdown कागजात",
+      "exportSaved": "ट्रान्सक्रिप्ट {{name}} का रूपमा सुरक्षित भयो।",
+      "exportFailed": "ट्रान्सक्रिप्ट निर्यात गर्न सकिएन।"
     },
     "debug": {
       "title": "डिबग",

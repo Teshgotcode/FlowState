@@ -730,7 +730,19 @@
       "showMore": "顯示更多",
       "showLess": "收合",
       "dropTitle": "拖放到此處進行轉錄",
-      "dropDescription": "它會出現在歷史記錄中。"
+      "dropDescription": "它會出現在歷史記錄中。",
+      "transcript": "逐字稿",
+      "meeting": "會議",
+      "date": "日期",
+      "duration": "時長",
+      "transcriptSearchPlaceholder": "搜尋逐字稿",
+      "transcriptNoMatches": "沒有符合「{{query}}」的段落。",
+      "transcriptEmpty": "此項目沒有含時間戳記的段落。",
+      "copyTranscript": "複製逐字稿",
+      "exportMarkdown": "匯出為 Markdown",
+      "markdownFile": "Markdown 文件",
+      "exportSaved": "逐字稿已儲存為 {{name}}。",
+      "exportFailed": "無法匯出逐字稿。"
     },
     "debug": {
       "title": "偵錯",

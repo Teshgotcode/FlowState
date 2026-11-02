@@ -730,7 +730,19 @@
       "showMore": "Daha fazla göster",
       "showLess": "Daha az göster",
       "dropTitle": "Yazıya dökmek için bırakın",
-      "dropDescription": "Geçmiş'te görünecek."
+      "dropDescription": "Geçmiş'te görünecek.",
+      "transcript": "Transkript",
+      "meeting": "Toplantı",
+      "date": "Tarih",
+      "duration": "Süre",
+      "transcriptSearchPlaceholder": "Transkriptte ara",
+      "transcriptNoMatches": "\"{{query}}\" ile eşleşen bölüm yok.",
+      "transcriptEmpty": "Bu kaydın zaman damgalı bölümü yok.",
+      "copyTranscript": "Transkripti kopyala",
+      "exportMarkdown": "Markdown olarak dışa aktar",
+      "markdownFile": "Markdown belgesi",
+      "exportSaved": "Transkript {{name}} olarak kaydedildi.",
+      "exportFailed": "Transkript dışa aktarılamadı."
     },
     "debug": {
       "title": "Hata Ayıklama",

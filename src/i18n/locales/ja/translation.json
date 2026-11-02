@@ -730,7 +730,19 @@
       "showMore": "もっと見る",
       "showLess": "閉じる",
       "dropTitle": "ドロップして文字起こし",
-      "dropDescription": "履歴に表示されます。"
+      "dropDescription": "履歴に表示されます。",
+      "transcript": "文字起こし",
+      "meeting": "会議",
+      "date": "日付",
+      "duration": "長さ",
+      "transcriptSearchPlaceholder": "文字起こしを検索",
+      "transcriptNoMatches": "「{{query}}」に一致するセグメントはありません。",
+      "transcriptEmpty": "この項目にはタイムスタンプ付きのセグメントがありません。",
+      "copyTranscript": "文字起こしをコピー",
+      "exportMarkdown": "Markdown として書き出す",
+      "markdownFile": "Markdown ドキュメント",
+      "exportSaved": "文字起こしを {{name}} として保存しました。",
+      "exportFailed": "文字起こしを書き出せませんでした。"
     },
     "debug": {
       "title": "デバッグ",

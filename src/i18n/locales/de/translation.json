@@ -730,7 +730,19 @@
       "showMore": "Mehr anzeigen",
       "showLess": "Weniger anzeigen",
       "dropTitle": "Zum Transkribieren ablegen",
-      "dropDescription": "Es erscheint im Verlauf."
+      "dropDescription": "Es erscheint im Verlauf.",
+      "transcript": "Transkript",
+      "meeting": "Besprechung",
+      "date": "Datum",
+      "duration": "Dauer",
+      "transcriptSearchPlaceholder": "Transkript durchsuchen",
+      "transcriptNoMatches": "Keine Segmente passen zu „{{query}}“.",
+      "transcriptEmpty": "Dieser Eintrag hat keine Segmente mit Zeitstempeln.",
+      "copyTranscript": "Transkript kopieren",
+      "exportMarkdown": "Als Markdown exportieren",
+      "markdownFile": "Markdown-Dokument",
+      "exportSaved": "Transkript wurde als {{name}} gespeichert.",
+      "exportFailed": "Das Transkript konnte nicht exportiert werden."
     },
     "debug": {
       "title": "Debug",

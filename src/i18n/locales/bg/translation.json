@@ -730,7 +730,19 @@
       "showMore": "Покажи повече",
       "showLess": "Покажи по-малко",
       "dropTitle": "Пуснете за транскрибиране",
-      "dropDescription": "Ще се появи в Историята."
+      "dropDescription": "Ще се появи в Историята.",
+      "transcript": "Транскрипция",
+      "meeting": "Среща",
+      "date": "Дата",
+      "duration": "Продължителност",
+      "transcriptSearchPlaceholder": "Търсене в транскрипцията",
+      "transcriptNoMatches": "Няма откъси, съответстващи на „{{query}}“.",
+      "transcriptEmpty": "Този запис няма откъси с времеви марки.",
+      "copyTranscript": "Копиране на транскрипцията",
+      "exportMarkdown": "Експортиране като Markdown",
+      "markdownFile": "Markdown документ",
+      "exportSaved": "Транскрипцията е запазена като {{name}}.",
+      "exportFailed": "Транскрипцията не можа да бъде експортирана."
     },
     "debug": {
       "title": "Отстраняване",

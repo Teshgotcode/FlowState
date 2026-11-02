@@ -730,7 +730,19 @@
       "showMore": "Показать больше",
       "showLess": "Показать меньше",
       "dropTitle": "Отпустите, чтобы расшифровать",
-      "dropDescription": "Он появится в истории."
+      "dropDescription": "Он появится в истории.",
+      "transcript": "Расшифровка",
+      "meeting": "Совещание",
+      "date": "Дата",
+      "duration": "Длительность",
+      "transcriptSearchPlaceholder": "Поиск по расшифровке",
+      "transcriptNoMatches": "Ни один фрагмент не соответствует запросу «{{query}}».",
+      "transcriptEmpty": "В этой записи нет фрагментов с отметками времени.",
+      "copyTranscript": "Скопировать расшифровку",
+      "exportMarkdown": "Экспортировать в Markdown",
+      "markdownFile": "Документ Markdown",
+      "exportSaved": "Расшифровка сохранена как {{name}}.",
+      "exportFailed": "Не удалось экспортировать расшифровку."
     },
     "debug": {
       "title": "Отлаживать",

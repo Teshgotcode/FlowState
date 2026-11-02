@@ -730,7 +730,19 @@
       "showMore": "显示更多",
       "showLess": "收起",
       "dropTitle": "拖放到此处进行转录",
-      "dropDescription": "它会出现在历史记录中。"
+      "dropDescription": "它会出现在历史记录中。",
+      "transcript": "转录文本",
+      "meeting": "会议",
+      "date": "日期",
+      "duration": "时长",
+      "transcriptSearchPlaceholder": "搜索转录文本",
+      "transcriptNoMatches": "没有与“{{query}}”匹配的段落。",
+      "transcriptEmpty": "此条目没有带时间戳的段落。",
+      "copyTranscript": "复制转录文本",
+      "exportMarkdown": "导出为 Markdown",
+      "markdownFile": "Markdown 文档",
+      "exportSaved": "转录文本已保存为 {{name}}。",
+      "exportFailed": "无法导出转录文本。"
     },
     "debug": {
       "title": "调试",

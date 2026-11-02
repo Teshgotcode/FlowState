@@ -730,7 +730,19 @@
       "showMore": "Vis mer",
       "showLess": "Vis mindre",
       "dropTitle": "Slipp for å transkribere",
-      "dropDescription": "Den dukker opp i Historikk."
+      "dropDescription": "Den dukker opp i Historikk.",
+      "transcript": "Transkript",
+      "meeting": "Møte",
+      "date": "Dato",
+      "duration": "Varighet",
+      "transcriptSearchPlaceholder": "Søk i transkriptet",
+      "transcriptNoMatches": "Ingen segmenter inneholder «{{query}}».",
+      "transcriptEmpty": "Denne oppføringen har ingen tidsstemplede segmenter.",
+      "copyTranscript": "Kopier transkriptet",
+      "exportMarkdown": "Eksporter som Markdown",
+      "markdownFile": "Markdown-dokument",
+      "exportSaved": "Transkriptet ble lagret som {{name}}.",
+      "exportFailed": "Transkriptet kunne ikke eksporteres."
     },
     "debug": {
       "title": "Feilsøking",

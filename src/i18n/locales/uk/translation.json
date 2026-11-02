@@ -730,7 +730,19 @@
       "showMore": "Показати більше",
       "showLess": "Показати менше",
       "dropTitle": "Відпустіть, щоб розшифрувати",
-      "dropDescription": "Він з'явиться в історії."
+      "dropDescription": "Він з'явиться в історії.",
+      "transcript": "Розшифровка",
+      "meeting": "Зустріч",
+      "date": "Дата",
+      "duration": "Тривалість",
+      "transcriptSearchPlaceholder": "Пошук у розшифровці",
+      "transcriptNoMatches": "Жоден фрагмент не відповідає «{{query}}».",
+      "transcriptEmpty": "У цьому записі немає фрагментів з мітками часу.",
+      "copyTranscript": "Копіювати розшифровку",
+      "exportMarkdown": "Експортувати як Markdown",
+      "markdownFile": "Документ Markdown",
+      "exportSaved": "Розшифровку збережено як {{name}}.",
+      "exportFailed": "Не вдалося експортувати розшифровку."
     },
     "debug": {
       "title": "Дебаг",

@@ -730,7 +730,19 @@
       "showMore": "הצג עוד",
       "showLess": "הצג פחות",
       "dropTitle": "שחררו כדי לתמלל",
-      "dropDescription": "הוא יופיע בהיסטוריה."
+      "dropDescription": "הוא יופיע בהיסטוריה.",
+      "transcript": "תמליל",
+      "meeting": "פגישה",
+      "date": "תאריך",
+      "duration": "משך",
+      "transcriptSearchPlaceholder": "חיפוש בתמליל",
+      "transcriptNoMatches": "אין קטעים שתואמים ל«{{query}}».",
+      "transcriptEmpty": "אין לרשומה זו קטעים עם חותמות זמן.",
+      "copyTranscript": "העתקת התמליל",
+      "exportMarkdown": "ייצוא כ־Markdown",
+      "markdownFile": "מסמך Markdown",
+      "exportSaved": "התמליל נשמר בשם {{name}}.",
+      "exportFailed": "לא ניתן היה לייצא את התמליל."
     },
     "debug": {
       "title": "ניפוי שגיאות",

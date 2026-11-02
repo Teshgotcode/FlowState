@@ -730,7 +730,19 @@
       "showMore": "Xem thêm",
       "showLess": "Thu gọn",
       "dropTitle": "Thả để chép lời",
-      "dropDescription": "Nó sẽ xuất hiện trong Lịch sử."
+      "dropDescription": "Nó sẽ xuất hiện trong Lịch sử.",
+      "transcript": "Bản ghi chép",
+      "meeting": "Cuộc họp",
+      "date": "Ngày",
+      "duration": "Thời lượng",
+      "transcriptSearchPlaceholder": "Tìm trong bản ghi chép",
+      "transcriptNoMatches": "Không có phân đoạn nào khớp với \"{{query}}\".",
+      "transcriptEmpty": "Mục này không có phân đoạn có dấu thời gian.",
+      "copyTranscript": "Sao chép bản ghi chép",
+      "exportMarkdown": "Xuất dưới dạng Markdown",
+      "markdownFile": "Tài liệu Markdown",
+      "exportSaved": "Bản ghi chép đã được lưu thành {{name}}.",
+      "exportFailed": "Không thể xuất bản ghi chép."
     },
     "debug": {
       "title": "Gỡ lỗi",

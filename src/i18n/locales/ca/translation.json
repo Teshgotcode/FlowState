@@ -730,7 +730,19 @@
       "showMore": "Mostra'n més",
       "showLess": "Mostra'n menys",
       "dropTitle": "Deixa anar per transcriure",
-      "dropDescription": "Apareixerà a l'historial."
+      "dropDescription": "Apareixerà a l'historial.",
+      "transcript": "Transcripció",
+      "meeting": "Reunió",
+      "date": "Data",
+      "duration": "Durada",
+      "transcriptSearchPlaceholder": "Cerca a la transcripció",
+      "transcriptNoMatches": "Cap segment coincideix amb \"{{query}}\".",
+      "transcriptEmpty": "Aquesta entrada no té segments amb marques de temps.",
+      "copyTranscript": "Copia la transcripció",
+      "exportMarkdown": "Exporta com a Markdown",
+      "markdownFile": "Document Markdown",
+      "exportSaved": "La transcripció s'ha desat com a {{name}}.",
+      "exportFailed": "No s'ha pogut exportar la transcripció."
     },
     "debug": {
       "title": "Depuració",
