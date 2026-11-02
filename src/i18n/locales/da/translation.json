@@ -7,7 +7,8 @@
     "model": "Model",
     "quit": "Afslut",
     "cancel": "Annuller",
-    "secureInputWarning": "⚠ Genveje blokeret af Secure Input"
+    "secureInputWarning": "⚠ Genveje blokeret af Secure Input",
+    "meetingBarHideForHour": "Skjul i 1 time"
   },
   "sidebar": {
     "general": "Generelt",

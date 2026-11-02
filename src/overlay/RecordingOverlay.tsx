@@ -36,6 +36,10 @@ const isDictationState = (state: string): state is OverlayState =>
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
 const WAVE_BARS = 9;
 
+// A pointer must travel this far before a press on the meeting bar becomes a
+// drag; anything less stays a click (start / stop the meeting).
+const BAR_DRAG_THRESHOLD_PX = 6;
+
 // Only call out a model load in the Live preview once it has run this long.
 // Warm loads finish in well under this (~0.2s on Apple Silicon, ~1.5s on a
 // Windows CPU backend), so the common case never flashes a loading notice while
@@ -78,6 +82,11 @@ const RecordingOverlay: React.FC = () => {
   const [position, setPosition] = useState<"top" | "bottom" | "left" | "right">(
     "bottom",
   );
+  // The meeting bar's own dock edge — Wispr's statusDockEdge: pinned by a drag
+  // once one has happened, following the dictation overlay's edge until then.
+  const [barPosition, setBarPosition] = useState<
+    "top" | "bottom" | "left" | "right"
+  >("bottom");
   // True once live text overflows the cap. A top overlay fades its top edge only
   // while overflowing, so the resting first line stays crisp flush under the pill.
   const [overflowing, setOverflowing] = useState(false);
@@ -212,6 +221,11 @@ const RecordingOverlay: React.FC = () => {
             const settings = await commands.getAppSettings();
             if (settings.status === "ok") {
               setPosition(settings.data.overlay_position ?? "bottom");
+              setBarPosition(
+                settings.data.meeting_bar_position ??
+                  settings.data.overlay_position ??
+                  "bottom",
+              );
             }
           } catch {
             // Keep the previous placement if settings can't be read.
@@ -229,6 +243,11 @@ const RecordingOverlay: React.FC = () => {
         ]);
         if (settings.status === "ok") {
           setPosition(settings.data.overlay_position ?? "bottom");
+          setBarPosition(
+            settings.data.meeting_bar_position ??
+              settings.data.overlay_position ??
+              "bottom",
+          );
         }
         if (status.state === "recording") {
           setMeetingStartedAt(status.started_at);
@@ -316,10 +335,64 @@ const RecordingOverlay: React.FC = () => {
   }, [session]);
 
   // ---- Meeting bar handlers ----
+  // The bar can be dragged to another screen edge (disc and pill alike). A
+  // press arms a drag; crossing the threshold hands the gesture to the native
+  // window drag — the window follows the pointer across the whole screen,
+  // which its own exact-fit bounds could never do — and the backend docks the
+  // bar to the nearest edge once it settles, saving the choice. A drag never
+  // starts or stops the meeting: the click handlers bail out once the gesture
+  // became a drag, and the native drag swallows the mouse-up that would have
+  // made it a click anyway.
+  const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
+  const dragStartedRef = useRef(false);
+
+  const handleBarPointerDown = (event: React.PointerEvent) => {
+    // The primary button only — a right-click is the disc's context menu, and
+    // the Stop button keeps its own click.
+    if (event.button !== 0) return;
+    if ((event.target as Element).closest(".mstop")) return;
+    dragOriginRef.current = { x: event.clientX, y: event.clientY };
+    // A leftover flag from a previous gesture must not eat the next click.
+    dragStartedRef.current = false;
+  };
+
+  const handleBarPointerMove = (event: React.PointerEvent) => {
+    const origin = dragOriginRef.current;
+    if (!origin || dragStartedRef.current) return;
+    const dx = event.clientX - origin.x;
+    const dy = event.clientY - origin.y;
+    if (dx * dx + dy * dy < BAR_DRAG_THRESHOLD_PX * BAR_DRAG_THRESHOLD_PX) {
+      return;
+    }
+    dragStartedRef.current = true;
+    commands
+      .startMeetingBarDrag()
+      .catch((err) => console.warn("Failed to drag the meeting bar:", err));
+  };
+
+  const handleBarPointerUp = () => {
+    dragOriginRef.current = null;
+  };
+
+  // Right-click on the disc: the backend pops the native menu ("Hide for 1
+  // hour") at the cursor. Native, because the disc's window is exactly the
+  // disc — there is no room for HTML around it.
+  const openDiscMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    commands
+      .openMeetingBarMenu()
+      .catch((err) => console.warn("Failed to open the bar menu:", err));
+  };
+
   // A click on the disc starts the meeting; the state event turns the bar
   // into the pill. A failed start (e.g. a dictation holds the microphone)
-  // leaves the disc as it was.
+  // leaves the disc as it was. A gesture that became a drag is not a click.
   const startMeeting = async () => {
+    if (dragStartedRef.current) {
+      dragStartedRef.current = false;
+      return;
+    }
     try {
       await commands.startMeeting();
     } catch (err) {
@@ -353,8 +426,14 @@ const RecordingOverlay: React.FC = () => {
     // Saving…: the pill keeps its footprint while the stop is in flight.
     if (meetingWrapping) {
       return (
-        <div dir={direction} className={`ov-stage ${position}`}>
-          <div className="mcard">
+        <div dir={direction} className={`ov-stage ${barPosition}`}>
+          <div
+            className="mcard"
+            onPointerDown={handleBarPointerDown}
+            onPointerMove={handleBarPointerMove}
+            onPointerUp={handleBarPointerUp}
+            onPointerCancel={handleBarPointerUp}
+          >
             <span className="sspinner" />
             <span className="mlabel">{t("overlay.meeting.saving")}</span>
           </div>
@@ -365,11 +444,15 @@ const RecordingOverlay: React.FC = () => {
     // Recording: red pulsing dot + running clock (mm:ss) + Stop.
     if (meetingSession === "recording") {
       return (
-        <div dir={direction} className={`ov-stage ${position}`}>
+        <div dir={direction} className={`ov-stage ${barPosition}`}>
           <div
             className="mcard"
             role="status"
             aria-label={t("overlay.meeting.recording")}
+            onPointerDown={handleBarPointerDown}
+            onPointerMove={handleBarPointerMove}
+            onPointerUp={handleBarPointerUp}
+            onPointerCancel={handleBarPointerUp}
           >
             <span className="mdot" aria-hidden="true" />
             <span className="mtimer">
@@ -386,13 +469,18 @@ const RecordingOverlay: React.FC = () => {
     // Idle: the disc with a mic, visible while the app is in the background;
     // one click starts the meeting without opening the app window.
     return (
-      <div dir={direction} className={`ov-stage ${position}`}>
+      <div dir={direction} className={`ov-stage ${barPosition}`}>
         <button
           type="button"
           className="mdisc"
           aria-label={t("overlay.meeting.start")}
           title={t("overlay.meeting.start")}
           onClick={startMeeting}
+          onContextMenu={openDiscMenu}
+          onPointerDown={handleBarPointerDown}
+          onPointerMove={handleBarPointerMove}
+          onPointerUp={handleBarPointerUp}
+          onPointerCancel={handleBarPointerUp}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <rect x="9" y="2.5" width="6" height="11" rx="3" />

@@ -7,7 +7,8 @@
     "model": "Mô hình",
     "quit": "Thoát",
     "cancel": "Hủy",
-    "secureInputWarning": "⚠ Phím tắt bị Secure Input chặn"
+    "secureInputWarning": "⚠ Phím tắt bị Secure Input chặn",
+    "meetingBarHideForHour": "Ẩn trong 1 giờ"
   },
   "sidebar": {
     "general": "Chung",

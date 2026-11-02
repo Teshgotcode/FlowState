@@ -1,10 +1,11 @@
 use crate::input;
 use crate::managers::meeting::MeetingManager;
 use crate::settings;
-use crate::settings::{OverlayPosition, OverlayStyle};
+use crate::settings::{AppSettings, OverlayPosition, OverlayStyle};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
-use std::sync::{Arc, Mutex};
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::sync::{mpsc, Arc, Mutex, OnceLock};
+use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
+use tauri::menu::{ContextMenu, Menu, MenuItem};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 #[cfg(not(target_os = "macos"))]
@@ -56,12 +57,17 @@ const OVERLAY_STREAM_WIDTH: f64 = 400.0;
 const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
 
 // Meeting bar (the Flow-style floating bar): the idle disc is a 40x40 circle
-// with a mic icon; the window carries a little slack so the hover scale and the
-// pop-in never clip it. The recording pill shares the compact dictation
-// footprint, and so does the short "Saving" pill the frontend shows while a
-// stop is in flight.
-const MEETING_DISC_WIDTH: f64 = 48.0;
-const MEETING_DISC_HEIGHT: f64 = 48.0;
+// with a mic icon, and the recording pill is the Flow-style capsule with the
+// running clock and Stop. Both windows are EXACT fits for their visible
+// content: a transparent margin would swallow clicks meant for the app
+// underneath the bar (Sjekkis' S-4c remark), so the slack S-4c carried is gone
+// and the CSS hover no longer scales the disc past the window. Keep in sync
+// with .mdisc / .mcard in RecordingOverlay.css (both border-box). The
+// recording pill shares its footprint with the frontend's short "Saving" pill.
+const MEETING_DISC_WIDTH: f64 = 40.0;
+const MEETING_DISC_HEIGHT: f64 = 40.0;
+const MEETING_PILL_WIDTH: f64 = 176.0;
+const MEETING_PILL_HEIGHT: f64 = 40.0;
 
 /// The meeting bar's own `show-overlay` states. The dictation states
 /// ("recording" | "streaming" | "transcribing" | "processing") are unchanged;
@@ -74,8 +80,9 @@ fn overlay_dimensions(state: &str) -> (f64, f64) {
     match state {
         "streaming" => (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT),
         MEETING_BAR_IDLE => (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT),
-        // The recording pill and the frontend's "Saving" pill share one
-        // footprint with the compact dictation pill.
+        // The recording pill and the frontend's "Saving" pill share the
+        // meeting bar's own exact footprint.
+        MEETING_BAR_RECORDING => (MEETING_PILL_WIDTH, MEETING_PILL_HEIGHT),
         _ => (OVERLAY_WIDTH, OVERLAY_HEIGHT),
     }
 }
@@ -285,19 +292,39 @@ fn calculate_overlay_position(
     app_handle: &AppHandle,
     width: f64,
     height: f64,
+    state: &str,
 ) -> Option<(f64, f64)> {
     let monitor = get_monitor_with_cursor(app_handle)?;
+    let position = overlay_position_for(&settings::get_settings(app_handle), state);
+    Some(overlay_position_on_monitor(
+        &monitor, width, height, position,
+    ))
+}
+
+/// Which screen edge a view docks on. The dictation overlay follows the
+/// user's `overlay_position` setting; the meeting bar has its own dock edge —
+/// Wispr's `statusDockEdge` — once it has been dragged to one, and follows the
+/// dictation overlay's edge until then (the S-4c behaviour).
+fn overlay_position_for(settings: &AppSettings, state: &str) -> OverlayPosition {
+    if is_dictation_state(state) {
+        settings.overlay_position
+    } else {
+        settings
+            .meeting_bar_position
+            .unwrap_or(settings.overlay_position)
+    }
+}
+
+/// The monitor's dockable region in global logical coordinates. macOS anchors
+/// every edge to the work area (NSScreen.visibleFrame — the Dock- and
+/// menu-bar-aware region), so Top/Left/Right/Bottom all keep the bar out of
+/// the Dock and the menu bar without hardcoded pixel guesses. The other
+/// platforms keep full monitor bounds: work_area is unreliable on Wayland, and
+/// Windows' fixed offsets already clear the taskbar.
+fn monitor_dock_area(monitor: &tauri::Monitor) -> (f64, f64, f64, f64) {
     let scale = monitor.scale_factor();
-
-    let settings = settings::get_settings(app_handle);
-
-    // macOS anchors every edge to the work area (NSScreen.visibleFrame — the
-    // Dock- and menu-bar-aware region), so Top/Left/Right/Bottom all keep the
-    // bar out of the Dock and the menu bar without hardcoded pixel guesses.
-    // The other platforms keep full monitor bounds: work_area is unreliable on
-    // Wayland, and Windows' fixed offsets already clear the taskbar.
     #[cfg(target_os = "macos")]
-    let (area_x, area_y, area_w, area_h) = {
+    let (x, y, w, h) = {
         let wa = monitor.work_area();
         (
             wa.position.x as f64 / scale,
@@ -307,14 +334,24 @@ fn calculate_overlay_position(
         )
     };
     #[cfg(not(target_os = "macos"))]
-    let (area_x, area_y, area_w, area_h) = (
+    let (x, y, w, h) = (
         monitor.position().x as f64 / scale,
         monitor.position().y as f64 / scale,
         monitor.size().width as f64 / scale,
         monitor.size().height as f64 / scale,
     );
+    (x, y, w, h)
+}
 
-    let (x, y) = match settings.overlay_position {
+/// The docked origin (logical) for `width`x`height` on one monitor.
+fn overlay_position_on_monitor(
+    monitor: &tauri::Monitor,
+    width: f64,
+    height: f64,
+    position: OverlayPosition,
+) -> (f64, f64) {
+    let (area_x, area_y, area_w, area_h) = monitor_dock_area(monitor);
+    match position {
         OverlayPosition::Top => (area_x + (area_w - width) / 2.0, area_y + OVERLAY_TOP_OFFSET),
         OverlayPosition::Bottom => (
             area_x + (area_w - width) / 2.0,
@@ -328,18 +365,63 @@ fn calculate_overlay_position(
             area_x + area_w - width - OVERLAY_SIDE_OFFSET,
             area_y + (area_h - height) / 2.0,
         ),
-    };
-
-    Some((x, y))
+    }
 }
 
-/// Current overlay window size in logical units (points), for repositioning
-/// without assuming a fixed size (compact vs. streaming).
-#[cfg(not(target_os = "windows"))]
-fn current_overlay_logical_size(window: &tauri::webview::WebviewWindow) -> Option<(f64, f64)> {
-    let size = window.inner_size().ok()?;
-    let scale = window.scale_factor().ok()?;
-    Some((size.width as f64 / scale, size.height as f64 / scale))
+/// The monitor whose bounds contain a global logical point — where a dragged
+/// bar was dropped — or the nearest one when it sits between monitors. Same
+/// coordinate convention as `get_monitor_with_cursor`: monitor bounds are
+/// physical, the point is logical, so the bounds are scaled down.
+fn monitor_for_point(app_handle: &AppHandle, x: f64, y: f64) -> Option<tauri::Monitor> {
+    let monitors = app_handle.available_monitors().ok()?;
+    let mut nearest: Option<(f64, tauri::Monitor)> = None;
+    for monitor in monitors {
+        let scale = monitor.scale_factor();
+        // Containment uses the full monitor bounds, not the dock area — a bar
+        // dropped into the Dock's strip or under the menu bar still docks to
+        // the screen it was dropped on.
+        let (bounds_x, bounds_y, bounds_w, bounds_h) = (
+            monitor.position().x as f64 / scale,
+            monitor.position().y as f64 / scale,
+            monitor.size().width as f64 / scale,
+            monitor.size().height as f64 / scale,
+        );
+        if x >= bounds_x
+            && x < bounds_x + bounds_w
+            && y >= bounds_y
+            && y < bounds_y + bounds_h
+        {
+            return Some(monitor);
+        }
+        let center = (
+            bounds_x + bounds_w / 2.0,
+            bounds_y + bounds_h / 2.0,
+        );
+        let distance = (center.0 - x).hypot(center.1 - y);
+        if nearest
+            .as_ref()
+            .is_none_or(|(best, _)| distance < *best)
+        {
+            nearest = Some((distance, monitor));
+        }
+    }
+    nearest.map(|(_, monitor)| monitor)
+}
+
+/// The edge of `area` a dropped bar belongs to: the one it was dropped
+/// closest to (Wispr's statusDockEdge snapping).
+fn nearest_overlay_edge(area: (f64, f64, f64, f64), x: f64, y: f64) -> OverlayPosition {
+    let (area_x, area_y, area_w, area_h) = area;
+    [
+        (OverlayPosition::Bottom, area_y + area_h - y),
+        (OverlayPosition::Top, y - area_y),
+        (OverlayPosition::Left, x - area_x),
+        (OverlayPosition::Right, area_x + area_w - x),
+    ]
+    .into_iter()
+    .min_by(|a, b| a.1.partial_cmp(&b.1).unwrap_or(std::cmp::Ordering::Equal))
+    .map(|(position, _)| position)
+    .unwrap_or(OverlayPosition::Bottom)
 }
 
 /// Windows accessibility text size (Settings > Accessibility > Text size), a
@@ -411,6 +493,7 @@ fn place_windows_overlay(
     overlay_window: &tauri::webview::WebviewWindow,
     logical_width: f64,
     logical_height: f64,
+    position: OverlayPosition,
 ) -> Result<(), String> {
     use windows::Win32::UI::WindowsAndMessaging::{SetWindowPos, SWP_NOACTIVATE, SWP_NOZORDER};
 
@@ -424,7 +507,7 @@ fn place_windows_overlay(
         text_scale,
         logical_width,
         logical_height,
-        settings::get_settings(app_handle).overlay_position,
+        position,
     );
     let hwnd = overlay_window
         .hwnd()
@@ -462,7 +545,8 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
     // for Layer Shell as we use anchors. On other platforms, we require a monitor.
     #[cfg(not(target_os = "linux"))]
     {
-        let position = calculate_overlay_position(app_handle, OVERLAY_WIDTH, OVERLAY_HEIGHT);
+        let position =
+            calculate_overlay_position(app_handle, OVERLAY_WIDTH, OVERLAY_HEIGHT, "recording");
         if position.is_none() {
             debug!("Failed to determine overlay position, not creating overlay window");
             return;
@@ -520,7 +604,9 @@ pub fn create_recording_overlay(app_handle: &AppHandle) {
 /// Creates the recording overlay panel and keeps it hidden by default (macOS)
 #[cfg(target_os = "macos")]
 pub fn create_recording_overlay(app_handle: &AppHandle) {
-    if let Some((x, y)) = calculate_overlay_position(app_handle, OVERLAY_WIDTH, OVERLAY_HEIGHT) {
+    if let Some((x, y)) =
+        calculate_overlay_position(app_handle, OVERLAY_WIDTH, OVERLAY_HEIGHT, "recording")
+    {
         // PanelBuilder creates a Tauri window then converts it to NSPanel.
         // The window remains registered, so get_webview_window() still works.
         match PanelBuilder::<_, RecordingOverlayPanel>::new(app_handle, "recording_overlay")
@@ -589,6 +675,36 @@ fn queue_overlay_state(app_handle: &AppHandle, state: &str) {
     let _ = app_handle.run_on_main_thread(move || show_overlay_state_on_main(&handle, &state));
 }
 
+/// Size and place the overlay window for `state` (no show, no event). Shared
+/// by the show path and the meeting bar's dock. Runs on the main thread.
+/// Layer-shell surfaces (Linux) never come through here: their geometry is
+/// committed by `configure_layer_shell_surface` instead, and dragging a
+/// compositor-anchored surface is not ours to do.
+fn apply_overlay_geometry_on_main(
+    app_handle: &AppHandle,
+    overlay_window: &tauri::webview::WebviewWindow,
+    state: &str,
+) {
+    let (width, height) = overlay_dimensions(state);
+    #[cfg(not(target_os = "windows"))]
+    {
+        let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
+        if let Some((x, y)) = calculate_overlay_position(app_handle, width, height, state) {
+            let _ = overlay_window
+                .set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
+        }
+    }
+    #[cfg(target_os = "windows")]
+    {
+        let position = overlay_position_for(&settings::get_settings(app_handle), state);
+        if let Err(error) =
+            place_windows_overlay(app_handle, overlay_window, width, height, position)
+        {
+            log::error!("Failed to place recording overlay: {error}");
+        }
+    }
+}
+
 fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
     // Remember which view owns the window: the position updater re-applies the
     // right geometry per state, and the meeting refresh defers while a
@@ -597,6 +713,9 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
     DICTATION_OVERLAY_ACTIVE.store(is_dictation_state(state), Ordering::SeqCst);
 
     // Size the overlay for this state (compact vs. streaming), then position it.
+    // Only the layer-shell branch reads the dimensions here directly; every
+    // other path is sized inside apply_overlay_geometry_on_main.
+    #[cfg(target_os = "linux")]
     let (width, height) = overlay_dimensions(state);
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
         // Invalidate any delayed hide still in flight from a previous session
@@ -605,7 +724,8 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
 
         #[cfg(target_os = "linux")]
         let shown_with_layer_shell = if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
-            let position = settings::get_settings(app_handle).overlay_position;
+            let position =
+                overlay_position_for(&settings::get_settings(app_handle), state);
             match overlay_window.gtk_window() {
                 Ok(gtk_window) => {
                     configure_layer_shell_surface(&gtk_window, position, width, height)
@@ -621,34 +741,7 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
         let shown_with_layer_shell = false;
 
         if !shown_with_layer_shell {
-            let size_started = std::time::Instant::now();
-            #[cfg(not(target_os = "windows"))]
-            let _ =
-                overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
-            let size_elapsed = size_started.elapsed();
-
-            let pos_started = std::time::Instant::now();
-            #[cfg(not(target_os = "windows"))]
-            let set_pos_elapsed =
-                if let Some((x, y)) = calculate_overlay_position(app_handle, width, height) {
-                    let set_pos_started = std::time::Instant::now();
-                    let _ = overlay_window
-                        .set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
-                    set_pos_started.elapsed()
-                } else {
-                    std::time::Duration::ZERO
-                };
-            #[cfg(target_os = "windows")]
-            let set_pos_elapsed = {
-                let set_pos_started = std::time::Instant::now();
-                if let Err(error) =
-                    place_windows_overlay(app_handle, &overlay_window, width, height)
-                {
-                    log::error!("Failed to place recording overlay: {error}");
-                }
-                set_pos_started.elapsed()
-            };
-            let pos_calc_elapsed = pos_started.elapsed() - set_pos_elapsed;
+            apply_overlay_geometry_on_main(app_handle, &overlay_window, state);
 
             let show_started = std::time::Instant::now();
             let _ = overlay_window.show();
@@ -661,18 +754,30 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
             // Re-assert bounds after show(): the pre-show move crosses the DPI
             // boundary, and tao's WM_DPICHANGED reflow clobbers the first placement.
             #[cfg(target_os = "windows")]
-            if let Err(error) = place_windows_overlay(app_handle, &overlay_window, width, height) {
-                log::error!("Failed to re-assert recording overlay position: {error}");
-            }
+            apply_overlay_geometry_on_main(app_handle, &overlay_window, state);
 
-            log::debug!(
-                "overlay '{}': set_size={:?} pos_calc={:?} set_pos={:?} show={:?}",
-                state,
-                size_elapsed,
-                pos_calc_elapsed,
-                set_pos_elapsed,
-                show_elapsed
-            );
+            log::debug!("overlay '{}': show={:?}", state, show_elapsed);
+        }
+
+        // macOS polish for the meeting bar (Wispr Flow Bar direction): the bar
+        // rides on the window server's own soft shadow, drawn from the window's
+        // content shape — it can never intercept a click the way a transparent
+        // margin would. The dictation overlay keeps its flat, shadow-less look.
+        #[cfg(target_os = "macos")]
+        let _ = overlay_window.set_shadow(!is_dictation_state(state));
+
+        // Never carry a click-through state across views: only the idle disc's
+        // hit-shape poll (below) sets `ignoresMouseEvents`, and every other view
+        // must own a fully interactive window.
+        #[cfg(target_os = "macos")]
+        let _ = overlay_window.set_ignore_cursor_events(false);
+
+        // The idle disc's window is the disc's bounding square, and the disc is
+        // a circle: the transparent corners would swallow clicks meant for the
+        // app underneath. Keep them click-through while the disc is up.
+        #[cfg(target_os = "macos")]
+        if state == MEETING_BAR_IDLE {
+            start_disc_hit_shape_poll(app_handle);
         }
 
         let _ = overlay_window.emit("show-overlay", state);
@@ -728,7 +833,11 @@ fn update_overlay_position_on_main(app_handle: &AppHandle) {
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
         #[cfg(target_os = "linux")]
         if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
-            let position = settings::get_settings(app_handle).overlay_position;
+            // Under layer shell only the anchor changes; the compositor commits
+            // it. (The meeting bar is never dragged on layer-shell Wayland —
+            // see `begin_meeting_bar_drag` — but honour a pinned edge anyway.)
+            let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+            let position = overlay_position_for(&settings::get_settings(app_handle), &state);
             match overlay_window.gtk_window() {
                 Ok(gtk_window) => configure_layer_shell_position(&gtk_window, position),
                 Err(error) => log::error!("Failed to access GTK overlay window: {error}"),
@@ -737,26 +846,10 @@ fn update_overlay_position_on_main(app_handle: &AppHandle) {
             return;
         }
 
-        #[cfg(target_os = "windows")]
-        {
-            let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
-            let (width, height) = overlay_dimensions(&state);
-            if let Err(error) = place_windows_overlay(app_handle, &overlay_window, width, height) {
-                log::error!("Failed to update recording overlay position: {error}");
-            }
-        }
-
-        #[cfg(not(target_os = "windows"))]
-        {
-            // Use the window's current size so centering stays correct whether the
-            // overlay is in compact or streaming layout.
-            let (width, height) = current_overlay_logical_size(&overlay_window)
-                .unwrap_or((OVERLAY_WIDTH, OVERLAY_HEIGHT));
-            if let Some((x, y)) = calculate_overlay_position(app_handle, width, height) {
-                let _ = overlay_window
-                    .set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
-            }
-        }
+        // Re-dock whatever view owns the window right now: the dictation card
+        // follows `overlay_position`, the meeting bar its own pinned edge.
+        let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+        apply_overlay_geometry_on_main(app_handle, &overlay_window, &state);
 
         // Tell the webview to re-read its placement: the meeting bar is a
         // persistent view and must re-anchor to the new edge without waiting
@@ -823,18 +916,372 @@ pub fn refresh_meeting_bar(app_handle: &AppHandle) {
         return;
     }
 
-    let recording = app_handle
+    if is_meeting_recording(app_handle) {
+        show_meeting_bar_state(app_handle, MEETING_BAR_RECORDING);
+        return;
+    }
+
+    // The disc can be dismissed for a while (right-click > "Hide for 1 hour"):
+    // while it is, the window itself goes away — there is nothing else to see.
+    if meeting_bar_hidden() {
+        hide_meeting_bar_window(app_handle);
+        return;
+    }
+
+    show_meeting_bar_state(app_handle, MEETING_BAR_IDLE);
+}
+
+/// Whether a meeting records right now.
+fn is_meeting_recording(app_handle: &AppHandle) -> bool {
+    app_handle
         .try_state::<Arc<MeetingManager>>()
         .map(|meetings| meetings.is_recording())
-        .unwrap_or(false);
-    show_meeting_bar_state(
+        .unwrap_or(false)
+}
+
+// ============================================================
+// Meeting bar: drag-to-edge, right-click hide, hit-shape (S-4d)
+//
+// Wispr Flow Bar parity, round 2. The bar (idle disc and recording pill
+// alike) can be dragged to another screen edge like Wispr's statusDockEdge;
+// the disc offers "Hide for 1 hour" on right-click; and the window no longer
+// swallows clicks outside its visible content.
+// ============================================================
+
+/// How long the bar must sit still after a move before it docks. A native
+/// window drag ends with a mouse-up we never see (the modal drag loop consumes
+/// it), so docking is driven by move-quiescence instead: the last move of a
+/// drag arms the dock, and it fires once the window has been still this long.
+/// Programmatic placements arm it too — and then no-op, because the window
+/// already sits at its docked spot.
+const MEETING_BAR_DOCK_QUIESCE: Duration = Duration::from_millis(150);
+
+/// Move signals for the dock watcher above. Created once, on the first move.
+static OVERLAY_MOVE_SIGNAL: OnceLock<mpsc::Sender<()>> = OnceLock::new();
+
+/// The idle disc can be dismissed for a while: the bar stays gone until the
+/// hour passes, the app restarts, or a meeting is started from Settings.
+/// Deliberately in-memory — a restart always brings the disc back.
+static MEETING_BAR_HIDDEN_UNTIL: Mutex<Option<Instant>> = Mutex::new(None);
+
+/// While the disc's native context menu is up. The menu runs its own event
+/// loop; the disc's hit-shape poll leaves the window's input state alone
+/// until it closes.
+static MEETING_BAR_MENU_OPEN: AtomicBool = AtomicBool::new(false);
+
+/// The right-click menu's "hide for an hour" item, handled by the app-wide
+/// menu-event handler in lib.rs.
+pub const MEETING_BAR_HIDE_FOR_HOUR_ID: &str = "meeting_bar_hide_for_hour";
+
+/// The window moved. Called from the app's window-event handler; every move of
+/// the overlay window — a drag or a programmatic placement — arms the dock
+/// watcher.
+pub fn on_overlay_window_moved(app_handle: &AppHandle) {
+    let sender = OVERLAY_MOVE_SIGNAL.get_or_init(|| {
+        let (tx, rx) = mpsc::channel();
+        let handle = app_handle.clone();
+        std::thread::spawn(move || loop {
+            // Park until the first move of a burst, then wait for quiet.
+            if rx.recv().is_err() {
+                return;
+            }
+            loop {
+                match rx.recv_timeout(MEETING_BAR_DOCK_QUIESCE) {
+                    Ok(()) => {}
+                    Err(_) => {
+                        dock_meeting_bar_if_moved(&handle);
+                        break;
+                    }
+                }
+            }
+        });
+        tx
+    });
+    let _ = sender.send(());
+}
+
+/// Begin a native drag of the meeting bar. The window-server drag carries the
+/// window with the pointer across the whole screen — the bar's own exact-fit
+/// window could never track a cross-screen drag by itself — and the dock
+/// watcher snaps it to the nearest edge once it settles. A drag never touches
+/// the session: the frontend only hands over once the pointer has crossed its
+/// drag threshold, so a click still clicks and a drag drags.
+pub fn begin_meeting_bar_drag(app_handle: &AppHandle) {
+    let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+    if is_dictation_state(&state) {
+        return;
+    }
+    // A compositor-anchored layer-shell surface is not ours to move.
+    #[cfg(target_os = "linux")]
+    if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
+        return;
+    }
+
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        if let Some(window) = handle.get_webview_window("recording_overlay") {
+            if let Err(error) = window.start_dragging() {
+                log::warn!("Failed to start the meeting bar drag: {error}");
+            }
+        }
+    });
+}
+
+/// Dock the meeting bar after its window has been still: snap it to the
+/// nearest edge of the monitor it was dropped on, save that edge (the Wispr
+/// `statusDockEdge` choice, resumed on restart), and tell the webview to
+/// re-anchor. No-op for dictation views and for a bar that already sits at
+/// its docked spot — which is what every programmatic placement does.
+fn dock_meeting_bar_if_moved(app_handle: &AppHandle) {
+    let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+    if is_dictation_state(&state) {
+        return;
+    }
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        dock_meeting_bar_on_main(&handle, &state);
+    });
+}
+
+fn dock_meeting_bar_on_main(app_handle: &AppHandle, state: &str) {
+    #[cfg(target_os = "linux")]
+    if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
+        return;
+    }
+
+    let Some(window) = app_handle.get_webview_window("recording_overlay") else {
+        return;
+    };
+    let (Ok(position), Ok(size), Ok(scale)) =
+        (window.outer_position(), window.outer_size(), window.scale_factor())
+    else {
+        return;
+    };
+
+    // Where the bar was dropped, in global logical coordinates.
+    let center_x = (position.x as f64 + size.width as f64 / 2.0) / scale;
+    let center_y = (position.y as f64 + size.height as f64 / 2.0) / scale;
+    let Some(monitor) = monitor_for_point(app_handle, center_x, center_y) else {
+        return;
+    };
+    let area = monitor_dock_area(&monitor);
+    let edge = nearest_overlay_edge(area, center_x, center_y);
+
+    let (width, height) = overlay_dimensions(state);
+    let (x, y) = overlay_position_on_monitor(&monitor, width, height, edge);
+    // Already docked here — a programmatic placement, or a drag that ended
+    // where it began: nothing to move, and nothing to pin.
+    let dropped_x = position.x as f64 / scale;
+    let dropped_y = position.y as f64 / scale;
+    if (dropped_x - x).abs() <= 3.0 && (dropped_y - y).abs() <= 3.0 {
+        return;
+    }
+
+    let mut settings = settings::get_settings(app_handle);
+    settings.meeting_bar_position = Some(edge);
+    settings::write_settings(app_handle, settings);
+    log::debug!("meeting bar docked to the {edge:?} edge");
+
+    apply_overlay_geometry_on_main(app_handle, &window, state);
+    let _ = window.emit("overlay-position-changed", ());
+}
+
+/// The idle disc's right-click menu (Wispr's escape hatch). Native, not HTML:
+/// the disc's window is exactly the disc, so a menu could never render inside
+/// it. Pops at the cursor; the item is dispatched by the app-wide menu-event
+/// handler.
+pub fn show_meeting_bar_menu(app_handle: &AppHandle) {
+    // Only the idle disc offers the menu — the recording pill is a live
+    // session's UI and can never be hidden.
+    if *CURRENT_OVERLAY_STATE.lock().unwrap() != MEETING_BAR_IDLE
+        || is_meeting_recording(app_handle)
+    {
+        return;
+    }
+
+    let strings = crate::tray_i18n::get_tray_translations(Some(
+        settings::get_settings(app_handle).app_language,
+    ));
+    // Locales that haven't translated the key yet fall back to English, the
+    // same contract the tray's secure-input item has.
+    let label = if strings.meeting_bar_hide_for_hour.is_empty() {
+        crate::tray_i18n::get_tray_translations(Some("en".to_string())).meeting_bar_hide_for_hour
+    } else {
+        strings.meeting_bar_hide_for_hour
+    };
+
+    let menu = match MenuItem::with_id(
         app_handle,
-        if recording {
-            MEETING_BAR_RECORDING
-        } else {
-            MEETING_BAR_IDLE
-        },
-    );
+        MEETING_BAR_HIDE_FOR_HOUR_ID,
+        &label,
+        true,
+        None::<&str>,
+    )
+    .and_then(|item| Menu::with_items(app_handle, &[&item]))
+    {
+        Ok(menu) => menu,
+        Err(error) => {
+            log::warn!("Failed to build the meeting bar menu: {error}");
+            return;
+        }
+    };
+    let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") else {
+        return;
+    };
+    // The popup anchors to the hosting window (the panel); the manager's
+    // `get_window` is unstable-only, so reach it through the webview window.
+    let window = overlay_window.as_ref().window();
+
+    MEETING_BAR_MENU_OPEN.store(true, Ordering::SeqCst);
+    if let Err(error) = menu.popup(window) {
+        log::warn!("Failed to open the meeting bar menu: {error}");
+    }
+    MEETING_BAR_MENU_OPEN.store(false, Ordering::SeqCst);
+}
+
+/// Hide the idle disc for a while (right-click > "Hide for 1 hour"). It comes
+/// back when the hour passes, when the app restarts, or when a meeting is
+/// started from Settings. The recording pill is never hideable.
+pub fn hide_meeting_bar_for(app_handle: &AppHandle, secs: u64) {
+    if is_meeting_recording(app_handle) {
+        return;
+    }
+    let Some(deadline) = Instant::now().checked_add(Duration::from_secs(secs)) else {
+        return;
+    };
+    *MEETING_BAR_HIDDEN_UNTIL.lock().unwrap() = Some(deadline);
+
+    // Hide the window now if the idle disc is showing; a dictation view keeps
+    // it — the flag is re-checked when the dictation hands the window back.
+    refresh_meeting_bar(app_handle);
+
+    // The hour itself: one sleeping thread, no polling, no persistence.
+    let handle = app_handle.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(Duration::from_secs(secs));
+        let mut hidden = MEETING_BAR_HIDDEN_UNTIL.lock().unwrap();
+        // Only this hide's own deadline may expire it; anything else that
+        // changed the flag since owns the decision.
+        if *hidden == Some(deadline) {
+            *hidden = None;
+            drop(hidden);
+            refresh_meeting_bar(&handle);
+        }
+    });
+}
+
+/// Bring the bar back early: starting a meeting from Settings dismisses the
+/// hour-long hide. Callers refresh the bar themselves (the pill shows).
+pub fn unhide_meeting_bar() {
+    *MEETING_BAR_HIDDEN_UNTIL.lock().unwrap() = None;
+}
+
+fn meeting_bar_hidden() -> bool {
+    MEETING_BAR_HIDDEN_UNTIL
+        .lock()
+        .unwrap()
+        .is_some_and(|until| until > Instant::now())
+}
+
+/// Take the overlay window off screen while the bar is hidden. The window is
+/// the bar's whole UI; hiding it hides the bar (and frees the space it sat in).
+fn hide_meeting_bar_window(app_handle: &AppHandle) {
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        if let Some(window) = handle.get_webview_window("recording_overlay") {
+            #[cfg(target_os = "macos")]
+            let _ = window.set_ignore_cursor_events(false);
+            let _ = window.hide();
+        }
+    });
+}
+
+/// Slack added to the disc's radius when deciding whether the cursor is "on"
+/// the disc: the whole visible circle must stay clickable even if the
+/// global-cursor-to-window-frame math lands a point off on a scaled display.
+#[cfg(target_os = "macos")]
+const DISC_HIT_MARGIN: f64 = 3.0;
+
+#[cfg(target_os = "macos")]
+const DISC_HIT_POLL_INTERVAL: Duration = Duration::from_millis(40);
+
+/// Freshness token for the disc's hit-shape poll: each show of the idle disc
+/// starts a poll and invalidates the previous one.
+#[cfg(target_os = "macos")]
+static DISC_HIT_POLL_GENERATION: AtomicU64 = AtomicU64::new(0);
+
+/// The idle disc's window is the disc's bounding square, and the disc is a
+/// circle: the square's corners are transparent yet still ours, so a click
+/// aimed just past the disc's edge would die in our window instead of reaching
+/// the app underneath. While the disc owns the window, keep the window's
+/// `ignoresMouseEvents` in sync with the cursor: click-through everywhere
+/// except on the disc itself (plus a small margin). Fails safe — on any error
+/// the window stays fully clickable.
+#[cfg(target_os = "macos")]
+fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
+    let generation = DISC_HIT_POLL_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+    let handle = app_handle.clone();
+    std::thread::spawn(move || {
+        let mut ignored = false;
+        loop {
+            std::thread::sleep(DISC_HIT_POLL_INTERVAL);
+            if generation != DISC_HIT_POLL_GENERATION.load(Ordering::SeqCst) {
+                break;
+            }
+            if *CURRENT_OVERLAY_STATE.lock().unwrap() != MEETING_BAR_IDLE {
+                break;
+            }
+            if MEETING_BAR_MENU_OPEN.load(Ordering::SeqCst) {
+                continue;
+            }
+            let Some(window) = handle.get_webview_window("recording_overlay") else {
+                break;
+            };
+            if !window.is_visible().unwrap_or(false) {
+                break;
+            }
+
+            // None (no cursor, no frame) means "can't tell" — stay clickable.
+            let hits_disc = disc_cursor_hits(&handle, &window).unwrap_or(true);
+            let want_ignore = !hits_disc;
+            if want_ignore != ignored {
+                ignored = want_ignore;
+                let poll_handle = handle.clone();
+                let _ = handle.run_on_main_thread(move || {
+                    if let Some(window) = poll_handle.get_webview_window("recording_overlay") {
+                        let _ = window.set_ignore_cursor_events(want_ignore);
+                    }
+                });
+            }
+        }
+
+        // Leaving the disc: whatever comes next owns a fully clickable window.
+        let exit_handle = handle.clone();
+        let _ = handle.run_on_main_thread(move || {
+            if let Some(window) = exit_handle.get_webview_window("recording_overlay") {
+                let _ = window.set_ignore_cursor_events(false);
+            }
+        });
+    });
+}
+
+/// Whether the global cursor sits on the disc's circle. Both the cursor
+/// (enigo reports points on macOS) and the window frame (physical, scaled
+/// down) land in the same global logical space.
+#[cfg(target_os = "macos")]
+fn disc_cursor_hits(
+    app_handle: &AppHandle,
+    window: &tauri::webview::WebviewWindow,
+) -> Option<bool> {
+    let (cursor_x, cursor_y) = input::get_cursor_position(app_handle)?;
+    let position = window.outer_position().ok()?;
+    let size = window.outer_size().ok()?;
+    let scale = window.scale_factor().ok()?;
+
+    let center_x = (position.x as f64 + size.width as f64 / 2.0) / scale;
+    let center_y = (position.y as f64 + size.height as f64 / 2.0) / scale;
+    let radius = size.width as f64 / scale / 2.0 + DISC_HIT_MARGIN;
+    Some((cursor_x as f64 - center_x).hypot(cursor_y as f64 - center_y) <= radius)
 }
 
 // Cached "overlay is enabled" flag, kept in sync with overlay_style. Avoids
@@ -900,16 +1347,56 @@ mod tests {
 
     #[test]
     fn meeting_bar_views_have_their_own_footprints() {
-        // The idle disc is a small square window sized for the 40x40 circle.
+        // The idle disc's window is exactly the 40x40 circle: no transparent
+        // margin to swallow clicks around it.
         assert_eq!(
             overlay_dimensions(MEETING_BAR_IDLE),
             (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT)
         );
-        // The recording pill shares the compact dictation pill's footprint.
+        // The recording pill (and the frontend's "Saving" pill) is the
+        // capsule's own exact footprint, not the dictation pill's.
         assert_eq!(
             overlay_dimensions(MEETING_BAR_RECORDING),
+            (MEETING_PILL_WIDTH, MEETING_PILL_HEIGHT)
+        );
+        // The dictation states keep their own footprints untouched.
+        assert_eq!(
+            overlay_dimensions("recording"),
             (OVERLAY_WIDTH, OVERLAY_HEIGHT)
         );
+    }
+
+    #[test]
+    fn meeting_bar_edge_follows_the_dictation_overlay_until_dragged() {
+        let mut settings = crate::settings::get_default_settings();
+        settings.overlay_position = OverlayPosition::Top;
+        // Unpinned (the default): the bar follows the dictation overlay.
+        assert_eq!(
+            overlay_position_for(&settings, MEETING_BAR_IDLE),
+            OverlayPosition::Top
+        );
+        // Pinned by a drag: the bar keeps its own edge, the dictation card
+        // keeps the setting's.
+        settings.meeting_bar_position = Some(OverlayPosition::Left);
+        assert_eq!(
+            overlay_position_for(&settings, MEETING_BAR_IDLE),
+            OverlayPosition::Left
+        );
+        assert_eq!(
+            overlay_position_for(&settings, "recording"),
+            OverlayPosition::Top
+        );
+    }
+
+    #[test]
+    fn dropped_bar_docks_to_the_nearest_edge() {
+        let area = (0.0, 0.0, 1000.0, 800.0);
+        assert_eq!(nearest_overlay_edge(area, 500.0, 790.0), OverlayPosition::Bottom);
+        assert_eq!(nearest_overlay_edge(area, 500.0, 12.0), OverlayPosition::Top);
+        assert_eq!(nearest_overlay_edge(area, 9.0, 400.0), OverlayPosition::Left);
+        assert_eq!(nearest_overlay_edge(area, 990.0, 400.0), OverlayPosition::Right);
+        // Ties prefer the resting dock (bottom first), like the bar's default.
+        assert_eq!(nearest_overlay_edge(area, 500.0, 400.0), OverlayPosition::Bottom);
     }
 
     #[test]

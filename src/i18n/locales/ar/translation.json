@@ -7,7 +7,8 @@
     "model": "النموذج",
     "quit": "إنهاء",
     "cancel": "إلغاء",
-    "secureInputWarning": "⚠ الاختصارات محجوبة بواسطة Secure Input"
+    "secureInputWarning": "⚠ الاختصارات محجوبة بواسطة Secure Input",
+    "meetingBarHideForHour": "إخفاء لمدة ساعة"
   },
   "sidebar": {
     "general": "عام",

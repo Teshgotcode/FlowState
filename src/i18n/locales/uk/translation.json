@@ -7,7 +7,8 @@
     "model": "Модель",
     "quit": "Вийти",
     "cancel": "Скасувати",
-    "secureInputWarning": "⚠ Комбінації клавіш заблоковано Secure Input"
+    "secureInputWarning": "⚠ Комбінації клавіш заблоковано Secure Input",
+    "meetingBarHideForHour": "Сховати на 1 годину"
   },
   "sidebar": {
     "general": "Загальні",
