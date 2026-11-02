@@ -55,6 +55,9 @@ jobs:
       - name: Check bundled model catalog matches @handy-computer/models
         run: bun run check:catalog
 
+      - name: Check bundled NOTICE matches the root NOTICE
+        run: bun run check:notice
+
       - name: Test keyboard utilities
         run: bun run test:keyboard
 
