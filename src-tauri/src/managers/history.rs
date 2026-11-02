@@ -11,6 +11,7 @@ use tauri::AppHandle;
 use tauri_specta::Event;
 
 use crate::language_detection::{LanguageDecision, LanguageSource};
+use crate::managers::meeting_note::MeetingNote;
 use crate::managers::transcription::TranscriptSegment;
 
 /// Database migrations for transcription history.
@@ -135,12 +136,17 @@ pub struct HistoryMetadata {
     /// none, read as `None`.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub segments: Option<Vec<TranscriptSegment>>,
+    /// The draft meeting note a local LLM wrote over the transcript, when the
+    /// user asked for one. Kept beside the transcript; the transcript itself
+    /// is never changed by it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub meeting_note: Option<MeetingNote>,
 }
 
 impl HistoryMetadata {
     /// Whether it holds any fact worth storing.
     fn is_empty(&self) -> bool {
-        self.duration_secs.is_none() && self.segments.is_none()
+        self.duration_secs.is_none() && self.segments.is_none() && self.meeting_note.is_none()
     }
 }
 
@@ -155,6 +161,7 @@ fn fresh_metadata(segments: &[TranscriptSegment]) -> Option<HistoryMetadata> {
     (!segments.is_empty()).then(|| HistoryMetadata {
         duration_secs: None,
         segments: Some(segments.to_vec()),
+        meeting_note: None,
     })
 }
 
@@ -444,6 +451,7 @@ impl HistoryManager {
             metadata: Some(HistoryMetadata {
                 duration_secs: Some(duration_secs),
                 segments: None,
+                meeting_note: None,
             }),
         })?;
 
@@ -567,6 +575,51 @@ impl HistoryManager {
         )?;
 
         debug!("Updated transcription for history entry {}", id);
+
+        if let Err(e) = (HistoryUpdatePayload::Updated {
+            entry: entry.clone(),
+        })
+        .emit(&self.app_handle)
+        {
+            error!("Failed to emit history-updated event: {}", e);
+        }
+
+        Ok(entry)
+    }
+
+    /// Keep a generated meeting note on the entry's metadata, beside the
+    /// transcript it was written from. Only the metadata column changes; the
+    /// transcription is never touched. The updated entry is announced so the
+    /// window that asked for the note gets it.
+    pub fn save_meeting_note(&self, id: i64, note: MeetingNote) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let existing = conn
+            .query_row(
+                &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+                params![id],
+                Self::map_history_entry,
+            )
+            .optional()?;
+        let mut metadata = existing
+            .and_then(|entry| entry.metadata)
+            .unwrap_or_default();
+        metadata.meeting_note = Some(note);
+        let metadata_json = serde_json::to_string(&metadata).ok();
+        let updated = conn.execute(
+            "UPDATE transcription_history SET metadata = ?1 WHERE id = ?2",
+            params![metadata_json, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+
+        let entry = conn.query_row(
+            &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+            params![id],
+            Self::map_history_entry,
+        )?;
+
+        debug!("Saved the meeting note on history entry {}", id);
 
         if let Err(e) = (HistoryUpdatePayload::Updated {
             entry: entry.clone(),
@@ -1033,6 +1086,7 @@ mod tests {
                 t1_ms: 1500,
                 text: "Hei der.".to_string(),
             }]),
+            meeting_note: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
 
@@ -1040,6 +1094,38 @@ mod tests {
             serde_json::from_str::<HistoryMetadata>(&stored).expect("read metadata"),
             metadata
         );
+    }
+
+    #[test]
+    fn metadata_round_trips_a_meeting_note() {
+        let metadata = HistoryMetadata {
+            duration_secs: None,
+            segments: None,
+            meeting_note: Some(MeetingNote {
+                summary: "Møtet avgjorde lanseringen.".to_string(),
+                decisions: vec!["Vi lanserer 1. mai.".to_string()],
+                action_items: vec![crate::managers::meeting_note::MeetingActionItem {
+                    task: "Kari sender rapporten".to_string(),
+                    owner: "Kari".to_string(),
+                }],
+                open_questions: vec!["Hvem sender pressemeldingen?".to_string()],
+                model: "llama3.1".to_string(),
+                generated_at: 1_700_000_000,
+            }),
+        };
+        let stored = serde_json::to_string(&metadata).expect("store metadata");
+        assert_eq!(
+            serde_json::from_str::<HistoryMetadata>(&stored).expect("read metadata"),
+            metadata
+        );
+    }
+
+    #[test]
+    fn old_metadata_without_a_note_opens_cleanly() {
+        let metadata: HistoryMetadata =
+            serde_json::from_str("{\"duration_secs\":120,\"segments\":[]}")
+                .expect("old metadata opens");
+        assert!(metadata.meeting_note.is_none());
     }
 
     #[test]

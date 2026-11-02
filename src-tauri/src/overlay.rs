@@ -386,22 +386,12 @@ fn monitor_for_point(app_handle: &AppHandle, x: f64, y: f64) -> Option<tauri::Mo
             monitor.size().width as f64 / scale,
             monitor.size().height as f64 / scale,
         );
-        if x >= bounds_x
-            && x < bounds_x + bounds_w
-            && y >= bounds_y
-            && y < bounds_y + bounds_h
-        {
+        if x >= bounds_x && x < bounds_x + bounds_w && y >= bounds_y && y < bounds_y + bounds_h {
             return Some(monitor);
         }
-        let center = (
-            bounds_x + bounds_w / 2.0,
-            bounds_y + bounds_h / 2.0,
-        );
+        let center = (bounds_x + bounds_w / 2.0, bounds_y + bounds_h / 2.0);
         let distance = (center.0 - x).hypot(center.1 - y);
-        if nearest
-            .as_ref()
-            .is_none_or(|(best, _)| distance < *best)
-        {
+        if nearest.as_ref().is_none_or(|(best, _)| distance < *best) {
             nearest = Some((distance, monitor));
         }
     }
@@ -724,8 +714,7 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
 
         #[cfg(target_os = "linux")]
         let shown_with_layer_shell = if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
-            let position =
-                overlay_position_for(&settings::get_settings(app_handle), state);
+            let position = overlay_position_for(&settings::get_settings(app_handle), state);
             match overlay_window.gtk_window() {
                 Ok(gtk_window) => {
                     configure_layer_shell_surface(&gtk_window, position, width, height)
@@ -1052,9 +1041,11 @@ fn dock_meeting_bar_on_main(app_handle: &AppHandle, state: &str) {
     let Some(window) = app_handle.get_webview_window("recording_overlay") else {
         return;
     };
-    let (Ok(position), Ok(size), Ok(scale)) =
-        (window.outer_position(), window.outer_size(), window.scale_factor())
-    else {
+    let (Ok(position), Ok(size), Ok(scale)) = (
+        window.outer_position(),
+        window.outer_size(),
+        window.scale_factor(),
+    ) else {
         return;
     };
 
@@ -1391,12 +1382,27 @@ mod tests {
     #[test]
     fn dropped_bar_docks_to_the_nearest_edge() {
         let area = (0.0, 0.0, 1000.0, 800.0);
-        assert_eq!(nearest_overlay_edge(area, 500.0, 790.0), OverlayPosition::Bottom);
-        assert_eq!(nearest_overlay_edge(area, 500.0, 12.0), OverlayPosition::Top);
-        assert_eq!(nearest_overlay_edge(area, 9.0, 400.0), OverlayPosition::Left);
-        assert_eq!(nearest_overlay_edge(area, 990.0, 400.0), OverlayPosition::Right);
+        assert_eq!(
+            nearest_overlay_edge(area, 500.0, 790.0),
+            OverlayPosition::Bottom
+        );
+        assert_eq!(
+            nearest_overlay_edge(area, 500.0, 12.0),
+            OverlayPosition::Top
+        );
+        assert_eq!(
+            nearest_overlay_edge(area, 9.0, 400.0),
+            OverlayPosition::Left
+        );
+        assert_eq!(
+            nearest_overlay_edge(area, 990.0, 400.0),
+            OverlayPosition::Right
+        );
         // Ties prefer the resting dock (bottom first), like the bar's default.
-        assert_eq!(nearest_overlay_edge(area, 500.0, 400.0), OverlayPosition::Bottom);
+        assert_eq!(
+            nearest_overlay_edge(area, 500.0, 400.0),
+            OverlayPosition::Bottom
+        );
     }
 
     #[test]

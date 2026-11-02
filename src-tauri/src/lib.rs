@@ -240,6 +240,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::stop_meeting,
             commands::meeting::cancel_meeting,
             commands::meeting::get_meeting_status,
+            commands::meeting::generate_meeting_note,
+            commands::meeting::cancel_meeting_note,
             commands::meeting::start_meeting_bar_drag,
             commands::meeting::open_meeting_bar_menu,
             helpers::clamshell::is_laptop,
