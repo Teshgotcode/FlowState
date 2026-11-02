@@ -82,7 +82,7 @@
   },
   "plugins": {
     "updater": {
-      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEJBQjcyMDk1MjA2NjAxRjkKUldUNUFXWWdsU0MzdXRRZi8zYzhqV2FaNUVDbDd2Rk5VM1IvWWowVXdmRFNKQ1BrMXF5RFFsLy8K",
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI4NEQ5NzY4MTU1MzZENUEKUldSYWJWTVZhSmROdUZoS3FOd2FIcTludG9yWnZJcVU2UmNaSFZHYko1Y3ErNGZSZVkwT3pBOHUK",
       "endpoints": [
         "https://github.com/Teshgotcode/FlowState/releases/latest/download/latest.json"
       ]
