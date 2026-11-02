@@ -408,7 +408,10 @@
       "startFailed": "Poradu nebylo možné spustit.",
       "stopFailed": "Poradu nebylo možné zastavit.",
       "cancelFailed": "Poradu nebylo možné zrušit.",
-      "stopped": "Porada byla uložena do Historie."
+      "stopped": "Porada byla uložena do Historie.",
+      "liveTranscript": "Živý přepis",
+      "liveEmpty": "Slova se zde zobrazují, během schůzky.",
+      "jumpToBottom": "Přejít na konec"
     },
     "models": {
       "title": "Modely",

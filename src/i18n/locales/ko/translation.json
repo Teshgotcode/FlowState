@@ -408,7 +408,10 @@
       "startFailed": "회의를 시작할 수 없습니다.",
       "stopFailed": "회의를 중지할 수 없습니다.",
       "cancelFailed": "회의를 취소할 수 없습니다.",
-      "stopped": "회의가 히스토리에 저장되었습니다."
+      "stopped": "회의가 히스토리에 저장되었습니다.",
+      "liveTranscript": "실시간 전사",
+      "liveEmpty": "회의가 진행되는 동안 단어가 여기에 나타납니다.",
+      "jumpToBottom": "맨 아래로 이동"
     },
     "models": {
       "title": "모델",

@@ -25,6 +25,7 @@ use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::Instant;
@@ -80,6 +81,24 @@ pub struct StoppedMeeting {
 #[derive(Clone, Debug, Serialize, Deserialize, Type, tauri_specta::Event)]
 pub struct MeetingStateEvent {
     pub status: MeetingStatus,
+}
+
+/// One finished piece of a meeting's live transcript, emitted as the
+/// `meeting-segment` event while the meeting records, so its window can show
+/// the transcript as it is spoken instead of only after the stop. The segment
+/// comes from the live decode the recording already runs — the same chunks a
+/// dictation's preview decodes — so no second transcription happens.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type, tauri_specta::Event)]
+pub struct MeetingSegment {
+    /// Arrival order within the session, from 0: the window keeps the list in
+    /// the order the segments were spoken.
+    pub index: u32,
+    /// When the segment starts, in milliseconds from the meeting's start.
+    pub t0_ms: i64,
+    /// When the segment ends, in milliseconds from the meeting's start.
+    pub t1_ms: i64,
+    /// What the model heard in it.
+    pub text: String,
 }
 
 /// Why a session transition was refused.
@@ -470,8 +489,14 @@ impl MeetingManager {
             "a frame tap was installed while no meeting was recording"
         );
 
+        // The live transcript follows the live decode that already runs:
+        // each segment it finishes becomes a `meeting-segment` event.
+        // Installed before the capture starts, so not even the first chunk
+        // can be decoded before the window can hear it.
+        self.install_live_transcript();
         if let Err(e) = rm.try_start_recording(MEETING_BINDING_ID, vad_policy) {
             rm.set_frame_tap(None);
+            self.clear_live_transcript();
             if let Err(discard_error) = working.lock().unwrap().discard() {
                 error!("Failed to clean up the meeting's working file: {discard_error}");
             }
@@ -522,6 +547,8 @@ impl MeetingManager {
         // from the background job, which transcribes the finished recording
         // chunk by chunk and yields to dictation.
         tm.cancel_stream();
+        // No more live segments: the job that follows is a batch one.
+        self.clear_live_transcript();
 
         let mut working = working.lock().unwrap();
         let entry_id = if working.frames() == 0 {
@@ -573,6 +600,7 @@ impl MeetingManager {
         rm.cancel_recording();
         rm.set_frame_tap(None);
         tm.cancel_stream();
+        self.clear_live_transcript();
 
         if let Err(e) = working.lock().unwrap().discard() {
             error!(
@@ -586,6 +614,36 @@ impl MeetingManager {
         emit_meeting_state(app, &MeetingStatus::Idle);
         crate::overlay::refresh_meeting_bar(app);
         Ok(())
+    }
+
+    /// Install the sink that turns the live decode's finished segments into
+    /// `meeting-segment` events, numbered from 0. Present exactly while this
+    /// session records, so no other live decode — a dictation's preview, a
+    /// batch job — can feed the meeting window.
+    fn install_live_transcript(&self) {
+        let app = self.app.clone();
+        let index = Arc::new(AtomicU32::new(0));
+        self.app
+            .state::<Arc<TranscriptionManager>>()
+            .set_live_segment_sink(Some(Arc::new(move |segment| {
+                let event = MeetingSegment {
+                    index: index.fetch_add(1, Ordering::Relaxed),
+                    t0_ms: segment.t0_ms,
+                    t1_ms: segment.t1_ms,
+                    text: segment.text,
+                };
+                if let Err(e) = event.emit(&app) {
+                    warn!("Failed to emit a meeting segment: {e}");
+                }
+            })));
+    }
+
+    /// Remove the live-transcript sink: the session is over, so the meeting
+    /// window's list is complete and later decodes report nothing.
+    fn clear_live_transcript(&self) {
+        self.app
+            .state::<Arc<TranscriptionManager>>()
+            .set_live_segment_sink(None);
     }
 
     /// The session's stage right now.

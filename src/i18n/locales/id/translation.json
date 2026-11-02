@@ -408,7 +408,10 @@
       "startFailed": "Rapat tidak dapat dimulai.",
       "stopFailed": "Rapat tidak dapat dihentikan.",
       "cancelFailed": "Rapat tidak dapat dibatalkan.",
-      "stopped": "Rapat telah disimpan ke Riwayat."
+      "stopped": "Rapat telah disimpan ke Riwayat.",
+      "liveTranscript": "Transkrip langsung",
+      "liveEmpty": "Kata-kata muncul di sini selama rapat berlangsung.",
+      "jumpToBottom": "Lompat ke bawah"
     },
     "models": {
       "title": "Model",

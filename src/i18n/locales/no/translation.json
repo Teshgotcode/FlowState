@@ -408,7 +408,10 @@
       "startFailed": "Møteøkten kunne ikke startes.",
       "stopFailed": "Møteøkten kunne ikke stoppes.",
       "cancelFailed": "Møteøkten kunne ikke avbrytes.",
-      "stopped": "Møteøkten ble lagret i historikken."
+      "stopped": "Møteøkten ble lagret i historikken.",
+      "liveTranscript": "Sanntidstranskripsjon",
+      "liveEmpty": "Ordene dukker opp her etter hvert som møtet pågår.",
+      "jumpToBottom": "Hopp til bunnen"
     },
     "models": {
       "title": "Modeller",

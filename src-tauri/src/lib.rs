@@ -263,6 +263,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             transcription_coordinator::RecordingStateEvent,
             actions::TranscriptionCompleteEvent,
             managers::meeting::MeetingStateEvent,
+            managers::meeting::MeetingSegment,
         ])
 }
 

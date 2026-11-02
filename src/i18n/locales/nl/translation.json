@@ -408,7 +408,10 @@
       "startFailed": "De vergadering kon niet worden gestart.",
       "stopFailed": "De vergadering kon niet worden gestopt.",
       "cancelFailed": "De vergadering kon niet worden geannuleerd.",
-      "stopped": "De vergadering is in de Geschiedenis opgeslagen."
+      "stopped": "De vergadering is in de Geschiedenis opgeslagen.",
+      "liveTranscript": "Live transcript",
+      "liveEmpty": "Woorden verschijnen hier terwijl de vergadering loopt.",
+      "jumpToBottom": "Naar beneden springen"
     },
     "models": {
       "title": "Modellen",

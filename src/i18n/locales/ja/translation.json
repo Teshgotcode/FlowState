@@ -408,7 +408,10 @@
       "startFailed": "会議を開始できませんでした。",
       "stopFailed": "会議を停止できませんでした。",
       "cancelFailed": "会議をキャンセルできませんでした。",
-      "stopped": "会議は履歴に保存されました。"
+      "stopped": "会議は履歴に保存されました。",
+      "liveTranscript": "ライブ文字起こし",
+      "liveEmpty": "会議の進行に合わせて、ここに文字が表示されます。",
+      "jumpToBottom": "一番下へ"
     },
     "models": {
       "title": "モデル",

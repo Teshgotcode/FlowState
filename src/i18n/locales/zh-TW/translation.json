@@ -408,7 +408,10 @@
       "startFailed": "無法開始會議。",
       "stopFailed": "無法停止會議。",
       "cancelFailed": "無法取消會議。",
-      "stopped": "會議已儲存到歷史紀錄。"
+      "stopped": "會議已儲存到歷史紀錄。",
+      "liveTranscript": "即時轉寫",
+      "liveEmpty": "會議進行時，文字會顯示在這裡。",
+      "jumpToBottom": "跳到底部"
     },
     "models": {
       "title": "模型",

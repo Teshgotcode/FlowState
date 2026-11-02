@@ -10,8 +10,8 @@ use transcribe_cpp::StreamOptions;
 use super::chunked::{ChunkSetup, ChunkedDecode, PendingSetup};
 use super::policy::LiveDecode;
 use super::{
-    emit_stream_text, join_chunks, lock_perf, timed_segments, PreviewScript, RunOutcome, RunSetup,
-    StreamFinalizeReply, StreamPerf, TranscriptSegment, TranscriptionManager,
+    emit_stream_text, join_chunks, lock_perf, timed_segments, LiveSegment, PreviewScript,
+    RunOutcome, RunSetup, StreamFinalizeReply, StreamPerf, TranscriptSegment, TranscriptionManager,
 };
 use crate::audio_toolkit::OutputLanguageEvidence;
 use crate::engine_supervisor::{EngineError, LoadedInfo, StreamHandle, StreamProgress};
@@ -72,6 +72,10 @@ impl<'a> LiveSession<'a> {
                     })),
                     model_id,
                     backend,
+                    // A live chunked decode reports every chunk it finishes,
+                    // so a meeting window can show the transcript as it is
+                    // spoken (a batch clip's chunks do not).
+                    true,
                 )))
             }
         };
@@ -173,6 +177,12 @@ impl<'a> StreamSession<'a> {
             let app_handle = tm.app_handle.clone();
             let languages = setup.languages.clone();
             let mut preview_script = PreviewScript::new(settings.chinese_script, &output_language);
+            // The meeting window's live transcript: the committed prefix only
+            // grows, so each growth is a finished piece of speech. The last
+            // length emitted and the audio it covered make the next segment's
+            // t0; the sink itself is installed only while a meeting records.
+            let tm = tm.clone();
+            let committed_seen: Arc<Mutex<(usize, i64)>> = Arc::new(Mutex::new((0, 0)));
             move |progress: StreamProgress| {
                 let mut perf = lock_perf(&perf);
                 perf.record_compute(progress.elapsed);
@@ -182,6 +192,15 @@ impl<'a> StreamSession<'a> {
                     let (committed, tentative) =
                         preview_script.convert(&text.committed, &text.tentative, &languages);
                     emit_stream_text(&app_handle, &committed, &tentative);
+                    // The segment carries the model's own committed text —
+                    // the same text the finished entry's segments keep — not
+                    // the script-converted preview the overlay shows.
+                    report_committed(
+                        &tm,
+                        &committed_seen,
+                        &text.committed,
+                        progress.update.audio_committed_ms,
+                    );
                 }
                 perf.maybe_log();
             }
@@ -270,5 +289,121 @@ impl<'a> StreamSession<'a> {
         };
         lock_perf(&self.perf).log_finalized(chars);
         result
+    }
+}
+
+/// Reports the streaming decode's newly committed text as one live segment.
+/// `seen` carries how much of the committed prefix was already emitted and
+/// the audio time it covered, so the delta becomes a segment of its own.
+fn report_committed(
+    tm: &TranscriptionManager,
+    seen: &Mutex<(usize, i64)>,
+    committed: &str,
+    audio_committed_ms: i64,
+) {
+    let mut seen = seen.lock().unwrap();
+    let (segment, next) = committed_segment(*seen, committed, audio_committed_ms);
+    if let Some(segment) = segment {
+        tm.report_live_segment(segment);
+    }
+    *seen = next;
+}
+
+/// The live segment a streaming decode's committed prefix growth makes, with
+/// the state the next call continues from: how much of the prefix was emitted
+/// and the audio time it covered. Committed text is append-only, so its new
+/// tail is one finished piece of speech; a prefix that shrank (a model
+/// rewriting it) only resynchronizes without emitting anything.
+fn committed_segment(
+    seen: (usize, i64),
+    committed: &str,
+    audio_committed_ms: i64,
+) -> (Option<LiveSegment>, (usize, i64)) {
+    let (last_len, last_ms) = seen;
+    let now_ms = audio_committed_ms.max(last_ms);
+    let grows = committed.len() >= last_len && committed.is_char_boundary(last_len);
+    let delta = if grows {
+        committed[last_len..].trim()
+    } else {
+        ""
+    };
+    let segment = (!delta.is_empty()).then(|| LiveSegment {
+        t0_ms: last_ms,
+        t1_ms: now_ms,
+        text: delta.to_string(),
+    });
+    (segment, (committed.len(), now_ms))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn committed_growth_becomes_one_segment_with_the_audio_it_covered() {
+        // Nothing was emitted yet, and 4 s of audio committed the first words.
+        let (segment, seen) = committed_segment((0, 0), "Hello there", 4_000);
+        assert_eq!(
+            segment,
+            Some(LiveSegment {
+                t0_ms: 0,
+                t1_ms: 4_000,
+                text: "Hello there".to_string(),
+            })
+        );
+        // The next growth starts where the last one ended.
+        let (segment, seen) = committed_segment(seen, "Hello there friend", 7_500);
+        assert_eq!(
+            segment,
+            Some(LiveSegment {
+                t0_ms: 4_000,
+                t1_ms: 7_500,
+                text: "friend".to_string(),
+            })
+        );
+        assert_eq!(seen, ("Hello there friend".len(), 7_500));
+    }
+
+    #[test]
+    fn whitespace_only_growth_emits_nothing_but_advances_the_state() {
+        let (segment, seen) = committed_segment((0, 0), "  \n", 1_000);
+        assert_eq!(segment, None);
+        assert_eq!(seen, (3, 1_000));
+    }
+
+    #[test]
+    fn a_rewritten_prefix_resynchronizes_without_emitting() {
+        let after_first = ("Hello there".len(), 4_000);
+        // The model rewrote what it had committed: nothing is emitted, and
+        // the next growth is measured against the rewritten prefix.
+        let (segment, seen) = committed_segment(after_first, "Hi", 4_500);
+        assert_eq!(segment, None);
+        assert_eq!(seen, ("Hi".len(), 4_500));
+        let (segment, _) = committed_segment(seen, "Hi there", 6_000);
+        assert_eq!(
+            segment,
+            Some(LiveSegment {
+                t0_ms: 4_500,
+                t1_ms: 6_000,
+                text: "there".to_string(),
+            })
+        );
+    }
+
+    #[test]
+    fn committed_audio_never_moves_backwards() {
+        // A commit whose audio time lags an earlier one keeps the earlier
+        // end, so a segment never ends before it starts.
+        let after_first = ("Hello".len(), 5_000);
+        let (segment, seen) = committed_segment(after_first, "Hello there", 3_000);
+        assert_eq!(
+            segment,
+            Some(LiveSegment {
+                t0_ms: 5_000,
+                t1_ms: 5_000,
+                text: "there".to_string(),
+            })
+        );
+        assert_eq!(seen, ("Hello there".len(), 5_000));
     }
 }

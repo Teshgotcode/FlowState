@@ -408,7 +408,10 @@
       "startFailed": "No se pudo iniciar la reunión.",
       "stopFailed": "No se pudo detener la reunión.",
       "cancelFailed": "No se pudo cancelar la reunión.",
-      "stopped": "La reunión se guardó en el Historial."
+      "stopped": "La reunión se guardó en el Historial.",
+      "liveTranscript": "Transcripción en directo",
+      "liveEmpty": "Las palabras aparecen aquí mientras dura la reunión.",
+      "jumpToBottom": "Ir al final"
     },
     "models": {
       "title": "Modelos",
