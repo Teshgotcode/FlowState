@@ -24,7 +24,7 @@ use crate::settings::APPLE_INTELLIGENCE_DEFAULT_MODEL_ID;
 use crate::settings::{
     self, get_settings, AutoSubmitKey, ChineseScript, ClipboardHandling, KeyboardImplementation,
     LLMPrompt, LanguageDetectionMode, OverlayPosition, OverlayStyle, PasteMethod,
-    ShortcutActivation, ShortcutBinding, SoundTheme, Theme, TypingTool, VadBackend,
+    ShortcutActivation, ShortcutBinding, Snippet, SoundTheme, Theme, TypingTool, VadBackend,
     APPLE_INTELLIGENCE_PROVIDER_ID,
 };
 use crate::tray;
@@ -897,6 +897,17 @@ pub fn change_whats_new_last_seen_version_setting(
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.custom_words = words;
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// Replaces the whole snippet list; the frontend owns add/edit/remove and
+/// sends the full array, the same shape `update_custom_words` uses.
+#[tauri::command]
+#[specta::specta]
+pub fn update_snippets(app: AppHandle, snippets: Vec<Snippet>) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.snippets = snippets;
     settings::write_settings(&app, settings);
     Ok(())
 }

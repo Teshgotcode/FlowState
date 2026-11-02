@@ -604,6 +604,28 @@
         "remove": "{{word}} हटाउनुहोस्",
         "duplicate": "\"{{word}}\" पहिले नै छ"
       },
+      "snippets": {
+        "title": "Snippets",
+        "description": "Say a trigger word (e.g. \"signatur\") and the dictation gets the full expansion instead. Triggers only match whole words.",
+        "triggerLabel": "Trigger",
+        "triggerPlaceholder": "signatur",
+        "expansionLabel": "Expansion",
+        "expansionPlaceholder": "Med vennlig hilsen…",
+        "caseSensitive": "Case sensitive",
+        "add": "Add",
+        "remove": "Remove snippet",
+        "duplicate": "\"{{trigger}}\" already exists",
+        "import": "Import",
+        "export": "Export",
+        "exportSaved": "Snippets exported",
+        "exportFailed": "Could not export snippets",
+        "imported": "Imported {{count}} snippets",
+        "importEmpty": "The file contains no snippets",
+        "importReadFailed": "Could not read the file",
+        "invalidJson": "The file is not valid JSON",
+        "notSnippets": "The file does not contain a snippets list",
+        "badEntry": "Snippet {{index}} is missing its {{field}}"
+      },
       "voiceActivityDetection": {
         "title": "भ्वाइस एक्टिभिटी डिटेक्सन",
         "description": "रेकर्डिङबाट मौनता हटाउँछ। स्ट्रिमिङ-सक्षम मोडेलहरूले लामो VAD टेल प्रयोग गर्छन्; VAD अफ गर्दा कच्चा अडियो रेकर्ड हुन्छ।"

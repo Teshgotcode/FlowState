@@ -345,6 +345,18 @@ async updateCustomWords(words: string[]) : Promise<Result<null, string>> {
 }
 },
 /**
+ * Replaces the whole snippet list; the frontend owns add/edit/remove and
+ * sends the full array, the same shape `update_custom_words` uses.
+ */
+async updateSnippets(snippets: Snippet[]) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_snippets", { snippets }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Temporarily unregister all bindings while the user is recording a
  * shortcut in the UI. This avoids firing actions while keys are recorded.
  */
@@ -1236,7 +1248,12 @@ spoken_languages?: string[]; overlay_position?: OverlayPosition;
  * overlay's edge (`overlay_position`); dragging the bar to an edge pins
  * it there, and the pinned choice persists across restarts.
  */
-meeting_bar_position?: OverlayPosition | null; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+meeting_bar_position?: OverlayPosition | null; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
+/**
+ * Spoken text templates ("say trigger, get expansion"), expanded after
+ * transcription in [`post_process_transcription_text`].
+ */
+snippets?: Snippet[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1672,6 +1689,20 @@ export type ShortcutActivation =
  */
 "hold_or_toggle"
 export type ShortcutBinding = { id: string; name: string; description: string; default_binding: string; current_binding: string }
+/**
+ * One spoken template: say the `trigger` as its own word or phrase and the
+ * final text gets the `expansion` instead. `case_sensitive` decides whether
+ * "Signatur" matches trigger "signatur".
+ */
+export type Snippet = { 
+/**
+ * The spoken word or phrase to listen for, e.g. "signatur".
+ */
+trigger: string; 
+/**
+ * The text the trigger is replaced with, verbatim.
+ */
+expansion: string; case_sensitive?: boolean }
 export type SoundTheme = "marimba" | "pop" | "custom"
 /**
  * What a finished meeting reports: the history entry it saved (when it

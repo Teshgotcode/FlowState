@@ -1,3 +1,4 @@
+use crate::settings::Snippet;
 use natural::phonetics::soundex;
 use once_cell::sync::Lazy;
 use regex::Regex;
@@ -479,9 +480,174 @@ pub fn normalize_transcription_output(text: &str) -> String {
     normalized.trim().to_string()
 }
 
+/// A character is a word boundary: start/end of text, whitespace, or
+/// punctuation. Snippet triggers must sit on word boundaries so they never
+/// fire inside a longer word ("signatur" must not match "signaturen").
+fn is_word_boundary(c: Option<char>) -> bool {
+    c.is_none_or(|c| !c.is_alphanumeric())
+}
+
+/// Expands spoken snippet triggers ("say this, get that") in transcribed text.
+///
+/// Matching rules:
+/// * Only whole words/phrases match: the character before the trigger and the
+///   one after must both be word boundaries, so a trigger that is part of a
+///   bigger word never fires.
+/// * Matching is case-insensitive unless the snippet opts into
+///   `case_sensitive`.
+/// * When two triggers could match at the same position the longer trigger
+///   wins.
+/// * The text is scanned left to right once: already-expanded text is never
+///   rescanned, so a snippet whose expansion contains another trigger does
+///   not chain.
+pub fn apply_snippets(text: &str, snippets: &[Snippet]) -> String {
+    if text.is_empty() || snippets.is_empty() {
+        return text.to_string();
+    }
+
+    // Longest trigger first so overlapping triggers resolve to the most
+    // specific one at any position.
+    let mut ordered: Vec<&Snippet> = snippets
+        .iter()
+        .filter(|snippet| !snippet.trigger.trim().is_empty())
+        .collect();
+    ordered.sort_by_key(|snippet| std::cmp::Reverse(snippet.trigger.chars().count()));
+
+    // Triggers as char vectors: snippets are compared per character so the
+    // scan stays correct for any Unicode script.
+    let prepared: Vec<(Vec<char>, &str, bool)> = ordered
+        .iter()
+        .map(|snippet| {
+            (
+                snippet.trigger.chars().collect::<Vec<char>>(),
+                snippet.expansion.as_str(),
+                snippet.case_sensitive,
+            )
+        })
+        .collect();
+
+    let chars: Vec<char> = text.chars().collect();
+    let mut out = String::with_capacity(text.len());
+    let mut i = 0usize;
+    while i < chars.len() {
+        let mut expanded = false;
+        for (trigger, expansion, case_sensitive) in &prepared {
+            let len = trigger.len();
+            if i + len > chars.len() {
+                continue;
+            }
+            let candidate = &chars[i..i + len];
+            let trigger_matches = if *case_sensitive {
+                candidate.iter().eq(trigger.iter())
+            } else {
+                candidate
+                    .iter()
+                    .zip(trigger.iter())
+                    .all(|(a, b)| a.to_lowercase().eq(b.to_lowercase()))
+            };
+            // Word boundaries on both sides keep the match whole-word.
+            let boundary_before = is_word_boundary(if i > 0 { Some(chars[i - 1]) } else { None });
+            let boundary_after = is_word_boundary(chars.get(i + len).copied());
+            if trigger_matches && boundary_before && boundary_after {
+                out.push_str(expansion);
+                i += len;
+                expanded = true;
+                break;
+            }
+        }
+        if !expanded {
+            out.push(chars[i]);
+            i += 1;
+        }
+    }
+    out
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn snippet(trigger: &str, expansion: &str) -> Snippet {
+        Snippet {
+            trigger: trigger.to_string(),
+            expansion: expansion.to_string(),
+            case_sensitive: false,
+        }
+    }
+
+    #[test]
+    fn test_apply_snippets_mid_sentence() {
+        let text = "kan du sette inn signatur her tack";
+        let snippets = vec![snippet("signatur", "Med vennlig hilsen\nOla")];
+        assert_eq!(
+            apply_snippets(text, &snippets),
+            "kan du sette inn Med vennlig hilsen\nOla her tack"
+        );
+    }
+
+    #[test]
+    fn test_apply_snippets_whole_word_only() {
+        let snippets = vec![snippet("sign", "X")];
+        // Part of a bigger word: never expands.
+        assert_eq!(apply_snippets("signaturen", &snippets), "signaturen");
+        // Whole word with punctuation boundaries: expands.
+        assert_eq!(apply_snippets("sign!", &snippets), "X!");
+        assert_eq!(apply_snippets("he said sign,", &snippets), "he said X,");
+    }
+
+    #[test]
+    fn test_apply_snippets_case_insensitive_by_default() {
+        let snippets = vec![snippet("Signatur", "X")];
+        assert_eq!(apply_snippets("Si Signatur nå", &snippets), "Si X nå");
+    }
+
+    #[test]
+    fn test_apply_snippets_case_sensitive() {
+        let snippets = vec![Snippet {
+            trigger: "Sign".to_string(),
+            expansion: "X".to_string(),
+            case_sensitive: true,
+        }];
+        assert_eq!(apply_snippets("Et sign nå", &snippets), "Et sign nå");
+        assert_eq!(apply_snippets("Et Sign nå", &snippets), "Et X nå");
+    }
+
+    #[test]
+    fn test_apply_snippets_phrase_and_longest_wins() {
+        let snippets = vec![snippet("hei", "A"), snippet("hei du", "B")];
+        assert_eq!(apply_snippets("hei du der", &snippets), "B der");
+        assert_eq!(apply_snippets("hei der", &snippets), "A der");
+    }
+
+    #[test]
+    fn test_apply_snippets_no_chaining_into_expansion() {
+        // The expansion contains the other trigger; it must not re-expand.
+        let snippets = vec![snippet("a", "b"), snippet("b", "c")];
+        assert_eq!(apply_snippets("a b", &snippets), "b c");
+    }
+
+    #[test]
+    fn test_apply_snippets_preserves_expansion_verbatim() {
+        let snippets = vec![snippet("kvittering", "  Mvh Ola  \n\nNTNU  ")];
+        assert_eq!(
+            apply_snippets("kvittering", &snippets),
+            "  Mvh Ola  \n\nNTNU  "
+        );
+    }
+
+    #[test]
+    fn test_apply_snippets_empty_inputs() {
+        assert_eq!(apply_snippets("hei", &[]), "hei");
+        assert_eq!(apply_snippets("hei", &[snippet("  ", "X")]), "hei");
+    }
+
+    #[test]
+    fn test_apply_snippets_unicode_boundaries() {
+        let snippets = vec![snippet("你好", "X")];
+        // CJK chars are alphanumeric, so a longer run does not match.
+        assert_eq!(apply_snippets("你好吗", &snippets), "你好吗");
+        assert_eq!(apply_snippets("你好!", &snippets), "X!");
+    }
 
     /// Exercise the complete cleanup sequence with an explicitly selected
     /// language. Individual tests below predate the split between filler
