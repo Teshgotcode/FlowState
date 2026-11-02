@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "전사 검색",
       "transcriptNoMatches": "\"{{query}}\"와 일치하는 구간이 없습니다.",
       "transcriptEmpty": "이 항목에는 타임스탬프가 있는 구간이 없습니다.",
+      "searchPlaceholder": "기록 검색",
+      "searching": "검색 중...",
+      "searchNoResults": "\"{{query}}\"에 대한 결과가 없습니다.",
+      "searchResultCount": "결과: {{count}}",
       "meetingNote": {
         "title": "회의 노트",
         "description": "로컬 LLM이 작성한 초안입니다. 어떤 것도 기기를 벗어나지 않습니다.",

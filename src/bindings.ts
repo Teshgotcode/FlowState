@@ -962,6 +962,19 @@ async getHistoryEntries(cursor: number | null, limit: number | null) : Promise<R
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Search history entries by a substring of their title or transcription
+ * text, newest first. `total` is the full match count, so the caller can
+ * page or count without a second query.
+ */
+async searchHistory(query: string, limit: number | null, offset: number | null) : Promise<Result<SearchedHistory, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("search_history", { query, limit, offset }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async toggleHistoryEntrySaved(id: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("toggle_history_entry_saved", { id }) };
@@ -1598,6 +1611,15 @@ export type RecordingStateEvent = { phase: RecordingPhase }
  * A retired ONNX model found on disk.
  */
 export type RetiredModel = { id: string; name: string; size_mb: number; replacement_repo: string }
+/**
+ * One page of `search_history` matches plus the full match count, so the
+ * frontend can say how many hits a query found without paging everything.
+ */
+export type SearchedHistory = { entries: HistoryEntry[]; 
+/**
+ * Every entry matching the query, not just this page.
+ */
+total: number; has_more: boolean }
 export type SecretMap = Partial<{ [key in string]: string }>
 export type SecureInputStatus = { 
 /**

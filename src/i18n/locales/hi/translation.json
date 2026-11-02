@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "प्रतिलिपि में खोजें",
       "transcriptNoMatches": "\"{{query}}\" से मेल खाता कोई खंड नहीं है।",
       "transcriptEmpty": "इस प्रविष्टि में समय-चिह्नित खंड नहीं हैं।",
+      "searchPlaceholder": "इतिहास खोजें",
+      "searching": "खोज रहे हैं...",
+      "searchNoResults": "\"{{query}}\" के लिए कोई परिणाम नहीं।",
+      "searchResultCount": "परिणाम: {{count}}",
       "meetingNote": {
         "title": "मीटिंग नोट",
         "description": "आपके लोकल LLM ने लिखा ड्राफ़्ट। कुछ भी मशीन से बाहर नहीं जाता।",

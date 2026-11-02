@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Cerca nella trascrizione",
       "transcriptNoMatches": "Nessun segmento corrisponde a \"{{query}}\".",
       "transcriptEmpty": "Questa voce non ha segmenti con timestamp.",
+      "searchPlaceholder": "Cerca nella cronologia",
+      "searching": "Ricerca...",
+      "searchNoResults": "Nessun risultato per \"{{query}}\".",
+      "searchResultCount": "Risultati: {{count}}",
       "meetingNote": {
         "title": "Nota della riunione",
         "description": "Una bozza scritta dal tuo LLM locale. Nulla lascia il computer.",

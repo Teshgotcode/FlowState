@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "חיפוש בתמליל",
       "transcriptNoMatches": "אין קטעים שתואמים ל«{{query}}».",
       "transcriptEmpty": "אין לרשומה זו קטעים עם חותמות זמן.",
+      "searchPlaceholder": "חיפוש בהיסטוריה",
+      "searching": "מחפש...",
+      "searchNoResults": "אין תוצאות עבור \"{{query}}\".",
+      "searchResultCount": "תוצאות: {{count}}",
       "meetingNote": {
         "title": "סיכום הפגישה",
         "description": "טיוטה שנכתבה על ידי המודל המקומי שלך. שום דבר לא עוזב את המחשב.",

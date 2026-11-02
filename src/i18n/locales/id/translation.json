@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Cari di transkrip",
       "transcriptNoMatches": "Tidak ada segmen yang cocok dengan \"{{query}}\".",
       "transcriptEmpty": "Entri ini tidak memiliki segmen dengan stempel waktu.",
+      "searchPlaceholder": "Cari di riwayat",
+      "searching": "Mencari...",
+      "searchNoResults": "Tidak ada hasil untuk \"{{query}}\".",
+      "searchResultCount": "Hasil: {{count}}",
       "meetingNote": {
         "title": "Catatan rapat",
         "description": "Draf yang ditulis oleh LLM lokal Anda. Tidak ada yang meninggalkan komputer.",

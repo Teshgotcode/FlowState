@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "البحث في التفريغ النصي",
       "transcriptNoMatches": "لا توجد مقاطع تطابق «{{query}}».",
       "transcriptEmpty": "لا توجد مقاطع بطوابع زمنية في هذا الإدخال.",
+      "searchPlaceholder": "البحث في السجل",
+      "searching": "جارٍ البحث...",
+      "searchNoResults": "لا توجد نتائج لـ \"{{query}}\".",
+      "searchResultCount": "النتائج: {{count}}",
       "meetingNote": {
         "title": "ملاحظات الاجتماع",
         "description": "مسودة كتبها نموذج اللغة المحلي. لا شيء يغادر جهازك.",

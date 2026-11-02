@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Rechercher dans la transcription",
       "transcriptNoMatches": "Aucun segment ne correspond à « {{query}} ».",
       "transcriptEmpty": "Cette entrée n'a pas de segments horodatés.",
+      "searchPlaceholder": "Rechercher dans l'historique",
+      "searching": "Recherche...",
+      "searchNoResults": "Aucun résultat pour « {{query}} ».",
+      "searchResultCount": "Résultats : {{count}}",
       "meetingNote": {
         "title": "Note de réunion",
         "description": "Un brouillon rédigé par votre LLM local. Rien ne quitte la machine.",

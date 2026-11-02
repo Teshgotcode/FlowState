@@ -1,5 +1,5 @@
 use crate::managers::{
-    history::{HistoryEntry, HistoryManager, PaginatedHistory},
+    history::{HistoryEntry, HistoryManager, PaginatedHistory, SearchedHistory},
     transcription_jobs::TranscriptionJobManager,
 };
 use std::path::PathBuf;
@@ -16,6 +16,24 @@ pub async fn get_history_entries(
 ) -> Result<PaginatedHistory, String> {
     history_manager
         .get_history_entries(cursor, limit)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Search history entries by a substring of their title or transcription
+/// text, newest first. `total` is the full match count, so the caller can
+/// page or count without a second query.
+#[tauri::command]
+#[specta::specta]
+pub async fn search_history(
+    _app: AppHandle,
+    history_manager: State<'_, Arc<HistoryManager>>,
+    query: String,
+    limit: Option<usize>,
+    offset: Option<usize>,
+) -> Result<SearchedHistory, String> {
+    history_manager
+        .search_history(&query, limit, offset)
         .await
         .map_err(|e| e.to_string())
 }

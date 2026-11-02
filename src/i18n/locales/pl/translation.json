@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Szukaj w transkrypcji",
       "transcriptNoMatches": "Żaden segment nie pasuje do \"{{query}}\".",
       "transcriptEmpty": "Ten wpis nie ma segmentów ze znacznikami czasu.",
+      "searchPlaceholder": "Szukaj w historii",
+      "searching": "Szukam...",
+      "searchNoResults": "Brak wyników dla \"{{query}}\".",
+      "searchResultCount": "Wyniki: {{count}}",
       "meetingNote": {
         "title": "Notatka ze spotkania",
         "description": "Szkic napisany przez lokalny model LLM. Nic nie opuszcza komputera.",

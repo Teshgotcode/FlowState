@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Sök i transkriptet",
       "transcriptNoMatches": "Inga segment matchar \"{{query}}\".",
       "transcriptEmpty": "Detta inlägg har inga tidsstämplade segment.",
+      "searchPlaceholder": "Sök i historiken",
+      "searching": "Söker...",
+      "searchNoResults": "Inga träffar för \"{{query}}\".",
+      "searchResultCount": "Träffar: {{count}}",
       "meetingNote": {
         "title": "Mötesanteckning",
         "description": "Ett utkast skrivet av din lokala LLM. Inget lämnar maskinen.",
