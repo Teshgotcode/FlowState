@@ -1522,7 +1522,7 @@
       "repository": "handy-computer/diar_streaming_sortformer_4spk-v2.1-gguf",
       "revision": "ae4afbb5c3d33b71cf2dbf600022b655ee706dd0",
       "previousRevisions": [],
-      "license": "other",
+      "license": "nvidia-open-model-license",
       "family": "sortformer",
       "parameters": "118M",
       "languages": [

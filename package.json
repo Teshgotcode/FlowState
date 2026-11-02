@@ -21,6 +21,8 @@
     "check:model-languages": "bun scripts/check-model-language-coverage.ts",
     "sync:catalog": "bun scripts/sync-catalog.ts",
     "check:catalog": "bun scripts/sync-catalog.ts --check",
+    "sync:notice": "bun scripts/sync-notice.ts",
+    "check:notice": "bun scripts/sync-notice.ts --check",
     "build:cjk-font": "bun scripts/build-cjk-font.ts",
     "check:cjk-font": "bun scripts/build-cjk-font.ts --check",
     "postinstall": "bun scripts/check-nix-deps.ts"
