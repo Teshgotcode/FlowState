@@ -92,7 +92,7 @@ fn overlay_dimensions(state: &str) -> (f64, f64) {
 fn is_dictation_state(state: &str) -> bool {
     matches!(
         state,
-        "recording" | "streaming" | "transcribing" | "processing"
+        "recording" | "streaming" | "transcribing" | "processing" | "command"
     )
 }
 
@@ -801,6 +801,12 @@ pub fn show_streaming_overlay(app_handle: &AppHandle) {
 }
 
 /// Shows the transcribing overlay window
+/// Shows the command-mode overlay window: the user is speaking an
+/// instruction that will edit their selected text.
+pub fn show_command_overlay(app_handle: &AppHandle) {
+    show_overlay_state(app_handle, "command");
+}
+
 pub fn show_transcribing_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "transcribing");
 }

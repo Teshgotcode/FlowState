@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Pintasan Pascaproses",
             "description": "Opsional: pintasan khusus yang selalu menerapkan pascaproses AI pada transkripsi Anda."
+          },
+          "command": {
+            "name": "Pintasan mode perintah",
+            "description": "Pintasan keyboard untuk mengedit teks yang dipilih dengan instruksi lisan."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Hentikan",
       "saving": "Menyimpan…",
       "recording": "Merekam"
-    }
+    },
+    "command": "Perintah",
+    "commandFallback": "Tidak ada yang dipilih — dikte normal"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} mungkin memblokir 1 pintasan",

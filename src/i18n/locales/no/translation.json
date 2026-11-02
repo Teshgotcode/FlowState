@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Etterbehandlingssnarvei",
             "description": "Valgfritt: En egen snarvei som alltid kjører AI-etterbehandling på transkripsjonen."
+          },
+          "command": {
+            "name": "Kommandosnarvei",
+            "description": "Snarveien som redigerer merket tekst med en muntlig instruksjon."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Stopp",
       "saving": "Lagrer …",
       "recording": "Tar opp"
-    }
+    },
+    "command": "Kommando",
+    "commandFallback": "Ingen merking — vanlig diktering"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkerer kanskje 1 snarvei",

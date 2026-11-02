@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Son İşlem Kısayolu",
             "description": "İsteğe bağlı: Transkripsiyonunuza her zaman yapay zekâ ile son işlem uygulayan özel bir kısayol tuşu."
+          },
+          "command": {
+            "name": "Komut modu kısayolu",
+            "description": "Seçili metni sözlü bir talimatla düzenlemek için klavye kısayolu."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Durdur",
       "saving": "Kaydediliyor…",
       "recording": "Kaydediliyor"
-    }
+    },
+    "command": "Komut",
+    "commandFallback": "Seçim yok — normal dikte"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 1 kısayolu engelliyor olabilir",

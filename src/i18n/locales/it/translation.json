@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Tasto di post-elaborazione",
             "description": "Facoltativo: Un tasto di scelta rapida dedicato che applica sempre la post-elaborazione IA alla trascrizione."
+          },
+          "command": {
+            "name": "Scorciatoia modalità comando",
+            "description": "La scorciatoia da tastiera per modificare il testo selezionato con un'istruzione dettata."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Ferma",
       "saving": "Salvataggio…",
       "recording": "Registrazione in corso"
-    }
+    },
+    "command": "Comando",
+    "commandFallback": "Nessuna selezione — dettatura normale"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} potrebbe bloccare 1 scorciatoia",

@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "קיצור לעיבוד משלים",
             "description": "אופציונלי: קיצור מקשים ייעודי שתמיד מפעיל עיבוד AI על התמלול."
+          },
+          "command": {
+            "name": "קיצור מקלדת של מצב פקודה",
+            "description": "קיצור המקלדת לעריכת הטקסט הנבחר בפקודה מדוברת."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "עצור",
       "saving": "שומר…",
       "recording": "מקליט"
-    }
+    },
+    "command": "פקודה",
+    "commandFallback": "לא נבחר טקסט — הכתבה רגילה"
   },
   "secureInput": {
     "blockedWithCulprit_one": "ייתכן ש-{{name}} חוסם קיצור דרך אחד",

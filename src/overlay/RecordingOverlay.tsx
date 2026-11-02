@@ -15,7 +15,12 @@ import type { ModelStateEvent } from "@/lib/types/events";
 import { formatDurationClock } from "@/lib/utils/format";
 import { getLanguageDirection } from "@/lib/utils/rtl";
 
-type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
+type OverlayState =
+  | "recording"
+  | "streaming"
+  | "transcribing"
+  | "processing"
+  | "command";
 
 // The meeting bar's views — the Flow-style floating bar that shares this
 // window with the dictation overlay. "recording" and "idle" follow the
@@ -30,7 +35,8 @@ const isDictationState = (state: string): state is OverlayState =>
   state === "recording" ||
   state === "streaming" ||
   state === "transcribing" ||
-  state === "processing";
+  state === "processing" ||
+  state === "command";
 
 // Number of reactive bars in the waveform (the simple, smoothed style shared by
 // every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
@@ -54,6 +60,9 @@ const RecordingOverlay: React.FC = () => {
   // Stay visually in an arming state until the backend processes the first
   // actual microphone sample chunk.
   const [captureReady, setCaptureReady] = useState(false);
+  // Command Mode: briefly shown when the command hotkey found no selection and
+  // the take continues as normal dictation.
+  const [commandHint, setCommandHint] = useState(false);
   // Recording starts while the model loads in the background. Say so, otherwise
   // a cold start looks like an empty Live preview that ignores speech, then a
   // hung "Transcribing..." spinner. Once recording stops, any in-flight load is
@@ -170,6 +179,16 @@ const RecordingOverlay: React.FC = () => {
         setElapsed(0);
         setCaptureReady(true);
       });
+
+      // Command Mode fell back to plain dictation (no text was selected):
+      // a discreet hint, auto-dismissed so it never lingers.
+      const unlistenCommandFallback = await listen(
+        "command-mode-fallback",
+        () => {
+          setCommandHint(true);
+          window.setTimeout(() => setCommandHint(false), 5000);
+        },
+      );
 
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
         const newLevels = event.payload as number[];
@@ -292,6 +311,7 @@ const RecordingOverlay: React.FC = () => {
         unlistenShow();
         unlistenHide();
         unlistenReady();
+        unlistenCommandFallback();
         unlistenLevel();
         unlistenStream();
         unlistenPhase();
@@ -557,6 +577,13 @@ const RecordingOverlay: React.FC = () => {
         <span className={`sdot ${captureReady ? "ready" : "arming"}`} />
       </div>
       {waveform}
+      {(state === "command" || commandHint) && (
+        <span className="swork-label scmd-label">
+          {state === "command"
+            ? t("overlay.command")
+            : t("overlay.commandFallback")}
+        </span>
+      )}
       <div className="sbase-r">
         {showTimer && <span className="stimer">{fmtTime(elapsed)}</span>}
         {showCancel && cancelBtn}

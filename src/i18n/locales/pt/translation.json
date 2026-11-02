@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Tecla de Pós-Processamento",
             "description": "Opcional: Uma tecla de atalho dedicada que sempre aplica pós-processamento com IA à sua transcrição."
+          },
+          "command": {
+            "name": "Atalho do modo comando",
+            "description": "O atalho de teclado para editar o texto selecionado com uma instrução falada."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Parar",
       "saving": "A guardar…",
       "recording": "A gravar"
-    }
+    },
+    "command": "Comando",
+    "commandFallback": "Nada selecionado — ditado normal"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} pode estar bloqueando 1 atalho",

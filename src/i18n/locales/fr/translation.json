@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Raccourci de post-traitement",
             "description": "Facultatif : Un raccourci dédié qui applique toujours le post-traitement IA à votre transcription."
+          },
+          "command": {
+            "name": "Raccourci du mode commande",
+            "description": "Le raccourci clavier pour modifier le texte sélectionné avec une instruction dictée."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Arrêter",
       "saving": "Sauvegarde…",
       "recording": "Enregistrement en cours"
-    }
+    },
+    "command": "Commande",
+    "commandFallback": "Rien de sélectionné — dictée normale"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} bloque peut-être 1 raccourci",
