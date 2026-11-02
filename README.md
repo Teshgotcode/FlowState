@@ -10,10 +10,10 @@ Laget for Entreprenørskolen ved NTNU. FlowState funker for alle som vil diktere
 
 Vi reverse-engineernet Wispr Flow 1.6.1174 for å være sikre på forskjellen. Appen deres koder lyden din til Opus lokalt og strømmer den til `api.wisprflow.ai` for transkripsjon, og de har tre analysestacker innebygd: Sentry, PostHog og Amplitude.
 
-FlowState sender ingenting. Noen gang.
+FlowState sender ingenting om deg.
 
 - Lyd, tekst og metadata blir aldri sendt noe sted. Ingen konto, ingen telemetri, ingen krasjrapporter.
-- Oppdateringssjekk er av som standard.
+- Den eneste utgående forespørselen er oppdateringssjekken: appen spør GitHub om det finnes en nyere versjon. Den sender ingen identifikator, ingen lyd og ingen tekst — og kan slås helt av i Innstillinger.
 - Historikken ligger i en lokal database på maskinen din, og kan slås helt av.
 - Modellen lastes ned én gang fra Hugging Face, deretter funker alt uten nett.
 
@@ -52,7 +52,7 @@ Du trenger [Bun](https://bun.sh), Rust (nyeste stable) og CMake.
 
 ## Veikart
 
-- **v1.0** Rebrand, norsk i18n, ES-ordliste, lokal LLM som standardvalg, oppdateringssjekk av
+- **v1.0** Rebrand, norsk i18n, ES-ordliste, lokal LLM som standardvalg, oppdateringsvarsel på som standard
 - **v1.1** Møtemodus: langopptak av gruppetime, transkriptvindu, punkter og tiltak via lokal modell
 - **v1.2** Eksport til contac (MCP) for kontaktloggen i ES
 

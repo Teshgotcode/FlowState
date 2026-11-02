@@ -625,8 +625,12 @@ fn default_autostart_enabled() -> bool {
 }
 
 fn default_update_checks_enabled() -> bool {
-    // FlowState: aldri phone-home som standard.
-    false
+    // On by default so a new release actually reaches people: the check is the
+    // single outbound request FlowState makes (to GitHub, for latest.json), it
+    // sends no identifiers and no audio, and the Settings toggle turns it off
+    // entirely. FLOWSTATE_DISABLE_UPDATER still forces it off for managed
+    // installs.
+    true
 }
 
 fn default_show_whats_new_on_update() -> bool {
