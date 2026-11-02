@@ -1,4 +1,5 @@
 use crate::managers::meeting::{MeetingManager, MeetingStatus, StoppedMeeting};
+use crate::managers::meeting_ask::{ask_about_entry, cancel_ask, MeetingAskOutcome};
 use crate::managers::meeting_note::{cancel_run, generate_for_entry, MeetingNoteOutcome};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
@@ -85,4 +86,29 @@ pub async fn generate_meeting_note(
 #[specta::specta]
 pub async fn cancel_meeting_note(entry_id: i64) -> Result<bool, String> {
     Ok(cancel_run(entry_id))
+}
+/// Ask the local LLM one question about a finished meeting's transcript and
+/// return its answer with the transcript parts it cites, so the window can
+/// jump to the right timestamp. The whole transcript rides along when it fits
+/// the model's window, otherwise the parts the question points at are picked
+/// with a plain keyword ranking. Nothing is saved: the transcript stands
+/// untouched and the conversation lives only in the window that asked.
+#[tauri::command]
+#[specta::specta]
+pub async fn ask_meeting_transcript(
+    app: AppHandle,
+    entry_id: i64,
+    question: String,
+) -> Result<MeetingAskOutcome, String> {
+    ask_about_entry(&app, entry_id, &question)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Stop the ask running for `entry_id`: the current LLM call is dropped and
+/// nothing is shown. Returns whether an ask was running.
+#[tauri::command]
+#[specta::specta]
+pub async fn cancel_meeting_ask(entry_id: i64) -> Result<bool, String> {
+    Ok(cancel_ask(entry_id))
 }

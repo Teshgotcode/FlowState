@@ -800,7 +800,8 @@
         "failedNoTranscript": "Nie ma transkrypcji, z której można zrobić notatki.",
         "failedNotMeeting": "Tylko nagrania spotkań mogą mieć notatkę.",
         "cancelled": "Notatka ze spotkania została anulowana. Transkrypcja jest bez zmian.",
-        "failed": "Nie udało się wygenerować notatki ze spotkania."
+        "failed": "Nie udało się wygenerować notatki ze spotkania.",
+        "tab": "Notatka"
       },
       "copyTranscript": "Skopiuj transkrypcję",
       "exportFormatLabel": "Format eksportu",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Zapytaj",
+        "description": "Zadaj pytanie o spotkanie; lokalny LLM odpowiada z transkrypcji, z cytatami, które można kliknąć.",
+        "placeholder": "Zapytaj o coś na spotkaniu…",
+        "ask": "Zapytaj",
+        "searching": "Czyta transkrypcję…",
+        "generatedLabel": "Wygenerowane lokalnie przez {{model}} — sprawdź z transkrypcją",
+        "showInTranscript": "Pokaż to miejsce w transkrypcji",
+        "notFound": "Transkrypcja na to nie odpowiada.",
+        "cancelled": "Pytanie zostało anulowane.",
+        "failedNoLocalLlm": "Zadawanie pytań wymaga lokalnego LLM, np. Ollama pod http://localhost:11434/v1. Skonfiguruj go w Post Process w ustawieniach.",
+        "failedUnreachable": "Brak odpowiedzi od lokalnego LLM. Sprawdź, czy działa.",
+        "failedInvalidResponse": "Lokalny LLM odpowiedział, ale odpowiedzi nie dało się użyć.",
+        "failedNoTranscript": "Nie ma transkrypcji, o którą można pytać.",
+        "failedNotMeeting": "Pytać można tylko nagrań spotkań.",
+        "failedEmptyQuestion": "Najpierw napisz pytanie.",
+        "failed": "Na pytanie nie udało się odpowiedzieć."
+      }
     },
     "debug": {
       "title": "Debugowanie",

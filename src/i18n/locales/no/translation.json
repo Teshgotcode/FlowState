@@ -800,7 +800,8 @@
         "failedNoTranscript": "Det finnes ingen transkripsjon å lage notat av.",
         "failedNotMeeting": "Bare møteopptak kan få et notat.",
         "cancelled": "Møtenotatet ble avbrutt. Transkripsjonen er uendret.",
-        "failed": "Møtenotatet kunne ikke genereres."
+        "failed": "Møtenotatet kunne ikke genereres.",
+        "tab": "Notat"
       },
       "copyTranscript": "Kopier transkriptet",
       "exportFormatLabel": "Eksportformat",
@@ -818,7 +819,25 @@
       "correctSave": "Lagre",
       "correctCancel": "Avbryt",
       "correctSaved": "Transkripsjonen er rettet",
-      "correctError": "Kunne ikke lagre rettelsen"
+      "correctError": "Kunne ikke lagre rettelsen",
+      "meetingAsk": {
+        "tab": "Spør",
+        "description": "Spør om møtet; den lokale LLM-en svarer fra transkriptet, med sitater du kan klikke på.",
+        "placeholder": "Spør om noe i møtet…",
+        "ask": "Spør",
+        "searching": "Leser transkriptet…",
+        "generatedLabel": "Generert lokalt av {{model}} — kontroller mot transkriptet",
+        "showInTranscript": "Vis dette stedet i transkriptet",
+        "notFound": "Transkriptet svarer ikke på det.",
+        "cancelled": "Spørsmålet ble avbrutt.",
+        "failedNoLocalLlm": "Å spørre krever en lokal LLM, for eksempel Ollama på http://localhost:11434/v1. Sett den opp under Post Process i innstillingene.",
+        "failedUnreachable": "Intet svar fra den lokale LLM-en. Sjekk at den kjører.",
+        "failedInvalidResponse": "Den lokale LLM-en svarte, men svaret kunne ikke brukes.",
+        "failedNoTranscript": "Det er ikke noe transkript å spørre om.",
+        "failedNotMeeting": "Bare møteopptak kan spørres om.",
+        "failedEmptyQuestion": "Skriv et spørsmål først.",
+        "failed": "Spørsmålet kunne ikke besvares."
+      }
     },
     "debug": {
       "title": "Feilsøking",

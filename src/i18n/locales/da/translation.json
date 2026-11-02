@@ -800,7 +800,8 @@
         "failedNoTranscript": "Der er ingen transskription at lave notat af.",
         "failedNotMeeting": "Kun mødeoptagelser kan få et notat.",
         "cancelled": "Mødenotatet blev annulleret. Transskriptionen er uændret.",
-        "failed": "Mødenotatet kunne ikke genereres."
+        "failed": "Mødenotatet kunne ikke genereres.",
+        "tab": "Notat"
       },
       "copyTranscript": "Kopier transskriptionen",
       "exportFormatLabel": "Eksportformat",
@@ -818,7 +819,25 @@
       "correctSave": "Gem",
       "correctCancel": "Annuller",
       "correctSaved": "Transkriptionen er rettet",
-      "correctError": "Kunne ikke gemme rettelsen"
+      "correctError": "Kunne ikke gemme rettelsen",
+      "meetingAsk": {
+        "tab": "Spørg",
+        "description": "Stil et spørgsmål om mødet; den lokale LLM svarer fra transskriptionen, med citater du kan klikke på.",
+        "placeholder": "Spørg om noget i mødet…",
+        "ask": "Spørg",
+        "searching": "Læser transskriptionen…",
+        "generatedLabel": "Genereret lokalt af {{model}} — tjek mod transskriptionen",
+        "showInTranscript": "Vis dette sted i transskriptionen",
+        "notFound": "Transskriptionen svarer ikke på det.",
+        "cancelled": "Spørgsmålet blev afbrudt.",
+        "failedNoLocalLlm": "At spørge kræver en lokal LLM, for eksempel Ollama på http://localhost:11434/v1. Sæt den op under Post Process i indstillingerne.",
+        "failedUnreachable": "Intet svar fra den lokale LLM. Tjek at den kører.",
+        "failedInvalidResponse": "Den lokale LLM svarede, men svaret kunne ikke bruges.",
+        "failedNoTranscript": "Der er ingen transskription at spørge om.",
+        "failedNotMeeting": "Kun mødeoptagelser kan spørges om.",
+        "failedEmptyQuestion": "Skriv et spørgsmål først.",
+        "failed": "Spørgsmålet kunne ikke besvares."
+      }
     },
     "debug": {
       "title": "Fejlfinding",

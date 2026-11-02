@@ -800,7 +800,8 @@
         "failedNoTranscript": "メモにする文字起こしがありません。",
         "failedNotMeeting": "メモを作成できるのは会議の録音のみです。",
         "cancelled": "会議メモの生成を中止しました。文字起こしは変更されていません。",
-        "failed": "会議メモを生成できませんでした。"
+        "failed": "会議メモを生成できませんでした。",
+        "tab": "メモ"
       },
       "copyTranscript": "文字起こしをコピー",
       "exportFormatLabel": "エクスポート形式",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "質問",
+        "description": "会議について質問すると、ローカル LLM が書き起こしから、クリックできる引用付きで答えます。",
+        "placeholder": "会議について質問する…",
+        "ask": "質問",
+        "searching": "書き起こしを読んでいます…",
+        "generatedLabel": "{{model}} によるローカル生成 — 書き起こしで確認してください",
+        "showInTranscript": "書き起こしのこの箇所を表示",
+        "notFound": "書き起こしにはその答えはありません。",
+        "cancelled": "質問はキャンセルされました。",
+        "failedNoLocalLlm": "質問にはローカル LLM が必要です(例:http://localhost:11434/v1 の Ollama)。設定の Post Process で設定してください。",
+        "failedUnreachable": "ローカル LLM から応答がありません。起動しているか確認してください。",
+        "failedInvalidResponse": "ローカル LLM は応答しましたが、答えとして使えませんでした。",
+        "failedNoTranscript": "質問できる書き起こしがありません。",
+        "failedNotMeeting": "会議の録音についてのみ質問できます。",
+        "failedEmptyQuestion": "まず質問を入力してください。",
+        "failed": "質問に答えられませんでした。"
+      }
     },
     "debug": {
       "title": "デバッグ",

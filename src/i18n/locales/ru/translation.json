@@ -800,7 +800,8 @@
         "failedNoTranscript": "Нет расшифровки, по которой можно составить заметку.",
         "failedNotMeeting": "Заметку можно создать только для записей встреч.",
         "cancelled": "Создание заметки отменено. Расшифровка не изменилась.",
-        "failed": "Не удалось создать заметку о встрече."
+        "failed": "Не удалось создать заметку о встрече.",
+        "tab": "Заметка"
       },
       "copyTranscript": "Скопировать расшифровку",
       "exportFormatLabel": "Формат экспорта",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Спросить",
+        "description": "Задайте вопрос о встрече; локальная LLM отвечает по расшифровке, с цитатами, на которые можно нажать.",
+        "placeholder": "Спросите о чём-нибудь во встрече…",
+        "ask": "Спросить",
+        "searching": "Читаем расшифровку…",
+        "generatedLabel": "Сгенерировано локально моделью {{model}} — сверьте с расшифровкой",
+        "showInTranscript": "Показать это место в расшифровке",
+        "notFound": "В расшифровке нет ответа на это.",
+        "cancelled": "Вопрос был отменён.",
+        "failedNoLocalLlm": "Чтобы задавать вопросы, нужна локальная LLM, например Ollama на http://localhost:11434/v1. Настройте её в разделе Post Process в настройках.",
+        "failedUnreachable": "Нет ответа от локальной LLM. Проверьте, что она запущена.",
+        "failedInvalidResponse": "Локальная LLM ответила, но ответ не удалось использовать.",
+        "failedNoTranscript": "Нет расшифровки, о которой можно спросить.",
+        "failedNotMeeting": "Спрашивать можно только о записях встреч.",
+        "failedEmptyQuestion": "Сначала напишите вопрос.",
+        "failed": "Не удалось ответить на вопрос."
+      }
     },
     "debug": {
       "title": "Отлаживать",

@@ -800,7 +800,8 @@
         "failedNoTranscript": "Il n'y a pas de transcription à résumer.",
         "failedNotMeeting": "Seuls les enregistrements de réunion peuvent recevoir une note.",
         "cancelled": "La note de réunion a été annulée. La transcription est inchangée.",
-        "failed": "La note de réunion n'a pas pu être générée."
+        "failed": "La note de réunion n'a pas pu être générée.",
+        "tab": "Note"
       },
       "copyTranscript": "Copier la transcription",
       "exportFormatLabel": "Format d'exportation",
@@ -818,7 +819,25 @@
       "correctSave": "Enregistrer",
       "correctCancel": "Annuler",
       "correctSaved": "Transcription corrigée",
-      "correctError": "Impossible d'enregistrer la correction"
+      "correctError": "Impossible d'enregistrer la correction",
+      "meetingAsk": {
+        "tab": "Demander",
+        "description": "Pose une question sur la réunion ; le LLM local répond depuis la transcription, avec des citations cliquables.",
+        "placeholder": "Pose une question sur la réunion…",
+        "ask": "Demander",
+        "searching": "Lecture de la transcription…",
+        "generatedLabel": "Généré localement par {{model}} — à vérifier dans la transcription",
+        "showInTranscript": "Voir ce passage dans la transcription",
+        "notFound": "La transcription ne répond pas à cela.",
+        "cancelled": "La question a été annulée.",
+        "failedNoLocalLlm": "Poser une question exige un LLM local, par exemple Ollama sur http://localhost:11434/v1. Configure-le dans Post Process, dans les réglages.",
+        "failedUnreachable": "Pas de réponse du LLM local. Vérifie qu'il est en cours d'exécution.",
+        "failedInvalidResponse": "Le LLM local a répondu, mais la réponse n'a pas pu être utilisée.",
+        "failedNoTranscript": "Il n'y a pas de transcription à interroger.",
+        "failedNotMeeting": "Seuls les enregistrements de réunion peuvent être interrogés.",
+        "failedEmptyQuestion": "Écris d'abord une question.",
+        "failed": "La question n'a pas pu obtenir de réponse."
+      }
     },
     "debug": {
       "title": "Débogage",

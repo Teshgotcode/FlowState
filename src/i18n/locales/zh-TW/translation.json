@@ -800,7 +800,8 @@
         "failedNoTranscript": "沒有可用於產生紀錄的逐字稿。",
         "failedNotMeeting": "只有會議錄音才能產生紀錄。",
         "cancelled": "會議紀錄已取消。逐字稿未變更。",
-        "failed": "無法產生會議紀錄。"
+        "failed": "無法產生會議紀錄。",
+        "tab": "筆記"
       },
       "copyTranscript": "複製逐字稿",
       "exportFormatLabel": "匯出格式",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "提問",
+        "description": "對會議提問;本機 LLM 會依轉寫內容回答,附上可點擊的引文。",
+        "placeholder": "對會議提問…",
+        "ask": "提問",
+        "searching": "正在讀取轉寫…",
+        "generatedLabel": "由 {{model}} 本機產生 — 請對照轉寫核實",
+        "showInTranscript": "在轉寫中顯示此處",
+        "notFound": "轉寫中沒有回答這個問題。",
+        "cancelled": "問題已取消。",
+        "failedNoLocalLlm": "提問需要本機 LLM,例如執行於 http://localhost:11434/v1 的 Ollama。請在設定的 Post Process 中設定。",
+        "failedUnreachable": "本機 LLM 沒有回應。請檢查它是否在執行。",
+        "failedInvalidResponse": "本機 LLM 已回答,但答案無法使用。",
+        "failedNoTranscript": "沒有可提問的轉寫。",
+        "failedNotMeeting": "只能對會議錄音提問。",
+        "failedEmptyQuestion": "請先輸入問題。",
+        "failed": "無法回答這個問題。"
+      }
     },
     "debug": {
       "title": "偵錯",

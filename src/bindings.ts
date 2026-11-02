@@ -1187,6 +1187,34 @@ async cancelMeetingNote(entryId: number) : Promise<Result<boolean, string>> {
 }
 },
 /**
+ * Ask the local LLM one question about a finished meeting's transcript and
+ * return its answer with the transcript parts it cites, so the window can
+ * jump to the right timestamp. The whole transcript rides along when it fits
+ * the model's window, otherwise the parts the question points at are picked
+ * with a plain keyword ranking. Nothing is saved: the transcript stands
+ * untouched and the conversation lives only in the window that asked.
+ */
+async askMeetingTranscript(entryId: number, question: string) : Promise<Result<MeetingAskOutcome, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("ask_meeting_transcript", { entryId, question }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stop the ask running for `entry_id`: the current LLM call is dropped and
+ * nothing is shown. Returns whether an ask was running.
+ */
+async cancelMeetingAsk(entryId: number) : Promise<Result<boolean, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("cancel_meeting_ask", { entryId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Begin dragging the floating meeting bar (idle disc or recording pill).
  * The frontend calls this once the pointer has crossed its click/drag
  * threshold, so a plain click still starts or stops the meeting; the native
@@ -1538,6 +1566,75 @@ export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
  */
 export type MeetingActionItem = { task?: string; owner?: string }
 /**
+ * The answer to one question: the text the model wrote, whether the
+ * transcript actually answers the question, and the parts the answer builds
+ * on. `model` names the LLM that wrote it, for the "generated locally" label.
+ */
+export type MeetingAnswer = { 
+/**
+ * Whether the transcript parts answer the question. `false` means the
+ * answer says so, and no quote was kept.
+ */
+found: boolean; 
+/**
+ * The model's answer, in the transcript's language.
+ */
+answer: string; 
+/**
+ * The verbatim transcript parts the answer builds on.
+ */
+quotes: MeetingQuote[]; model: string }
+/**
+ * Why a question could not be answered. The frontend maps each reason to a
+ * localized message; `detail` never reaches the user, only the log.
+ */
+export type MeetingAskFailure = 
+/**
+ * The entry is not a meeting session.
+ */
+"not_a_meeting" | 
+/**
+ * The entry has no transcript to ask about.
+ */
+"no_transcript" | 
+/**
+ * No post-processing provider is selected.
+ */
+"no_provider" | 
+/**
+ * The selected provider has no model configured.
+ */
+"no_model" | 
+/**
+ * The selected provider cannot answer: it is not a local
+ * OpenAI-compatible endpoint.
+ */
+"no_local_llm" | 
+/**
+ * The question was empty.
+ */
+"empty_question" | 
+/**
+ * Another question is already being answered for this entry.
+ */
+"already_asking" | 
+/**
+ * The local LLM could not be reached, or answered with an error.
+ */
+"llm_unreachable" | 
+/**
+ * The local LLM answered, but no answer could be read from it.
+ */
+"invalid_response" | 
+/**
+ * The user pressed cancel; nothing was shown.
+ */
+"cancelled"
+/**
+ * What one question comes back with: the answer, or why there is none.
+ */
+export type MeetingAskOutcome = { outcome: "answered"; answer: MeetingAnswer } | { outcome: "failed"; reason: MeetingAskFailure; detail: string | null }
+/**
  * The generated meeting note: a draft the user must check, not a record of
  * what was decided. `model` names the LLM that wrote it, and `generated_at`
  * when, so the label in the transcript window can say both.
@@ -1602,6 +1699,12 @@ export type MeetingNoteOutcome =
  * Nothing was saved; `reason` tells the window what to tell the user.
  */
 { outcome: "failed"; reason: MeetingNoteFailure; detail: string | null }
+/**
+ * One quote an answer cites: the verbatim transcript part it came from and
+ * the part's place on the recording's timeline, so the window can jump to
+ * the right timestamp. Timestamps are `None` when the entry had no segments.
+ */
+export type MeetingQuote = { t0_ms: number | null; t1_ms: number | null; text: string }
 /**
  * One finished piece of a meeting's live transcript, emitted as the
  * `meeting-segment` event while the meeting records, so its window can show

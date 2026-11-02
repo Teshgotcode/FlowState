@@ -800,7 +800,8 @@
         "failedNoTranscript": "Not oluşturulacak bir transkript yok.",
         "failedNotMeeting": "Yalnızca toplantı kayıtları not alabilir.",
         "cancelled": "Toplantı notu iptal edildi. Transkript değişmedi.",
-        "failed": "Toplantı notu oluşturulamadı."
+        "failed": "Toplantı notu oluşturulamadı.",
+        "tab": "Not"
       },
       "copyTranscript": "Transkripti kopyala",
       "exportFormatLabel": "Dışa aktarma biçimi",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Sor",
+        "description": "Toplantıyla ilgili bir soru sor; yerel LLM, transkriptten tıklanabilir alıntılarla yanıtlar.",
+        "placeholder": "Toplantıyla ilgili bir şey sor…",
+        "ask": "Sor",
+        "searching": "Transkript okunuyor…",
+        "generatedLabel": "{{model}} tarafından yerel olarak üretildi — transkriptle karşılaştırın",
+        "showInTranscript": "Bu bölümü transkriptte göster",
+        "notFound": "Transkript bunu yanıtlamıyor.",
+        "cancelled": "Soru iptal edildi.",
+        "failedNoLocalLlm": "Soru sormak için yerel bir LLM gerekir, örneğin http://localhost:11434/v1 adresindeki Ollama. Ayarlar'daki Post Process altından kurun.",
+        "failedUnreachable": "Yerel LLM'den yanıt yok. Çalıştığından emin olun.",
+        "failedInvalidResponse": "Yerel LLM yanıtladı ama yanıt kullanılamadı.",
+        "failedNoTranscript": "Soru sorulacak bir transkript yok.",
+        "failedNotMeeting": "Yalnızca toplantı kayıtları hakkında soru sorulabilir.",
+        "failedEmptyQuestion": "Önce bir soru yazın.",
+        "failed": "Soruya yanıt verilemedi."
+      }
     },
     "debug": {
       "title": "Hata Ayıklama",

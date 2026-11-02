@@ -800,7 +800,8 @@
         "failedNoTranscript": "Neexistuje přepis, ze kterého by šla vytvořit poznámka.",
         "failedNotMeeting": "Poznámku lze vytvořit jen z nahrávek porad.",
         "cancelled": "Poznámka z porady byla zrušena. Přepis zůstal beze změny.",
-        "failed": "Poznámku z porady se nepodařilo vytvořit."
+        "failed": "Poznámku z porady se nepodařilo vytvořit.",
+        "tab": "Poznámka"
       },
       "copyTranscript": "Zkopírovat přepis",
       "exportFormatLabel": "Formát exportu",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "Zeptat se",
+        "description": "Zeptejte se na schůzku; místní LLM odpovídá z přepisu a uvádí citace, na které lze kliknout.",
+        "placeholder": "Zeptejte se na něco ve schůzce…",
+        "ask": "Zeptat se",
+        "searching": "Čte se přepis…",
+        "generatedLabel": "Vygenerováno lokálně modelem {{model}} — ověřte proti přepisu",
+        "showInTranscript": "Zobrazit toto místo v přepisu",
+        "notFound": "Přepis na to neodpovídá.",
+        "cancelled": "Dotaz byl zrušen.",
+        "failedNoLocalLlm": "Dotazy vyžadují místní LLM, například Ollama na http://localhost:11434/v1. Nastavte jej v Post Process v nastaveních.",
+        "failedUnreachable": "Žádná odpověď od místního LLM. Zkontrolujte, zda běží.",
+        "failedInvalidResponse": "Místní LLM odpověděl, ale odpověď nebyla použitelná.",
+        "failedNoTranscript": "Neexistuje přepis, na který se lze ptát.",
+        "failedNotMeeting": "Ptát se lze jen na nahrávky schůzek.",
+        "failedEmptyQuestion": "Nejdřív napište otázku.",
+        "failed": "Na otázku se nepodařilo odpovědět."
+      }
     },
     "debug": {
       "title": "Ladění",

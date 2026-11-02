@@ -800,7 +800,8 @@
         "failedNoTranscript": "لا يوجد نص مكتوب لعمل الملاحظات منه.",
         "failedNotMeeting": "يمكن إنشاء الملاحظات لتسجيلات الاجتماعات فقط.",
         "cancelled": "أُلغيت ملاحظات الاجتماع. النص المكتوب لم يتغير.",
-        "failed": "تعذر إنشاء ملاحظات الاجتماع."
+        "failed": "تعذر إنشاء ملاحظات الاجتماع.",
+        "tab": "الملاحظة"
       },
       "copyTranscript": "نسخ التفريغ النصي",
       "exportFormatLabel": "تنسيق التصدير",
@@ -818,7 +819,25 @@
       "correctSave": "Save",
       "correctCancel": "Cancel",
       "correctSaved": "Transcription corrected",
-      "correctError": "Could not save the correction"
+      "correctError": "Could not save the correction",
+      "meetingAsk": {
+        "tab": "اسأل",
+        "description": "اسأل عن الاجتماع؛ يجيب LLM المحلي من النص المكتوب، مع اقتباسات يمكنك النقر عليها.",
+        "placeholder": "اسأل عن شيء في الاجتماع…",
+        "ask": "اسأل",
+        "searching": "يقرأ النص المكتوب…",
+        "generatedLabel": "مولّد محليًا بواسطة {{model}} — تحقق من النص المكتوب",
+        "showInTranscript": "أظهر هذا الموضع في النص المكتوب",
+        "notFound": "النص المكتوب لا يجيب عن ذلك.",
+        "cancelled": "تم إلغاء السؤال.",
+        "failedNoLocalLlm": "يتطلب السؤال LLM محليًا، مثل Ollama على http://localhost:11434/v1. اضبطه في Post Process في الإعدادات.",
+        "failedUnreachable": "لا استجابة من LLM المحلي. تحقق من أنه يعمل.",
+        "failedInvalidResponse": "أجاب LLM المحلي، لكن لم يمكن استخدام الإجابة.",
+        "failedNoTranscript": "لا يوجد نص مكتوب للسؤال عنه.",
+        "failedNotMeeting": "يمكن السؤال عن تسجيلات الاجتماعات فقط.",
+        "failedEmptyQuestion": "اكتب سؤالًا أولًا.",
+        "failed": "تعذّر الإجابة عن السؤال."
+      }
     },
     "debug": {
       "title": "تصحيح الأخطاء",
