@@ -1,0 +1,36 @@
+Henrik	Hei alle sammen, og velkommen til ukentlig statusmøte for lanseringen av versjon én punkt én. I dag skal vi gjennomgå status på diarisering, oversettelsesstøtte, budsjettet, og bestemme en dato for lansering. Nora, kan du begynne med det tekniske?
+Nora	Ja, takk. Sist uke fikk vi ferdig den nye lydmotoren, og latensen er nede i under fire hundre millisekunder på Mac med M-serien. De viktigste feilene fra betaen er rettet, men vi har fortsatt et åpent punkt rundt mikrofonvalg når flere enheter er koblet til.
+Henrik	Hvor alvorlig er det punktet? Kan det blokkere lanseringen?
+Nora	Nei, jeg vil ikke kalle det blokkerende. Vi har en omvei som fungerer i ni av ti tilfeller, men brukere med Bluetooth-headset kan oppleve at appen velger feil mikrofon ved oppstart.
+Alva	Jeg vil bare legge til at vi har fått fire henvendelser om akkurat det i brukerforumet de siste fjorten dagene. Så det er ikke bare et teoretisk problem.
+Henrik	Fint, da setter vi det på lista over ting som må fikses i én punkt to. Nora, hva med diarisering? Hvor står vi der?
+Nora	Vi har testet to lokale løsninger. Den ene er en strømmende sortformer-modell på omtrent hundre og tretti megabyte, og den andre er en kombinasjon av segmentering, innbedding og klynging med sherpa-onnx.
+Alva	Og hva var resultatet da dere kjørte dem på et ekte møteopptak?
+Nora	Begge fant riktig antall talere på testopptaket vårt på over fem minutter, men grensene mellom talerne var ganske forskjellige. Sortformeren var raskere, men den er trent på engelsk, så vi er usikre på om den holder like godt på norsk.
+Henrik	Hva betyr det i praksis for brukerne? Kan de forvente «hvem sa hva» i utskriften?
+Nora	Ikke i første omgang. Vi kan ikke love nøyaktighet på norsk før vi har kjørt en ordentlig evaluering. Det er akkurat dette spike-notatet skal gi svar på.
+Alva	Fra kundesiden er dette et hyggelig-å-ha-krav, ikke et må-krav. Ingen av pilotkundene har krevd det i kontraktene så langt.
+Henrik	Enig. Da beslutter vi at diarisering ikke blokkerer versjon én punkt én, og at ledelsen tar den endelige beslutningen etter at vi har tallene på bordet. Alva, hva med oversettelse?
+Alva	Oversettelsesmodellen er klar, men kvaliteten på norsk til engelsk er omtrent åtti prosent av det vi ser for svensk. Vi bør kanskje holde den bak et eksperimentflagg i første runde.
+Nora	Det er enkelt å få til. Vi har allerede infrastrukturen for funksjonsflagg fra forrige lansering.
+Henrik	Bra. Da setter vi oversettelse bak et flagg, og vi evaluerer kvaliteten mot et sett med representative opptak før vi slår det på for alle.
+Nora	Jeg tar ansvar for den evalueringen. Har vi en frist?
+Henrik	La oss si to uker fra i dag. Da har vi tallene før neste styremøte.
+Alva	Jeg har en bekymring til, og det gjelder budsjettet. Server-kostnadene våre er stabile, men lisenskostnadene for modellene øker hvis vi distribuerer videre.
+Nora	Derfor er hele poenget med lokal-først-arkitekturen vår at vi ikke har serverkostnader i det hele tatt. Alt kjører på kundens egen maskin.
+Alva	Jeg forstår det, men lisensspørsmålet står. Hvis vi velger sortformeren, følger det med en egen lisens fra Nvidia som vi må vurdere nøye før vi distribuerer modellen inne i appen.
+Henrik	Kan du oppsummere hva den lisensen tillater, Alva?
+Alva	Grovt sagt tillater den både kommersiell bruk og distribusjon, men den er ikke en standard åpen kildekode-lisens, så vi må sende med lisensteksten og en merknad. Og vi kan ikke bruke navnet deres i markedsføringen.
+Nora	Og dette gjelder bare modellfilen, ikke app-koden vår?
+Alva	Riktig. App-koden vår forblir MIT. Lisensen gjelder vektene i modellen, altså selve filen på omtrent hundre og tretti megabyte.
+Henrik	Fint oppsummert. Da noterer vi at lisensieringen må vurderes nøye før vi eventuelt anbefaler sortformeren videre. Hva med størrelsene, Nora? Hva legger hver løsning til i appen?
+Nora	Sortformeren legger til hundre og tretti megabyte i nedlasting. Sherpa-løsningen legger til rundt tretti megabyte for kjøretidsbiblioteket, pluss omtrent trettifem megabyte med modeller. Totalt er de ganske like.
+Alva	Men sherpa krever jo en ny ONNX-kjøretid i appen, og den har vi ikke i dag. Det er en del vedlikehold også.
+Nora	Stemmer, og det er en reell kostnad. Vi har allerede transcribe-motoren i appen, så sortformeren gir ingen ny kjøretid, bare en større modellfil.
+Henrik	OK. La oss oppsummere og beslutte. Ett: versjon én punkt én lanseres uten diarisering. To: Alva leverer lisensvurdering til fredag. Tre: Nora fullfører evalueringen av begge løsningene på et lengre norsk møteopptak, med mål på talerantall, segmentgrenser og kjøretid.
+Nora	Enig. Jeg foreslår at vi bruker det samme opptaket for begge løsningene, sånn at tallene er direkte sammenlignbare.
+Alva	Og vi bør være ærlige i notatet på at opptaket er syntetisk, med tre ulike stemmer, ikke et ekte møte med bakgrunnsstøy.
+Henrik	Godt poeng. Et siste punkt: dato. Hva sier dere til tolvte november?
+Nora	Det henger sammen med fristen for evalueringen, så jeg stemmer ja.
+Alva	Jeg stemmer også ja, forutsatt at lisensspørsmålet er lukket innen da.
+Henrik	Flott. Da er vi ferdige. Takk for i dag, alle sammen. Jeg sender ut protokoll med vedtaksliste i ettermiddag.
