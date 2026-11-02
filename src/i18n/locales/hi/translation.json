@@ -8,7 +8,8 @@
     "quit": "बाहर निकलें",
     "cancel": "रद्द करें",
     "secureInputWarning": "⚠ Secure Input ने शॉर्टकट ब्लॉक किए हैं",
-    "meetingBarHideForHour": "1 घंटे के लिए छिपाएं"
+    "meetingBarHideForHour": "1 घंटे के लिए छिपाएं",
+    "scratchpadOpen": "तुरंत नोट"
   },
   "sidebar": {
     "general": "सामान्य",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "केवल बैठक रिकॉर्डिंग के बारे में पूछा जा सकता है।",
         "failedEmptyQuestion": "पहले एक सवाल लिखें।",
         "failed": "सवाल का उत्तर नहीं दिया जा सका।"
-      }
+      },
+      "note": "नोट"
     },
     "debug": {
       "title": "डिबग",
@@ -1194,5 +1196,11 @@
     "learnMore": "इसे कैसे ठीक करें",
     "recorderBlocked": "अभी शॉर्टकट रिकॉर्ड नहीं किए जा सकते — macOS Secure Input कुंजी इवेंट ब्लॉक कर रहा है. पहले Secure Input चेतावनी हल करें.",
     "dismiss": "खारिज करें"
+  },
+  "scratchpad": {
+    "title": "तुरंत नोट",
+    "placeholder": "बोलकर लिखें या टाइप करें — नोट यहीं, स्थानीय रूप से सहेजा जाता है।",
+    "copy": "कॉपी",
+    "copied": "कॉपी हो गया"
   }
 }

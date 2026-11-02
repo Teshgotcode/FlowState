@@ -8,7 +8,8 @@
     "quit": "बाहिर निस्कनुहोस्",
     "cancel": "रद्द गर्नुहोस्",
     "secureInputWarning": "⚠ Secure Input ले सर्टकटहरू रोकेको छ",
-    "meetingBarHideForHour": "एक घण्टाको लागि लुकाउनुहोस्"
+    "meetingBarHideForHour": "एक घण्टाको लागि लुकाउनुहोस्",
+    "scratchpadOpen": "छिटो नोट"
   },
   "sidebar": {
     "general": "सामान्य",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "बैठक रेकर्डिङबारे मात्र सोध्न सकिन्छ।",
         "failedEmptyQuestion": "पहिले एउटा प्रश्न लेख्नुहोस्।",
         "failed": "प्रश्नको उत्तर दिन सकिएन।"
-      }
+      },
+      "note": "नोट"
     },
     "debug": {
       "title": "डिबग",
@@ -1194,5 +1196,11 @@
     "learnMore": "यसलाई कसरी ठिक गर्ने",
     "recorderBlocked": "अहिले सर्टकट रेकर्ड गर्न सकिँदैन — macOS Secure Input ले कुञ्जी इभेन्टहरू रोकिरहेको छ। पहिले Secure Input चेतावनी समाधान गर्नुहोस्।",
     "dismiss": "हटाउनुहोस्"
+  },
+  "scratchpad": {
+    "title": "छिटो नोट",
+    "placeholder": "बोल्नुहोस् वा टाइप गर्नुहोस् — नोट यहीँ स्थानीय रूपमा सुरक्षित हुन्छ।",
+    "copy": "कपी गर्नुहोस्",
+    "copied": "कपी भयो"
   }
 }

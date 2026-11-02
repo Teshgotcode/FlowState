@@ -967,6 +967,8 @@ static MEETING_BAR_MENU_OPEN: AtomicBool = AtomicBool::new(false);
 /// The right-click menu's "hide for an hour" item, handled by the app-wide
 /// menu-event handler in lib.rs.
 pub const MEETING_BAR_HIDE_FOR_HOUR_ID: &str = "meeting_bar_hide_for_hour";
+/// The menu item that opens the Scratchpad (quick note) window.
+pub const MEETING_BAR_SCRATCHPAD_ID: &str = "meeting_bar_scratchpad";
 
 /// The window moved. Called from the app's window-event handler; every move of
 /// the overlay window — a drag or a programmatic placement — arms the dock
@@ -1099,23 +1101,37 @@ pub fn show_meeting_bar_menu(app_handle: &AppHandle) {
     let strings = crate::tray_i18n::get_tray_translations(Some(
         settings::get_settings(app_handle).app_language,
     ));
-    // Locales that haven't translated the key yet fall back to English, the
+    // Locales that haven't translated a key yet fall back to English, the
     // same contract the tray's secure-input item has.
+    let english = crate::tray_i18n::get_tray_translations(Some("en".to_string()));
     let label = if strings.meeting_bar_hide_for_hour.is_empty() {
-        crate::tray_i18n::get_tray_translations(Some("en".to_string())).meeting_bar_hide_for_hour
+        english.meeting_bar_hide_for_hour
     } else {
         strings.meeting_bar_hide_for_hour
+    };
+    let scratchpad_label = if strings.scratchpad_open.is_empty() {
+        english.scratchpad_open
+    } else {
+        strings.scratchpad_open
     };
 
     let menu = match MenuItem::with_id(
         app_handle,
-        MEETING_BAR_HIDE_FOR_HOUR_ID,
-        &label,
+        MEETING_BAR_SCRATCHPAD_ID,
+        &scratchpad_label,
         true,
         None::<&str>,
     )
-    .and_then(|item| Menu::with_items(app_handle, &[&item]))
-    {
+    .and_then(|scratchpad| {
+        MenuItem::with_id(
+            app_handle,
+            MEETING_BAR_HIDE_FOR_HOUR_ID,
+            &label,
+            true,
+            None::<&str>,
+        )
+        .and_then(|hide| Menu::with_items(app_handle, &[&scratchpad, &hide]))
+    }) {
         Ok(menu) => menu,
         Err(error) => {
             log::warn!("Failed to build the meeting bar menu: {error}");

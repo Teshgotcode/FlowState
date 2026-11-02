@@ -8,7 +8,8 @@
     "quit": "Thoát",
     "cancel": "Hủy",
     "secureInputWarning": "⚠ Phím tắt bị Secure Input chặn",
-    "meetingBarHideForHour": "Ẩn trong 1 giờ"
+    "meetingBarHideForHour": "Ẩn trong 1 giờ",
+    "scratchpadOpen": "Nháp nhanh"
   },
   "sidebar": {
     "general": "Chung",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Chỉ có thể hỏi về bản ghi cuộc họp.",
         "failedEmptyQuestion": "Hãy viết câu hỏi trước.",
         "failed": "Không thể trả lời câu hỏi."
-      }
+      },
+      "note": "Ghi chú"
     },
     "debug": {
       "title": "Gỡ lỗi",
@@ -1194,5 +1196,11 @@
     "learnMore": "Cách khắc phục",
     "recorderBlocked": "Hiện không thể ghi phím tắt — Secure Input của macOS đang chặn các sự kiện phím. Hãy xử lý cảnh báo Secure Input trước.",
     "dismiss": "Bỏ qua"
+  },
+  "scratchpad": {
+    "title": "Nháp nhanh",
+    "placeholder": "Nói hoặc gõ — ghi chú được lưu tại đây, trên máy.",
+    "copy": "Sao chép",
+    "copied": "Đã sao chép"
   }
 }

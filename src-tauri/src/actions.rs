@@ -895,17 +895,36 @@ impl ShortcutAction for TranscribeAction {
                                 return;
                             }
 
+                            // The Scratchpad is the take's target while its
+                            // window holds the focus: the text lands in the
+                            // note, History labels the take "note", and no
+                            // paste runs — no other app's focus is touched.
+                            let to_scratchpad = crate::scratchpad::is_focused(&ah);
+
                             // Save to history if WAV was saved
                             if wav_saved {
-                                if let Err(err) = hm.save_entry(
-                                    file_name,
-                                    transcription,
-                                    post_process,
-                                    processed.post_processed_text.clone(),
-                                    processed.post_process_prompt.clone(),
-                                    language,
-                                    segments,
-                                ) {
+                                let save_result = if to_scratchpad {
+                                    hm.save_note_entry(
+                                        file_name,
+                                        transcription,
+                                        post_process,
+                                        processed.post_processed_text.clone(),
+                                        processed.post_process_prompt.clone(),
+                                        language,
+                                        segments,
+                                    )
+                                } else {
+                                    hm.save_entry(
+                                        file_name,
+                                        transcription,
+                                        post_process,
+                                        processed.post_processed_text.clone(),
+                                        processed.post_process_prompt.clone(),
+                                        language,
+                                        segments,
+                                    )
+                                };
+                                if let Err(err) = save_result {
                                     error!("Failed to save history entry: {}", err);
                                 }
                             }
@@ -916,6 +935,25 @@ impl ShortcutAction for TranscribeAction {
                                 emit_transcription_complete(
                                     &ah,
                                     empty_outcome(input_silent),
+                                    sample_count,
+                                    stop_time,
+                                );
+                            } else if to_scratchpad {
+                                // Hand the take to the Scratchpad window, which
+                                // inserts it at the note's caret. No paste, so
+                                // the frontmost app keeps its focus and text.
+                                if let Err(err) = ah.emit_to(
+                                    crate::scratchpad::SCRATCHPAD_WINDOW_LABEL,
+                                    "scratchpad-text",
+                                    processed.final_text,
+                                ) {
+                                    error!("Failed to deliver the take to the Scratchpad: {}", err);
+                                }
+                                utils::hide_recording_overlay(&ah);
+                                set_tray_state(&ah, TrayIconState::Idle);
+                                emit_transcription_complete(
+                                    &ah,
+                                    TranscriptionOutcome::Typed,
                                     sample_count,
                                     stop_time,
                                 );

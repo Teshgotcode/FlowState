@@ -4,6 +4,7 @@ pub mod history;
 pub mod mcp;
 pub mod meeting;
 pub mod models;
+pub mod scratchpad;
 pub mod sync;
 pub mod transcription;
 pub mod word_suggestions;

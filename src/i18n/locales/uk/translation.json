@@ -8,7 +8,8 @@
     "quit": "Вийти",
     "cancel": "Скасувати",
     "secureInputWarning": "⚠ Комбінації клавіш заблоковано Secure Input",
-    "meetingBarHideForHour": "Сховати на 1 годину"
+    "meetingBarHideForHour": "Сховати на 1 годину",
+    "scratchpadOpen": "Швидка нотатка"
   },
   "sidebar": {
     "general": "Загальні",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Запитувати можна лише про записи зустрічей.",
         "failedEmptyQuestion": "Спершу напишіть питання.",
         "failed": "Не вдалося відповісти на питання."
-      }
+      },
+      "note": "Нотатка"
     },
     "debug": {
       "title": "Дебаг",
@@ -1194,5 +1196,11 @@
     "learnMore": "Як це виправити",
     "recorderBlocked": "Зараз неможливо записати комбінацію — Secure Input у macOS блокує події клавіш. Спершу усуньте попередження про Secure Input.",
     "dismiss": "Приховати"
+  },
+  "scratchpad": {
+    "title": "Швидка нотатка",
+    "placeholder": "Диктуйте або друкуйте — нотатка зберігається тут, локально.",
+    "copy": "Копіювати",
+    "copied": "Скопійовано"
   }
 }

@@ -8,7 +8,8 @@
     "quit": "Salir",
     "cancel": "Cancelar",
     "secureInputWarning": "⚠ Atajos bloqueados por Secure Input",
-    "meetingBarHideForHour": "Ocultar durante 1 hora"
+    "meetingBarHideForHour": "Ocultar durante 1 hora",
+    "scratchpadOpen": "Nota rápida"
   },
   "sidebar": {
     "general": "General",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Solo se pueden consultar las grabaciones de reuniones.",
         "failedEmptyQuestion": "Escribe primero una pregunta.",
         "failed": "No se pudo responder a la pregunta."
-      }
+      },
+      "note": "Nota"
     },
     "debug": {
       "title": "Depuración",
@@ -1194,5 +1196,11 @@
     "learnMore": "Cómo solucionarlo",
     "recorderBlocked": "Ahora mismo no se pueden grabar atajos: Secure Input de macOS está bloqueando los eventos de teclado. Resuelve primero el aviso de Secure Input.",
     "dismiss": "Descartar"
+  },
+  "scratchpad": {
+    "title": "Nota rápida",
+    "placeholder": "Dicta o escribe: la nota se guarda aquí, localmente.",
+    "copy": "Copiar",
+    "copied": "Copiado"
   }
 }

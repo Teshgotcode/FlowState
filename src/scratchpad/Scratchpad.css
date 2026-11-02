@@ -1,0 +1,67 @@
+@import "../styles/theme.css";
+
+html,
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+/* The note: an app-surface card that fills the window, text on top, the
+   Copy action pinned under it. */
+.sp-root {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  background: var(--color-background);
+  color: var(--color-text);
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.sp-area {
+  flex: 1;
+  width: 100%;
+  border: none;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: inherit;
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.sp-area::placeholder {
+  color: color-mix(in srgb, var(--color-mid-gray) 80%, transparent);
+}
+
+.sp-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 8px 12px;
+  border-top: 1px solid
+    color-mix(in srgb, var(--color-mid-gray) 22%, transparent);
+}
+
+.sp-copy {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--color-mid-gray) 30%, transparent);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-text);
+  font-size: 12px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.sp-copy:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-mid-gray) 14%, transparent);
+}
+
+.sp-copy:disabled {
+  opacity: 0.45;
+  cursor: default;
+}

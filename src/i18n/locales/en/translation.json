@@ -8,7 +8,8 @@
     "quit": "Quit",
     "cancel": "Cancel",
     "secureInputWarning": "⚠ Shortcuts blocked by Secure Input",
-    "meetingBarHideForHour": "Hide for 1 hour"
+    "meetingBarHideForHour": "Hide for 1 hour",
+    "scratchpadOpen": "Scratchpad"
   },
   "sidebar": {
     "general": "General",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Only meeting recordings can be asked about.",
         "failedEmptyQuestion": "Write a question first.",
         "failed": "The question could not be answered."
-      }
+      },
+      "note": "Note"
     },
     "debug": {
       "title": "Debug",
@@ -1194,5 +1196,11 @@
     "learnMore": "How to fix",
     "recorderBlocked": "Can't record shortcuts right now. macOS Secure Input is blocking key events. Resolve the Secure Input warning first.",
     "dismiss": "Dismiss"
+  },
+  "scratchpad": {
+    "title": "Quick note",
+    "placeholder": "Dictate or type — the note is kept here, locally.",
+    "copy": "Copy",
+    "copied": "Copied"
   }
 }

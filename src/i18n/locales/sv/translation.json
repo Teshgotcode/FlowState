@@ -8,7 +8,8 @@
     "quit": "Avsluta",
     "cancel": "Avbryt",
     "secureInputWarning": "⚠ Kortkommandon blockeras av Secure Input",
-    "meetingBarHideForHour": "Dölj i 1 timme"
+    "meetingBarHideForHour": "Dölj i 1 timme",
+    "scratchpadOpen": "Snabbanteckning"
   },
   "sidebar": {
     "general": "Allmänt",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Bara mötesinspelningar kan frågas om.",
         "failedEmptyQuestion": "Skriv en fråga först.",
         "failed": "Frågan kunde inte besvaras."
-      }
+      },
+      "note": "Anteckning"
     },
     "debug": {
       "title": "Felsökning",
@@ -1194,5 +1196,11 @@
     "learnMore": "Så här löser du det",
     "recorderBlocked": "Det går inte att spela in kortkommandon just nu — macOS Secure Input blockerar tangenthändelser. Lös varningen om Secure Input först.",
     "dismiss": "Avfärda"
+  },
+  "scratchpad": {
+    "title": "Snabbanteckning",
+    "placeholder": "Diktera eller skriv — anteckningen finns här, lokalt.",
+    "copy": "Kopiera",
+    "copied": "Kopierad"
   }
 }

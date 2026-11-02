@@ -8,7 +8,8 @@
     "quit": "Выход",
     "cancel": "Отмена",
     "secureInputWarning": "⚠ Сочетания клавиш заблокированы Secure Input",
-    "meetingBarHideForHour": "Скрыть на 1 час"
+    "meetingBarHideForHour": "Скрыть на 1 час",
+    "scratchpadOpen": "Быстрая заметка"
   },
   "sidebar": {
     "general": "Общие",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Спрашивать можно только о записях встреч.",
         "failedEmptyQuestion": "Сначала напишите вопрос.",
         "failed": "Не удалось ответить на вопрос."
-      }
+      },
+      "note": "Заметка"
     },
     "debug": {
       "title": "Отлаживать",
@@ -1194,5 +1196,11 @@
     "learnMore": "Как это исправить",
     "recorderBlocked": "Сейчас нельзя записать сочетание клавиш — Secure Input в macOS блокирует события клавиш. Сначала устраните предупреждение о Secure Input.",
     "dismiss": "Скрыть"
+  },
+  "scratchpad": {
+    "title": "Быстрая заметка",
+    "placeholder": "Диктуйте или печатайте — заметка хранится здесь, локально.",
+    "copy": "Копировать",
+    "copied": "Скопировано"
   }
 }

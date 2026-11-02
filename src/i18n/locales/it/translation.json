@@ -8,7 +8,8 @@
     "quit": "Esci",
     "cancel": "Annulla",
     "secureInputWarning": "⚠ Scorciatoie bloccate da Secure Input",
-    "meetingBarHideForHour": "Nascondi per 1 ora"
+    "meetingBarHideForHour": "Nascondi per 1 ora",
+    "scratchpadOpen": "Nota rapida"
   },
   "sidebar": {
     "general": "Generale",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Si può chiedere solo delle registrazioni di riunioni.",
         "failedEmptyQuestion": "Scrivi prima una domanda.",
         "failed": "Non è stato possibile rispondere alla domanda."
-      }
+      },
+      "note": "Nota"
     },
     "debug": {
       "title": "Debug",
@@ -1194,5 +1196,11 @@
     "learnMore": "Come risolvere",
     "recorderBlocked": "Non è possibile registrare scorciatoie in questo momento: Secure Input di macOS sta bloccando gli eventi dei tasti. Risolvi prima l'avviso di Secure Input.",
     "dismiss": "Ignora"
+  },
+  "scratchpad": {
+    "title": "Nota rapida",
+    "placeholder": "Detta o scrivi — la nota resta qui, in locale.",
+    "copy": "Copia",
+    "copied": "Copiato"
   }
 }

@@ -8,7 +8,8 @@
     "quit": "Afslut",
     "cancel": "Annuller",
     "secureInputWarning": "⚠ Genveje blokeret af Secure Input",
-    "meetingBarHideForHour": "Skjul i 1 time"
+    "meetingBarHideForHour": "Skjul i 1 time",
+    "scratchpadOpen": "Hurtignotat"
   },
   "sidebar": {
     "general": "Generelt",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Kun mødeoptagelser kan spørges om.",
         "failedEmptyQuestion": "Skriv et spørgsmål først.",
         "failed": "Spørgsmålet kunne ikke besvares."
-      }
+      },
+      "note": "Note"
     },
     "debug": {
       "title": "Fejlfinding",
@@ -1194,5 +1196,11 @@
     "learnMore": "Sådan løser du det",
     "recorderBlocked": "Genveje kan ikke optages lige nu — macOS Secure Input blokerer tastehændelser. Løs advarslen om Secure Input først.",
     "dismiss": "Afvis"
+  },
+  "scratchpad": {
+    "title": "Hurtignotat",
+    "placeholder": "Diktér eller skriv — noten ligger her, lokalt.",
+    "copy": "Kopiér",
+    "copied": "Kopieret"
   }
 }

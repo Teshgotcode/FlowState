@@ -8,7 +8,8 @@
     "quit": "Изход",
     "cancel": "Отказ",
     "secureInputWarning": "⚠ Бързите клавиши са блокирани от Secure Input",
-    "meetingBarHideForHour": "Скрий за 1 час"
+    "meetingBarHideForHour": "Скрий за 1 час",
+    "scratchpadOpen": "Бърза бележка"
   },
   "sidebar": {
     "general": "Общи",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Може да се пита само за записи на срещи.",
         "failedEmptyQuestion": "Първо напишете въпрос.",
         "failed": "На въпроса не можа да се отговори."
-      }
+      },
+      "note": "Бележка"
     },
     "debug": {
       "title": "Отстраняване",
@@ -1194,5 +1196,11 @@
     "learnMore": "Как да поправите това",
     "recorderBlocked": "В момента не могат да се записват бързи клавиши — Secure Input на macOS блокира клавишните събития. Първо отстранете предупреждението за Secure Input.",
     "dismiss": "Отхвърляне"
+  },
+  "scratchpad": {
+    "title": "Бърза бележка",
+    "placeholder": "Диктувайте или пишете — бележката остава тук, локално.",
+    "copy": "Копирай",
+    "copied": "Копирано"
   }
 }

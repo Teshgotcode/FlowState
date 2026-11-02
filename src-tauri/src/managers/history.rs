@@ -128,12 +128,15 @@ pub struct HistoryEntry {
 pub enum HistorySource {
     /// A meeting session: an explicit start/stop recording, not a hotkey take.
     Meeting,
+    /// A take dictated into the Scratchpad's note window.
+    Note,
 }
 
 impl HistorySource {
     pub fn as_str(self) -> &'static str {
         match self {
             HistorySource::Meeting => "meeting",
+            HistorySource::Note => "note",
         }
     }
 
@@ -417,6 +420,45 @@ impl HistoryManager {
             language,
             language_source,
             source: None,
+            metadata: fresh_metadata(&segments),
+        })?;
+
+        self.cleanup_old_entries()?;
+
+        Ok(entry)
+    }
+
+    /// Save the entry for a take dictated into the Scratchpad: the same
+    /// record a plain hotkey dictation leaves, but marked `source: "note"`
+    /// so History can label it. The note's text itself is kept by the
+    /// Scratchpad; this entry is the take's record (with its audio), and it
+    /// never leaves the machine. Same parameter shape as `save_entry`.
+    #[allow(clippy::too_many_arguments)]
+    pub fn save_note_entry(
+        &self,
+        file_name: String,
+        transcription_text: String,
+        post_process_requested: bool,
+        post_processed_text: Option<String>,
+        post_process_prompt: Option<String>,
+        language: Option<LanguageDecision>,
+        segments: Vec<TranscriptSegment>,
+    ) -> Result<HistoryEntry> {
+        let (language, language_source) = split_language(language);
+        let entry = self.insert_entry(HistoryEntry {
+            id: 0,
+            file_name,
+            timestamp: Utc::now().timestamp(),
+            saved: false,
+            title: String::new(),
+            transcription_text,
+            post_processed_text,
+            post_process_prompt,
+            post_process_requested,
+            source_name: None,
+            language,
+            language_source,
+            source: Some(HistorySource::Note),
             metadata: fresh_metadata(&segments),
         })?;
 
