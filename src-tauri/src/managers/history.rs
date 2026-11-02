@@ -425,6 +425,16 @@ impl HistoryManager {
         Ok(entry)
     }
 
+    /// Insert a history entry that arrived from sync (shared folder or a
+    /// hand-carried bundle): the audio file, if any, must already be in the
+    /// recordings directory. Sync never deletes history — this only ever
+    /// adds.
+    pub fn save_synced_entry(&self, entry: HistoryEntry) -> Result<HistoryEntry> {
+        let entry = self.insert_entry(entry)?;
+        self.cleanup_old_entries()?;
+        Ok(entry)
+    }
+
     /// Save the entry for a file whose audio is already at `file_name`.
     /// Retention never removes it (only deleting it does); never
     /// post-processed.

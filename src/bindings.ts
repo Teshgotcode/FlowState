@@ -1126,6 +1126,108 @@ async getWordSuggestions() : Promise<Result<WordSuggestion[], string>> {
 }
 },
 /**
+ * Open the shared folder in Finder/Files — the same window onto "where
+ * does this stuff actually live" the app data folder has.
+ */
+async syncOpenFolder() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_open_folder") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async syncGetStatus() : Promise<Result<SyncStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_get_status") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Point sync at a shared folder. A bad folder is refused and changes
+ * nothing.
+ */
+async syncSetFolder(folder: string | null) : Promise<Result<SyncStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_set_folder", { folder }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The master switch. Off stops every sync activity: nothing is published,
+ * nothing is merged, nothing is written.
+ */
+async syncSetEnabled(enabled: boolean) : Promise<Result<SyncStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_set_enabled", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async syncSetSyncHistory(value: boolean) : Promise<Result<SyncStatus, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_set_sync_history", { value }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * One sync pass: publish, merge every peer, apply. Works with the network
+ * unplugged — it is only file copy. A refused sync (off, no folder,
+ * unreadable folder) changes nothing.
+ */
+async syncNow() : Promise<Result<SyncRunResult, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_now") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Recent collisions from this machine's own log, newest first.
+ */
+async syncGetConflicts(limit: number | null) : Promise<Result<ConflictRecord[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_get_conflicts", { limit }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Export the signed FlowState bundle (a sealed zip: settings excerpt,
+ * dictionary, snippets, optional history with audio).
+ */
+async syncExportBundle(path: string, includeHistory: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_export_bundle", { path, includeHistory }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Import a bundle. The seal and every member hash are verified first; a
+ * damaged or tampered bundle is refused and nothing is touched. Otherwise
+ * dictionary, snippets and history merge in — union, with conflicts logged
+ * and both versions preserved.
+ */
+async syncImportBundle(path: string) : Promise<Result<SyncImportResult, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("sync_import_bundle", { path }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * "Legg til": puts the word in `custom_words` — so the next transcription
  * can use it — and retires the suggestion for good.
  */
@@ -1486,6 +1588,35 @@ export type ChineseScript =
  */
 "traditional_hk"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
+/**
+ * One recorded collision: the full versions of both sides plus what sync
+ * did about it. Nothing is dropped without one of these.
+ */
+export type ConflictRecord = { at: number; 
+/**
+ * "word" or "snippet".
+ */
+kind: string; key: string; 
+/**
+ * Full local version; `None` when the local side had deleted it.
+ */
+local_version: ConflictVersion | null; 
+/**
+ * Full remote version; `None` when the remote side had deleted it.
+ */
+remote_version: ConflictVersion | null; remote_device: string; resolution: string }
+/**
+ * One side of a conflict, spelled out so nothing is ever lost.
+ */
+export type ConflictVersion = { 
+/**
+ * The word (dictionary) or the trigger phrase (snippet).
+ */
+trigger_or_word: string; 
+/**
+ * The replacement text; snippets only.
+ */
+expansion: string | null; case_sensitive: boolean; updated_at: number }
 export type CustomSounds = { start: boolean; stop: boolean }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean; 
@@ -2018,6 +2149,13 @@ export type StreamTextEvent = { committed: string; tentative: string }
  * Semantic kind of "working" phase, used to localize the spinner label.
  */
 export type StreamWorkKind = "transcribing" | "polishing"
+export type SyncImportResult = { words_added: number; snippets_added: number; history_imported: number; conflicts: ConflictRecord[] }
+export type SyncRunResult = { status: SyncStatus; 
+/**
+ * Collisions found during this run (also appended to the conflict log).
+ */
+conflicts: ConflictRecord[]; history_imported: number }
+export type SyncStatus = { enabled: boolean; folder: string | null; sync_history: boolean; device_name: string; last_sync_at: number | null; last_result: string | null; last_error: string | null; word_count: number; snippet_count: number; conflict_count: number }
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes FlowState already ships.

@@ -18,7 +18,8 @@
     "history": "Historikk",
     "debug": "Feilsøking",
     "about": "Om",
-    "integrations": "Integrasjoner"
+    "integrations": "Integrasjoner",
+    "sync": "Synk"
   },
   "onboarding": {
     "customModelDescription": "Ikke offisielt støttet",
@@ -1054,6 +1055,61 @@
         "tokenRegenerate": "Lag en ny token",
         "tokenHint": "Vises bare nå — kopier den med én gang. MCP-klientene signerer forespørslene sine med den.",
         "setupHint": "Koble Claude Desktop eller Cursor til via MCP; README har det nøyaktige oppsettet."
+      }
+    },
+    "sync": {
+      "title": "Synk mellom maskinene dine",
+      "enabled": {
+        "title": "Synk på",
+        "description": "Hold ordbok, snippets og (valgfritt) historikk lik på egne Macer — uten konto og uten skyserver."
+      },
+      "explain": {
+        "offline": "Alt er ren filkopi via en mappe du velger (iCloud Drive, Dropbox, OneDrive eller USB), så det fungerer offline og på skolenett der maskiner ikke kan nå hverandre.",
+        "off": "Å slå av synken stopper alt: ingenting publiseres, ingenting flettes, ingenting skrives."
+      },
+      "folder": {
+        "title": "Delt mappe",
+        "description": "Mappen begge Macene kan se. FlowState lager en liten «FlowState Sync»-undermappe i den.",
+        "current": "Mappe",
+        "none": "Ingen mappe valgt ennå",
+        "choose": "Velg mappe…"
+      },
+      "history": {
+        "title": "Ta med historikk",
+        "description": "Synk også historikkoppføringer med lyd. Synken sletter aldri historikk."
+      },
+      "now": {
+        "title": "Synk nå",
+        "button": "Synk nå",
+        "last": "Sist synket {{time}}",
+        "never": "Aldri synket"
+      },
+      "counts": "{{words}} ord · {{snippets}} snippets",
+      "bundle": {
+        "title": "FlowState-bunt",
+        "description": "En forseglet zip du kan ta med til den andre Macen (AirDrop, USB) når det ikke finnes en delt mappe.",
+        "actions": "Eksport / import",
+        "export": "Eksporter bunt…",
+        "import": "Importer bunt…",
+        "exportTitle": "Lagre FlowState-bunt",
+        "sealed": "Hver fil i bunten er sjekksummet og manifestet er forseglet; en skadet eller manipulert bunt avvises uten å røre dataene dine."
+      },
+      "conflicts": {
+        "title": "Konflikter",
+        "description": "Når begge maskiner endret samme oppføring, bevares begge versjoner og hendelsen logges her. Ingenting går stille tapt.",
+        "none": "Ingen konflikter hittil.",
+        "word": "Ordboksord «{{key}}»",
+        "snippet": "Snippet «{{key}}»",
+        "device": "Fra {{device}}"
+      },
+      "toasts": {
+        "done": "Synket ({{history}} historikkoppføringer importert)",
+        "doneWithConflicts": "Synket med {{count}} konflikt(er) — begge versjoner ble bevart, se konfliktloggen",
+        "folderSet": "Delt mappe satt",
+        "needFolder": "Velg en delt mappe først",
+        "exported": "Bunt eksportert",
+        "imported": "Importerte {{words}} ord, {{snippets}} snippets, {{history}} historikkoppføringer",
+        "importedConflicts": "{{count}} konflikt(er) under import — begge versjoner ble bevart"
       }
     }
   },

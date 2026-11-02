@@ -18,7 +18,8 @@
     "history": "Riwayat",
     "debug": "Debug",
     "about": "Tentang",
-    "integrations": "Integrations"
+    "integrations": "Integrations",
+    "sync": "Sync"
   },
   "onboarding": {
     "customModelDescription": "Tidak didukung secara resmi",
@@ -1054,6 +1055,61 @@
         "tokenRegenerate": "Generate a new token",
         "tokenHint": "Shown only now — copy it right away. MCP clients sign every request with it.",
         "setupHint": "Connect Claude Desktop or Cursor via MCP; the README has the exact setup."
+      }
+    },
+    "sync": {
+      "title": "Sync between your Macs",
+      "enabled": {
+        "title": "Sync on",
+        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs — no account, no cloud server."
+      },
+      "explain": {
+        "offline": "Everything is plain file copy through a folder you pick (iCloud Drive, Dropbox, OneDrive or a USB stick), so it works offline and on school networks where machines cannot reach each other.",
+        "off": "Turning sync off stops everything: nothing is published, nothing is merged, nothing is written."
+      },
+      "folder": {
+        "title": "Shared folder",
+        "description": "The folder both Macs can see. FlowState writes a small \"FlowState Sync\" subfolder into it.",
+        "current": "Folder",
+        "none": "No folder selected yet",
+        "choose": "Choose folder…"
+      },
+      "history": {
+        "title": "Include history",
+        "description": "Also sync history entries with their audio. Sync never deletes history."
+      },
+      "now": {
+        "title": "Sync now",
+        "button": "Sync now",
+        "last": "Last synced {{time}}",
+        "never": "Never synced"
+      },
+      "counts": "{{words}} words · {{snippets}} snippets",
+      "bundle": {
+        "title": "FlowState bundle",
+        "description": "A sealed zip you can hand to your other Mac (AirDrop, USB) when there is no shared folder yet.",
+        "actions": "Export / import",
+        "export": "Export bundle…",
+        "import": "Import bundle…",
+        "exportTitle": "Save FlowState bundle",
+        "sealed": "Every file inside is checksummed and the manifest is sealed; a damaged or tampered bundle is refused without touching your data."
+      },
+      "conflicts": {
+        "title": "Conflicts",
+        "description": "When both Macs changed the same entry, both versions survive and the collision is logged here. Nothing is ever silently lost.",
+        "none": "No conflicts so far.",
+        "word": "Dictionary word \"{{key}}\"",
+        "snippet": "Snippet \"{{key}}\"",
+        "device": "From {{device}}"
+      },
+      "toasts": {
+        "done": "Synced ({{history}} history entries imported)",
+        "doneWithConflicts": "Synced with {{count}} conflict(s) — both versions were kept, see the conflict log",
+        "folderSet": "Shared folder set",
+        "needFolder": "Pick a shared folder first",
+        "exported": "Bundle exported",
+        "imported": "Imported {{words}} words, {{snippets}} snippets, {{history}} history entries",
+        "importedConflicts": "{{count}} conflict(s) while importing — both versions were kept"
       }
     }
   },

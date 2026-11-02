@@ -8,6 +8,7 @@ import {
   Info,
   Sparkles,
   Cpu,
+  RefreshCw,
 } from "lucide-react";
 import FlowStateLogo from "./icons/FlowStateLogo";
 import FlowStateMark from "./icons/FlowStateMark";
@@ -20,6 +21,7 @@ import {
   AboutSettings,
   PostProcessingSettings,
   ModelsSettings,
+  SyncSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -51,6 +53,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.history",
     icon: History,
     component: HistorySettings,
+    enabled: () => true,
+  },
+  sync: {
+    labelKey: "sidebar.sync",
+    icon: RefreshCw,
+    component: SyncSettings,
     enabled: () => true,
   },
   models: {
