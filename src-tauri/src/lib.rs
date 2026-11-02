@@ -23,6 +23,7 @@ mod paste_tx;
 pub mod portable;
 mod secure_input;
 mod settings;
+mod sync;
 mod shortcut;
 mod signal_handle;
 mod system_languages;
@@ -247,6 +248,15 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::mcp::regenerate_mcp_token,
             commands::mcp::get_mcp_status,
             commands::word_suggestions::get_word_suggestions,
+            commands::sync::sync_open_folder,
+            commands::sync::sync_get_status,
+            commands::sync::sync_set_folder,
+            commands::sync::sync_set_enabled,
+            commands::sync::sync_set_sync_history,
+            commands::sync::sync_now,
+            commands::sync::sync_get_conflicts,
+            commands::sync::sync_export_bundle,
+            commands::sync::sync_import_bundle,
             commands::word_suggestions::accept_word_suggestion,
             commands::word_suggestions::ignore_word_suggestion,
             commands::word_suggestions::correct_history_entry,

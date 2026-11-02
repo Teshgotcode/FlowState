@@ -896,7 +896,7 @@ pub fn change_whats_new_last_seen_version_setting(
 #[specta::specta]
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
-    settings.custom_words = words;
+    settings.custom_words = words.clone();
     // Keep the word suggestion learner's idea of "already known" in step
     // with the real dictionary, so a word the user removes can be learned
     // about again.
@@ -906,6 +906,7 @@ pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), Str
         learner.sync_dictionary(&settings.custom_words);
     }
     settings::write_settings(&app, settings);
+    crate::sync::note_settings_change(&app, &words, &[]);
     Ok(())
 }
 
@@ -929,8 +930,9 @@ pub fn change_learn_from_corrections_setting(
 #[specta::specta]
 pub fn update_snippets(app: AppHandle, snippets: Vec<Snippet>) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
-    settings.snippets = snippets;
+    settings.snippets = snippets.clone();
     settings::write_settings(&app, settings);
+    crate::sync::note_settings_change(&app, &[], &snippets);
     Ok(())
 }
 

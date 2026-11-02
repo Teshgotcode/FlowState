@@ -75,6 +75,8 @@ isolang = "2"
 chrono = "0.4"
 rusqlite = { version = "0.37", features = ["bundled"] }
 sha2 = "0.10"
+# Reading/writing the signed FlowState sync bundle (export/import between machines).
+zip = { version = "4.6.1", default-features = false, features = ["deflate"] }
 # OS entropy for the MCP server's per-user token (no clock-based randomness).
 getrandom = "0.2"
 libc = "0.2"

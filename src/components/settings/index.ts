@@ -7,6 +7,7 @@ export { IntegrationsSettings } from "./integrations/IntegrationsSettings";
 export { AboutSettings } from "./about/AboutSettings";
 export { PostProcessingSettings } from "./post-processing/PostProcessingSettings";
 export { ModelsSettings } from "./models/ModelsSettings";
+export { SyncSettings } from "./SyncSettings";
 
 // Individual setting components
 export { MicrophoneSelector } from "./MicrophoneSelector";
