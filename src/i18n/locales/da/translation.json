@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Genvej til efterbehandling",
             "description": "Valgfrit: En dedikeret genvej, der altid anvender AI-efterbehandling på din transskription."
+          },
+          "command": {
+            "name": "Kommandogenvej",
+            "description": "Genvejen der redigerer markeret tekst med en talt instruktion."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Stop",
       "saving": "Gemmer …",
       "recording": "Optager"
-    }
+    },
+    "command": "Kommando",
+    "commandFallback": "Ingen markering — almindelig diktering"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokerer muligvis 1 genvej",

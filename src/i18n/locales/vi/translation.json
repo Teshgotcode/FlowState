@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Phím tắt xử lý sau",
             "description": "Tùy chọn: Phím tắt chuyên dụng luôn áp dụng xử lý sau bằng AI cho bản chuyển đổi của bạn."
+          },
+          "command": {
+            "name": "Phím tắt chế độ lệnh",
+            "description": "Phím tắt để chỉnh sửa văn bản đã chọn bằng một chỉ dẫn bằng giọng nói."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Dừng",
       "saving": "Đang lưu…",
       "recording": "Đang ghi"
-    }
+    },
+    "command": "Lệnh",
+    "commandFallback": "Không có lựa chọn — đọc chính tả bình thường"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} có thể đang chặn 1 phím tắt",

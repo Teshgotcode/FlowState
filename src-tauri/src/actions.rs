@@ -113,6 +113,9 @@ pub trait ShortcutAction: Send + Sync {
 // Transcribe Action
 struct TranscribeAction {
     post_process: bool,
+    /// Command Mode: the hotkey captures the selected text and the spoken
+    /// dictation is an instruction that edits it, applied via the local LLM.
+    command_mode: bool,
 }
 
 /// Field name for structured output JSON schema
@@ -522,10 +525,31 @@ impl ShortcutAction for TranscribeAction {
         // doesn't stream (or whose capability is not known yet) gets the compact
         // pill instead of an oversized transparent live window.
         let overlay_started = Instant::now();
-        match settings.overlay_style {
-            OverlayStyle::Live if model_supports_streaming => utils::show_streaming_overlay(app),
-            OverlayStyle::Live | OverlayStyle::Minimal => show_recording_overlay(app),
-            OverlayStyle::None => {} // show_overlay_state no-ops on None anyway
+        // Command Mode reads the selection up front so the overlay reflects
+        // what will actually happen when the user releases the hotkey.
+        let command_selection = if self.command_mode {
+            let selection = crate::command_mode::capture_selection();
+            crate::command_mode::store_pending(selection.clone());
+            if selection.is_some() {
+                utils::show_command_overlay(app);
+                let _ = app.emit("command-mode-active", ());
+            } else {
+                // No selection (or no AX permission): discreet hint, then
+                // plain dictation. Never a dead-end hotkey.
+                let _ = app.emit("command-mode-fallback", ());
+            }
+            selection
+        } else {
+            None
+        };
+        if command_selection.is_none() {
+            match settings.overlay_style {
+                OverlayStyle::Live if model_supports_streaming => {
+                    utils::show_streaming_overlay(app)
+                }
+                OverlayStyle::Live | OverlayStyle::Minimal => show_recording_overlay(app),
+                OverlayStyle::None => {} // show_overlay_state no-ops on None anyway
+            }
         }
         // Everything above runs before capture can begin, so each span here is
         // added keypress->capture latency.
@@ -663,6 +687,13 @@ impl ShortcutAction for TranscribeAction {
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
         let post_process = self.post_process;
+        // Command Mode: the selection captured at hotkey press, if any. `None`
+        // means the hotkey fell back to plain dictation.
+        let command_selection = if self.command_mode {
+            crate::command_mode::take_pending()
+        } else {
+            None
+        };
         let cancel_generation = rm.cancel_generation();
 
         tauri::async_runtime::spawn(async move {
@@ -760,18 +791,48 @@ impl ShortcutAction for TranscribeAction {
                                 utils::redact_text(&transcription)
                             );
 
-                            if post_process {
+                            if command_selection.is_some() || post_process {
                                 if use_streaming_overlay {
                                     tm.emit_stream_working(StreamWorkKind::Polishing);
                                 } else {
                                     show_processing_overlay(&ah);
                                 }
                             }
-                            let Some(processed) = complete_unless_cancelled(
-                                process_transcription_output(&ah, &transcription, post_process),
-                                || rm.was_cancelled_since(cancel_generation),
-                            )
-                            .await
+                            // Command Mode: the transcription is the spoken
+                            // instruction; apply it to the selected text.
+                            // Everything else goes through the normal
+                            // (post-)processing pipeline.
+                            let processed_result = if let Some(selection) = command_selection {
+                                complete_unless_cancelled(
+                                    async {
+                                        crate::command_mode::apply_instruction(
+                                            &get_settings(&ah),
+                                            &selection,
+                                            &transcription,
+                                        )
+                                        .await
+                                        .map(|text| ProcessedTranscription {
+                                            final_text: text,
+                                            post_processed_text: None,
+                                            post_process_prompt: None,
+                                        })
+                                        .unwrap_or(ProcessedTranscription {
+                                            final_text: String::new(),
+                                            post_processed_text: None,
+                                            post_process_prompt: None,
+                                        })
+                                    },
+                                    || rm.was_cancelled_since(cancel_generation),
+                                )
+                                .await
+                            } else {
+                                complete_unless_cancelled(
+                                    process_transcription_output(&ah, &transcription, post_process),
+                                    || rm.was_cancelled_since(cancel_generation),
+                                )
+                                .await
+                            };
+                            let Some(processed) = processed_result
                             else {
                                 debug!("Transcription operation cancelled during output handling");
                                 utils::hide_recording_overlay(&ah);
@@ -975,11 +1036,22 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         "transcribe".to_string(),
         Arc::new(TranscribeAction {
             post_process: false,
+            command_mode: false,
         }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "transcribe_with_post_process".to_string(),
-        Arc::new(TranscribeAction { post_process: true }) as Arc<dyn ShortcutAction>,
+        Arc::new(TranscribeAction {
+            post_process: true,
+            command_mode: false,
+        }) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        "command".to_string(),
+        Arc::new(TranscribeAction {
+            post_process: false,
+            command_mode: true,
+        }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "cancel".to_string(),

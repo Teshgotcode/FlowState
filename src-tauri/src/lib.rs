@@ -8,6 +8,7 @@ mod catalog;
 mod chinese_script;
 pub mod cli;
 mod clipboard;
+mod command_mode;
 mod commands;
 pub mod engine_supervisor;
 mod helpers;

@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Tecla de post procesamiento",
             "description": "Opcional: Una tecla de acceso rápido dedicada que siempre aplica post procesamiento con IA a tu transcripción."
+          },
+          "command": {
+            "name": "Atajo del modo comando",
+            "description": "El atajo de teclado para editar el texto seleccionado con una instrucción hablada."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Detener",
       "saving": "Guardando…",
       "recording": "Grabando"
-    }
+    },
+    "command": "Comando",
+    "commandFallback": "Nada seleccionado — dictado normal"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} puede estar bloqueando 1 atajo",

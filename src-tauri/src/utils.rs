@@ -119,6 +119,11 @@ pub fn cancel_current_operation(app: &AppHandle) {
     // Unregister the cancel shortcut asynchronously
     shortcut::unregister_cancel_shortcut(app);
 
+    // Command Mode: cancelling discards the captured selection so the next
+    // take starts from a clean slate. The in-flight LLM call is aborted by the
+    // cancellation checks in the command pipeline.
+    crate::command_mode::clear_pending();
+
     // Cancel any ongoing recording
     let audio_manager = app.state::<Arc<AudioRecordingManager>>();
     let recording_was_active = audio_manager.is_recording();

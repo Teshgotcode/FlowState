@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Snabbkommando för efterbearbetning",
             "description": "Valfritt: En dedikerad snabbknapp som alltid tillämpar AI-efterbearbetning på din transkription."
+          },
+          "command": {
+            "name": "Kommandokortkommando",
+            "description": "Kortkommandot som redigerar markerad text med ett talat instruktion."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Stoppa",
       "saving": "Sparar …",
       "recording": "Spelar in"
-    }
+    },
+    "command": "Kommando",
+    "commandFallback": "Ingen markering — vanlig diktering"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} kanske blockerar 1 kortkommando",

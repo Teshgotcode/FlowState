@@ -1059,6 +1059,21 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_post_process_shortcut.to_string(),
         },
     );
+    #[cfg(target_os = "macos")]
+    let default_command_shortcut = "command+option+c";
+    #[cfg(not(target_os = "macos"))]
+    let default_command_shortcut = "ctrl+alt+c";
+
+    bindings.insert(
+        "command".to_string(),
+        ShortcutBinding {
+            id: "command".to_string(),
+            name: "Command Mode".to_string(),
+            description: "Selects text and edits it with a spoken instruction.".to_string(),
+            default_binding: default_command_shortcut.to_string(),
+            current_binding: default_command_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {

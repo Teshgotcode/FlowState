@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "後處理快捷鍵",
             "description": "可選：專用快捷鍵，使用時一律對轉錄結果套用 AI 後處理"
+          },
+          "command": {
+            "name": "命令模式快捷鍵",
+            "description": "以語音指令編輯所選文字的鍵盤快捷鍵。"
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "停止",
       "saving": "儲存中…",
       "recording": "錄音中"
-    }
+    },
+    "command": "命令",
+    "commandFallback": "未選取文字 — 一般聽寫"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 可能正在阻擋 1 個快捷鍵",

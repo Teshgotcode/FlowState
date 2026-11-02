@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Post-Processing Hotkey",
             "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+          },
+          "command": {
+            "name": "Command Mode Shortcut",
+            "description": "The keyboard shortcut to edit the selected text with a spoken instruction."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Stop",
       "saving": "Saving…",
       "recording": "Recording"
-    }
+    },
+    "command": "Command",
+    "commandFallback": "Nothing selected — dictating normally"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} may be blocking 1 shortcut",

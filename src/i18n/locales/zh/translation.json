@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "后处理快捷键",
             "description": "可选：一个专用快捷键，始终对您的转录应用 AI 后处理。"
+          },
+          "command": {
+            "name": "命令模式快捷键",
+            "description": "用语音指令编辑所选文本的键盘快捷键。"
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "停止",
       "saving": "保存中…",
       "recording": "录音中"
-    }
+    },
+    "command": "命令",
+    "commandFallback": "未选择文本 — 普通听写"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 可能正在阻止 1 个快捷键",

@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Skrót postprocessingu",
             "description": "Opcjonalnie: Dedykowany skrót klawiszowy, który zawsze stosuje postprocessing AI do transkrypcji."
+          },
+          "command": {
+            "name": "Skrót trybu poleceń",
+            "description": "Skrót klawiszowy do edytowania zaznaczonego tekstu poleceniem głosowym."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Zatrzymaj",
       "saving": "Zapisywanie…",
       "recording": "Nagrywanie"
-    }
+    },
+    "command": "Polecenie",
+    "commandFallback": "Brak zaznaczenia — zwykłe dyktowanie"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} może blokować 1 skrót",

@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Nachbearbeitungs-Tastenkürzel",
             "description": "Optional: Ein dediziertes Tastenkürzel, das immer die KI-Nachbearbeitung auf deine Transkription anwendet."
+          },
+          "command": {
+            "name": "Befehlsmodus-Kürzel",
+            "description": "Das Tastenkürzel, um den markierten Text mit einer gesprochenen Anweisung zu bearbeiten."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Stoppen",
       "saving": "Wird gespeichert …",
       "recording": "Aufnahme läuft"
-    }
+    },
+    "command": "Befehl",
+    "commandFallback": "Nichts markiert — normale Diktatfunktion"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blockiert möglicherweise 1 Tastenkürzel",

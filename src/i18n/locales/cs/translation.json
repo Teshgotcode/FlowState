@@ -346,6 +346,10 @@
           "transcribe_with_post_process": {
             "name": "Klávesa pro následné zpracování",
             "description": "Volitelné: Vyhrazená klávesová zkratka, která vždy použije AI následné zpracování na váš přepis."
+          },
+          "command": {
+            "name": "Klávesová zkratka režimu příkazů",
+            "description": "Klávesová zkratka pro úpravu vybraného textu hlasovým příkazem."
           }
         },
         "errors": {
@@ -1050,7 +1054,9 @@
       "stop": "Zastavit",
       "saving": "Ukládá se…",
       "recording": "Nahrává se"
-    }
+    },
+    "command": "Příkaz",
+    "commandFallback": "Nic není vybráno — běžné diktování"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} může blokovat 1 zkratku",
