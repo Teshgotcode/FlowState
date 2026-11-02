@@ -7,7 +7,8 @@ use std::time::Instant;
 use transcribe_cpp::Transcript;
 
 use super::{
-    agreed_language, engine_error, post_process_transcription_text, real_time_factor, BatchContext,
+    agreed_language, engine_error, offset_segments, post_process_transcription_text,
+    real_time_factor, samples_to_ms, timed_segments, BatchContext, TranscriptSegment,
     Transcription, TranscriptionManager,
 };
 use crate::audio_toolkit::chunking::Chunker;
@@ -46,6 +47,7 @@ impl TranscriptionManager {
             return Ok(Some(Transcription {
                 text: String::new(),
                 language: None,
+                segments: Vec::new(),
             }));
         }
 
@@ -78,8 +80,12 @@ impl TranscriptionManager {
             };
             for chunk in chunks {
                 let len = chunk.len();
+                // The chunk decodes on its own, so its reported segment times
+                // count from its start in the whole audio; shift them onto the
+                // recording's timeline so they survive the join below.
+                let offset_ms = samples_to_ms(done);
                 let mut attempts = 0;
-                let transcript = loop {
+                let mut transcript = loop {
                     if !control.proceed() {
                         return Ok(None);
                     }
@@ -95,6 +101,7 @@ impl TranscriptionManager {
                         Err(e) => return Err(engine_error(e)),
                     }
                 };
+                offset_segments(&mut transcript.segments, offset_ms);
                 transcripts.push(transcript);
                 done += len;
                 control.progress(done, total);
@@ -106,6 +113,12 @@ impl TranscriptionManager {
 
         debug!("Transcribed {} chunks in the background", transcripts.len());
         let language = setup.spoken_language(agreed_language(&transcripts).as_deref());
+        // The chunks' segments are already offset to the recording's timeline,
+        // so they only line up in order.
+        let segments: Vec<TranscriptSegment> = transcripts
+            .iter()
+            .flat_map(|transcript| timed_segments(&transcript.segments))
+            .collect();
         let paragraphs: Vec<String> = transcripts
             .into_iter()
             .map(|t| {
@@ -133,6 +146,7 @@ impl TranscriptionManager {
         Ok(Some(Transcription {
             text: paragraphs.join("\n\n"),
             language: Some(language),
+            segments,
         }))
     }
 }

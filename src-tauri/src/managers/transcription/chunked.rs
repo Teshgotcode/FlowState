@@ -6,7 +6,7 @@ use std::time::Instant;
 use log::info;
 use transcribe_cpp::Transcript;
 
-use super::{RunSetup, TranscriptionManager};
+use super::{offset_segments, samples_to_ms, RunSetup, TranscriptionManager};
 use crate::audio_toolkit::chunking::Chunker;
 use crate::engine_supervisor::{CancelMark, EngineError, LoadedInfo};
 use crate::language_detection::Plan;
@@ -51,6 +51,10 @@ pub(super) struct ChunkedDecode<'a> {
     model_id: String,
     chunker: Chunker,
     transcripts: Vec<Transcript>,
+    /// Where the next chunk starts, in samples of the whole recording: every
+    /// decoded chunk's segments are shifted onto the recording's timeline by
+    /// it, so they survive the join (see [`offset_segments`]).
+    offset_samples: usize,
     /// The first run that failed or was cancelled; nothing more is decoded
     /// after it.
     failure: Option<EngineError>,
@@ -73,6 +77,7 @@ impl<'a> ChunkedDecode<'a> {
             model_id: model_id.to_string(),
             chunker: Chunker::new(Box::new(move || create_detector(backend, &app_handle))),
             transcripts: Vec::new(),
+            offset_samples: 0,
             failure: None,
         }
     }
@@ -148,13 +153,16 @@ impl<'a> ChunkedDecode<'a> {
             }
             // The first chunk picks the language for every chunk.
             let run_options = self.setup.resolve(self.tm, &chunk).run_options.clone();
-            let audio_secs = chunk.len() as f64 / 16_000.0;
+            let chunk_samples = chunk.len();
+            let audio_secs = chunk_samples as f64 / 16_000.0;
+            let offset_ms = samples_to_ms(self.offset_samples);
             let started = Instant::now();
             match self
                 .tm
                 .run_batch(self.mark, chunk, &run_options, &self.model_id)
             {
-                Ok(transcript) => {
+                Ok(mut transcript) => {
+                    offset_segments(&mut transcript.segments, offset_ms);
                     self.transcripts.push(transcript);
                     // Real-time factor: audio seconds decoded per second of
                     // wall clock. Floored so a near-instant decode reports a
@@ -173,6 +181,9 @@ impl<'a> ChunkedDecode<'a> {
                     self.failure = Some(e);
                 }
             }
+            // Chunks are contiguous and in order, so the next one starts where
+            // this one ended.
+            self.offset_samples += chunk_samples;
         }
     }
 }

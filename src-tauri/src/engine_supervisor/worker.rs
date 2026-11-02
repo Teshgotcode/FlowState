@@ -208,14 +208,24 @@ fn serve_stream(
                     Err(e) => (Response::Error(e.to_string()), false),
                 }
             }
-            Request::Finalize { want_language } => {
+            Request::Finalize {
+                want_language,
+                want_segments,
+            } => {
                 inject_fault("finalize", on_gpu);
                 match stream.finalize() {
                     Ok(update) => {
+                        // One snapshot serves both asks; its segments were
+                        // computed for free either way.
+                        let snapshot = (want_language || want_segments).then(|| stream.snapshot());
                         let language = if want_language {
-                            stream.snapshot().language
+                            snapshot.as_ref().and_then(|s| s.language.clone())
                         } else {
                             None
+                        };
+                        let segments = match (&snapshot, want_segments) {
+                            (Some(snapshot), true) => snapshot.segments.clone(),
+                            _ => Vec::new(),
                         };
                         let text = stream.text();
                         (
@@ -223,6 +233,7 @@ fn serve_stream(
                                 update,
                                 text,
                                 language,
+                                segments,
                             },
                             true,
                         )

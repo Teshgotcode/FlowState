@@ -10,8 +10,8 @@ use transcribe_cpp::StreamOptions;
 use super::chunked::{ChunkSetup, ChunkedDecode, PendingSetup};
 use super::policy::LiveDecode;
 use super::{
-    emit_stream_text, join_chunks, lock_perf, PreviewScript, RunOutcome, RunSetup,
-    StreamFinalizeReply, StreamPerf, TranscriptionManager,
+    emit_stream_text, join_chunks, lock_perf, timed_segments, PreviewScript, RunOutcome, RunSetup,
+    StreamFinalizeReply, StreamPerf, TranscriptSegment, TranscriptionManager,
 };
 use crate::audio_toolkit::OutputLanguageEvidence;
 use crate::engine_supervisor::{EngineError, LoadedInfo, StreamHandle, StreamProgress};
@@ -29,8 +29,9 @@ enum LiveDecoder<'a> {
     Chunked(Box<ChunkedDecode<'a>>),
 }
 
-/// A decoded text and the language the model detected in it, if any.
-type Decoded = (String, Option<String>);
+/// A decoded text, the language the model detected in it (if any), and its
+/// timed segments on the recording's timeline.
+type Decoded = (String, Option<String>, Vec<TranscriptSegment>);
 
 impl<'a> LiveSession<'a> {
     /// Begins the live decode `mode` picks on the loaded model. `None` when
@@ -91,10 +92,11 @@ impl<'a> LiveSession<'a> {
             LiveDecoder::Stream(stream, setup) => {
                 Ok(stream
                     .finish()?
-                    .map(|(text, model_detected_language)| RunOutcome {
+                    .map(|(text, model_detected_language, segments)| RunOutcome {
                         setup: *setup,
                         text,
                         model_detected_language,
+                        segments,
                     }))
             }
             LiveDecoder::Chunked(chunks) => finish_chunks(*chunks, recorded_samples),
@@ -125,11 +127,12 @@ fn finish_chunks(
                     transcripts.len()
                 );
             }
-            let (text, model_detected_language) = join_chunks(transcripts);
+            let (text, model_detected_language, segments) = join_chunks(transcripts);
             Ok(Some(RunOutcome {
                 setup,
                 text,
                 model_detected_language,
+                segments,
             }))
         }
         Err(EngineError::Cancelled) => Err(EngineError::Cancelled),
@@ -222,7 +225,10 @@ impl<'a> StreamSession<'a> {
     }
 
     fn finish(self) -> Result<Option<Decoded>, EngineError> {
-        let result = match self.stream.finalize(self.want_language) {
+        // Segments always: the result lands in the history whatever the
+        // language plan was, and a finalize's snapshot is one copy of what the
+        // stream already decoded.
+        let result = match self.stream.finalize(self.want_language, true) {
             // After finalize the committed prefix holds the full text;
             // display() = committed + tentative is the safe read.
             Ok(Some(finalized)) => {
@@ -235,7 +241,11 @@ impl<'a> StreamSession<'a> {
                     info!("Live transcription produced no text; retrying in batch");
                     Ok(None)
                 } else {
-                    Ok(Some((finalized.text.full, finalized.language)))
+                    Ok(Some((
+                        finalized.text.full,
+                        finalized.language,
+                        timed_segments(&finalized.segments),
+                    )))
                 }
             }
             Ok(None) => {
@@ -255,7 +265,7 @@ impl<'a> StreamSession<'a> {
             }
         };
         let chars = match &result {
-            Ok(Some((text, _))) => text.len(),
+            Ok(Some((text, _, _))) => text.len(),
             _ => 0,
         };
         lock_perf(&self.perf).log_finalized(chars);
