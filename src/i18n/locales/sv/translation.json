@@ -408,7 +408,10 @@
       "startFailed": "Mötet kunde inte startas.",
       "stopFailed": "Mötet kunde inte stoppas.",
       "cancelFailed": "Mötet kunde inte avbrytas.",
-      "stopped": "Mötet sparades i Historiken."
+      "stopped": "Mötet sparades i Historiken.",
+      "liveTranscript": "Live-transkription",
+      "liveEmpty": "Ordena dyker upp här medan mötet pågår.",
+      "jumpToBottom": "Hopp längst ner"
     },
     "models": {
       "title": "Modeller",

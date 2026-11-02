@@ -5,6 +5,7 @@ import { Dialog } from "../ui/Dialog";
 import { SettingContainer } from "../ui/SettingContainer";
 import { SettingsGroup } from "../ui/SettingsGroup";
 import { useMeetingStore } from "../../stores/meetingStore";
+import { MeetingLiveTranscript } from "./MeetingLiveTranscript";
 import { useMeetingClock } from "../../hooks/useMeetingClock";
 import { formatDurationClock } from "../../lib/utils/format";
 
@@ -48,37 +49,40 @@ export const MeetingSession: React.FC = () => {
   return (
     <SettingsGroup title={t("settings.meeting.title")}>
       {isRecording ? (
-        <div className="flex items-center justify-between min-h-12 px-4 p-2">
-          <div className="flex items-center gap-2">
-            <span
-              className="h-2 w-2 rounded-full bg-error animate-pulse"
-              aria-hidden="true"
-            />
-            <span className="text-sm font-medium">
-              {t("settings.meeting.recording")}
-            </span>
-            <span className="text-sm text-ink-3 tabular-nums">
-              {formatDurationClock(elapsed)}
-            </span>
+        <div>
+          <div className="flex items-center justify-between min-h-12 px-4 p-2">
+            <div className="flex items-center gap-2">
+              <span
+                className="h-2 w-2 rounded-full bg-error animate-pulse"
+                aria-hidden="true"
+              />
+              <span className="text-sm font-medium">
+                {t("settings.meeting.recording")}
+              </span>
+              <span className="text-sm text-ink-3 tabular-nums">
+                {formatDurationClock(elapsed)}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="danger-ghost"
+                size="sm"
+                onClick={() => setConfirmingCancel(true)}
+                disabled={busy}
+              >
+                {t("settings.meeting.cancel")}
+              </Button>
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => run(stop)}
+                disabled={busy}
+              >
+                {t("settings.meeting.stop")}
+              </Button>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="danger-ghost"
-              size="sm"
-              onClick={() => setConfirmingCancel(true)}
-              disabled={busy}
-            >
-              {t("settings.meeting.cancel")}
-            </Button>
-            <Button
-              variant="primary"
-              size="sm"
-              onClick={() => run(stop)}
-              disabled={busy}
-            >
-              {t("settings.meeting.stop")}
-            </Button>
-          </div>
+          <MeetingLiveTranscript />
         </div>
       ) : (
         <SettingContainer

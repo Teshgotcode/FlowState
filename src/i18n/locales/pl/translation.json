@@ -408,7 +408,10 @@
       "startFailed": "Nie udało się rozpocząć spotkania.",
       "stopFailed": "Nie udało się zatrzymać spotkania.",
       "cancelFailed": "Nie udało się anulować spotkania.",
-      "stopped": "Spotkanie zostało zapisane w Historii."
+      "stopped": "Spotkanie zostało zapisane w Historii.",
+      "liveTranscript": "Transkrypcja na żywo",
+      "liveEmpty": "Słowa pojawiają się tutaj w trakcie spotkania.",
+      "jumpToBottom": "Przejdź na koniec"
     },
     "models": {
       "title": "Modele",

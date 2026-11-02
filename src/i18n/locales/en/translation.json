@@ -408,7 +408,10 @@
       "startFailed": "The meeting could not be started.",
       "stopFailed": "The meeting could not be stopped.",
       "cancelFailed": "The meeting could not be cancelled.",
-      "stopped": "The meeting was saved to History."
+      "stopped": "The meeting was saved to History.",
+      "liveTranscript": "Live transcript",
+      "liveEmpty": "Words appear here as the meeting records.",
+      "jumpToBottom": "Jump to bottom"
     },
     "models": {
       "title": "Models",

@@ -6,7 +6,7 @@ use std::time::Instant;
 use log::info;
 use transcribe_cpp::Transcript;
 
-use super::{offset_segments, samples_to_ms, RunSetup, TranscriptionManager};
+use super::{offset_segments, samples_to_ms, LiveSegment, RunSetup, TranscriptionManager};
 use crate::audio_toolkit::chunking::Chunker;
 use crate::engine_supervisor::{CancelMark, EngineError, LoadedInfo};
 use crate::language_detection::Plan;
@@ -58,6 +58,10 @@ pub(super) struct ChunkedDecode<'a> {
     /// The first run that failed or was cancelled; nothing more is decoded
     /// after it.
     failure: Option<EngineError>,
+    /// Whether each finished chunk is handed to the live-segment sink: true
+    /// only for a live decode (a recording still running), so a batch clip's
+    /// chunks stay where they were.
+    report_live: bool,
 }
 
 impl<'a> ChunkedDecode<'a> {
@@ -67,6 +71,7 @@ impl<'a> ChunkedDecode<'a> {
         setup: ChunkSetup,
         model_id: &str,
         backend: VadBackend,
+        report_live: bool,
     ) -> Self {
         // The VAD is only loaded if the audio turns out long enough to cut.
         let app_handle = tm.app_handle.clone();
@@ -79,6 +84,7 @@ impl<'a> ChunkedDecode<'a> {
             transcripts: Vec::new(),
             offset_samples: 0,
             failure: None,
+            report_live,
         }
     }
 
@@ -91,7 +97,7 @@ impl<'a> ChunkedDecode<'a> {
         model_id: &str,
         backend: VadBackend,
     ) -> Result<(Vec<Transcript>, RunSetup), EngineError> {
-        let mut decode = Self::new(tm, mark, setup, model_id, backend);
+        let mut decode = Self::new(tm, mark, setup, model_id, backend, false);
         decode.push(audio);
         decode.finish()
     }
@@ -146,6 +152,38 @@ impl<'a> ChunkedDecode<'a> {
         Ok((self.transcripts, *setup))
     }
 
+    /// Hand one finished chunk to the live-segment sink (a meeting window's
+    /// live transcript). The chunk's own segments carry the times; a model
+    /// that reports none still gets its text out with the chunk's bounds.
+    fn report_live(&self, offset_ms: i64, audio_secs: f64, transcript: &Transcript) {
+        if !self.report_live {
+            return;
+        }
+        if transcript.segments.is_empty() {
+            let text = transcript.text.trim();
+            if text.is_empty() {
+                return;
+            }
+            self.tm.report_live_segment(LiveSegment {
+                t0_ms: offset_ms,
+                t1_ms: offset_ms + (audio_secs * 1000.0) as i64,
+                text: text.to_string(),
+            });
+            return;
+        }
+        for segment in &transcript.segments {
+            let text = segment.text.trim();
+            if text.is_empty() {
+                continue;
+            }
+            self.tm.report_live_segment(LiveSegment {
+                t0_ms: segment.t0_ms,
+                t1_ms: segment.t1_ms,
+                text: text.to_string(),
+            });
+        }
+    }
+
     fn decode(&mut self, chunks: Vec<Vec<f32>>) {
         for chunk in chunks {
             if self.failure.is_some() {
@@ -163,6 +201,7 @@ impl<'a> ChunkedDecode<'a> {
             {
                 Ok(mut transcript) => {
                     offset_segments(&mut transcript.segments, offset_ms);
+                    self.report_live(offset_ms, audio_secs, &transcript);
                     self.transcripts.push(transcript);
                     // Real-time factor: audio seconds decoded per second of
                     // wall clock. Floored so a near-instant decode reports a

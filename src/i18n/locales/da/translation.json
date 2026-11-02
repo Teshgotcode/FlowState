@@ -408,7 +408,10 @@
       "startFailed": "Mødet kunne ikke startes.",
       "stopFailed": "Mødet kunne ikke stoppes.",
       "cancelFailed": "Mødet kunne ikke annulleres.",
-      "stopped": "Mødet blev gemt i Historikken."
+      "stopped": "Mødet blev gemt i Historikken.",
+      "liveTranscript": "Live-transskription",
+      "liveEmpty": "Ordene vises her, efterhånden som mødet står på.",
+      "jumpToBottom": "Hop til bunden"
     },
     "models": {
       "title": "Modeller",

@@ -408,7 +408,10 @@
       "startFailed": "Die Besprechung konnte nicht gestartet werden.",
       "stopFailed": "Die Besprechung konnte nicht gestoppt werden.",
       "cancelFailed": "Die Besprechung konnte nicht abgebrochen werden.",
-      "stopped": "Die Besprechung wurde im Verlauf gespeichert."
+      "stopped": "Die Besprechung wurde im Verlauf gespeichert.",
+      "liveTranscript": "Live-Transkript",
+      "liveEmpty": "Hier erscheinen die Worte, während das Meeting läuft.",
+      "jumpToBottom": "Nach unten springen"
     },
     "models": {
       "title": "Modelle",

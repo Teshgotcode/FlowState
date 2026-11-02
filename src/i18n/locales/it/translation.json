@@ -408,7 +408,10 @@
       "startFailed": "Impossibile avviare la riunione.",
       "stopFailed": "Impossibile fermare la riunione.",
       "cancelFailed": "Impossibile annullare la riunione.",
-      "stopped": "La riunione è stata salvata nella Cronologia."
+      "stopped": "La riunione è stata salvata nella Cronologia.",
+      "liveTranscript": "Trascrizione in tempo reale",
+      "liveEmpty": "Le parole appaiono qui mentre la riunione è in corso.",
+      "jumpToBottom": "Vai in fondo"
     },
     "models": {
       "title": "Modelli",

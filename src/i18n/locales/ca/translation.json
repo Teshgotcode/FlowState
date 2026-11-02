@@ -408,7 +408,10 @@
       "startFailed": "No s'ha pogut iniciar la reunió.",
       "stopFailed": "No s'ha pogut aturar la reunió.",
       "cancelFailed": "No s'ha pogut cancel·lar la reunió.",
-      "stopped": "La reunió s'ha desat a l'Historial."
+      "stopped": "La reunió s'ha desat a l'Historial.",
+      "liveTranscript": "Transcripció en directe",
+      "liveEmpty": "Les paraules apareixen aquí mentre dura la reunió.",
+      "jumpToBottom": "Anar al final"
     },
     "models": {
       "title": "Models",

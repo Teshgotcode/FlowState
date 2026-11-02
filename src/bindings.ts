@@ -1236,6 +1236,7 @@ async isLaptop() : Promise<Result<boolean, string>> {
 
 export const events = __makeEvents__<{
 historyUpdatePayload: HistoryUpdatePayload,
+meetingSegment: MeetingSegment,
 meetingStateEvent: MeetingStateEvent,
 recordingStateEvent: RecordingStateEvent,
 streamPhaseEvent: StreamPhaseEvent,
@@ -1244,6 +1245,7 @@ transcriptionCompleteEvent: TranscriptionCompleteEvent,
 transcriptionJob: TranscriptionJob
 }>({
 historyUpdatePayload: "history-update-payload",
+meetingSegment: "meeting-segment",
 meetingStateEvent: "meeting-state-event",
 recordingStateEvent: "recording-state-event",
 streamPhaseEvent: "stream-phase-event",
@@ -1600,6 +1602,31 @@ export type MeetingNoteOutcome =
  * Nothing was saved; `reason` tells the window what to tell the user.
  */
 { outcome: "failed"; reason: MeetingNoteFailure; detail: string | null }
+/**
+ * One finished piece of a meeting's live transcript, emitted as the
+ * `meeting-segment` event while the meeting records, so its window can show
+ * the transcript as it is spoken instead of only after the stop. The segment
+ * comes from the live decode the recording already runs — the same chunks a
+ * dictation's preview decodes — so no second transcription happens.
+ */
+export type MeetingSegment = { 
+/**
+ * Arrival order within the session, from 0: the window keeps the list in
+ * the order the segments were spoken.
+ */
+index: number; 
+/**
+ * When the segment starts, in milliseconds from the meeting's start.
+ */
+t0_ms: number; 
+/**
+ * When the segment ends, in milliseconds from the meeting's start.
+ */
+t1_ms: number; 
+/**
+ * What the model heard in it.
+ */
+text: string }
 /**
  * Emitted whenever the meeting session's stage changes, so a window can
  * follow along without polling.

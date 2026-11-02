@@ -276,6 +276,11 @@ pub struct TranscriptionManager {
     /// FlowState's spoken-language detector, loaded in this process on first
     /// use and unloaded with the model.
     language_detector: Arc<LanguageDetector>,
+    /// The live-transcript sink, present exactly while a meeting records: the
+    /// live decode hands every segment it finishes to it, so the meeting
+    /// window's transcript arrives with the chunks that already decode — no
+    /// second transcription runs.
+    live_segment_sink: Arc<Mutex<Option<LiveSegmentSink>>>,
 }
 
 impl TranscriptionManager {
@@ -292,6 +297,7 @@ impl TranscriptionManager {
             loading_condvar: Arc::new(Condvar::new()),
             reload_model_on_next_use: Arc::new(AtomicBool::new(false)),
             router: Arc::new(StreamRouter::new()),
+            live_segment_sink: Arc::new(Mutex::new(None)),
             stream_active: Arc::new(AtomicBool::new(false)),
             next_stream_worker_id: Arc::new(AtomicU64::new(1)),
             active_stream_worker: Arc::new(AtomicU64::new(0)),
@@ -913,6 +919,25 @@ impl TranscriptionManager {
         self.engine.cancel();
     }
 
+    /// Install (or remove) the sink that receives every segment the live
+    /// decode finishes. The meeting manager installs one while a meeting
+    /// records and removes it when the session ends, so a live decode that
+    /// belongs to no meeting (a dictation's preview) reports nothing.
+    pub fn set_live_segment_sink(&self, sink: Option<LiveSegmentSink>) {
+        *self.live_segment_sink.lock().unwrap() = sink;
+    }
+
+    /// Hand one finished live segment to the installed sink, if there is one.
+    /// Cheap when no meeting records: one uncontended mutex lock and nothing
+    /// more, so a dictation's live preview pays a lock per chunk, not a lock
+    /// per frame.
+    pub(super) fn report_live_segment(&self, segment: LiveSegment) {
+        let sink = self.live_segment_sink.lock().unwrap().clone();
+        if let Some(sink) = sink {
+            sink(segment);
+        }
+    }
+
     /// Emit a working-phase event to the streaming overlay (spinner + label).
     pub fn emit_stream_working(&self, kind: StreamWorkKind) {
         let _ = StreamPhaseEvent {
@@ -1204,6 +1229,24 @@ pub struct TranscriptSegment {
     /// What the model heard in it.
     pub text: String,
 }
+
+/// One finished piece of a live transcript, ready for a window that shows the
+/// transcript while the recording still runs: the segment's times on the
+/// recording's timeline and the model's own text.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct LiveSegment {
+    /// When the segment starts, in milliseconds from the recording's start.
+    pub t0_ms: i64,
+    /// When the segment ends, in milliseconds from the recording's start.
+    pub t1_ms: i64,
+    /// What the model heard in it.
+    pub text: String,
+}
+
+/// Receives every segment a live decode finishes while it runs. The meeting
+/// manager installs one for the meeting window; nothing else does, so the
+/// segments a dictation's preview decodes never leave the backend.
+pub type LiveSegmentSink = Arc<dyn Fn(LiveSegment) + Send + Sync>;
 
 /// A finished transcription.
 pub struct Transcription {

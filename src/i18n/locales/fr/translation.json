@@ -408,7 +408,10 @@
       "startFailed": "La réunion n'a pas pu démarrer.",
       "stopFailed": "La réunion n'a pas pu être arrêtée.",
       "cancelFailed": "La réunion n'a pas pu être annulée.",
-      "stopped": "La réunion a été enregistrée dans l'Historique."
+      "stopped": "La réunion a été enregistrée dans l'Historique.",
+      "liveTranscript": "Transcription en direct",
+      "liveEmpty": "Les mots apparaissent ici pendant la réunion.",
+      "jumpToBottom": "Aller en bas"
     },
     "models": {
       "title": "Modèles",
