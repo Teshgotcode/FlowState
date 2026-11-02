@@ -1,11 +1,19 @@
 import assert from "node:assert/strict";
 import {
+  EXPORT_EXTENSIONS,
   baseName,
+  buildSrt,
   buildTranscriptMarkdown,
+  buildVtt,
   formatSegmentTimestamp,
+  formatSrtTimecode,
+  formatVttTimecode,
+  sanitizeTitleStem,
   segmentLine,
   suggestedExportFileName,
   transcriptText,
+  wrapSubtitleText,
+  SUBTITLE_MAX_LINE_LENGTH,
 } from "./transcriptExport";
 import type { HistoryEntry, TranscriptSegment } from "@/bindings";
 
@@ -71,6 +79,105 @@ assert.equal(
   "heading, blank, date, blank, segment, trailing newline",
 );
 
+// --- Subtitle timecodes -------------------------------------------------
+
+assert.equal(formatSrtTimecode(0), "00:00:00,000");
+assert.equal(formatSrtTimecode(12_340), "00:00:12,340");
+assert.equal(formatSrtTimecode(3_723_456), "01:02:03,456");
+assert.equal(formatSrtTimecode(-5), "00:00:00,000", "negative clamps to 0");
+assert.equal(formatVttTimecode(12_340), "00:00:12.340");
+assert.equal(formatVttTimecode(3_723_456), "01:02:03.456");
+
+// --- Subtitle line wrapping --------------------------------------------
+
+assert.equal(SUBTITLE_MAX_LINE_LENGTH, 42);
+assert.deepEqual(wrapSubtitleText("short"), ["short"]);
+assert.deepEqual(wrapSubtitleText("  spaced   out  "), ["spaced out"]);
+
+const longText =
+  "The quick brown fox jumps over the lazy dog and then keeps on running far beyond the meadow";
+const wrapped = wrapSubtitleText(longText);
+assert.ok(
+  wrapped.every((line) => line.length <= 42),
+  "every subtitle row is at most 42 characters",
+);
+assert.equal(wrapped.join(" "), longText, "wrapping keeps every word");
+
+// A single token longer than a line is hard-split, never dropped.
+assert.deepEqual(wrapSubtitleText("x".repeat(100)), [
+  "x".repeat(42),
+  "x".repeat(42),
+  "x".repeat(16),
+]);
+
+// --- SRT ----------------------------------------------------------------
+
+const srt = buildSrt(segments);
+assert.equal(
+  srt,
+  [
+    "1",
+    "00:00:00,000 --> 00:00:01,000",
+    "First thing said.",
+    "",
+    "2",
+    "00:01:12,400 --> 00:01:13,400",
+    "Second thing said.",
+    "",
+    "3",
+    "01:00:00,000 --> 01:00:01,000",
+    "An hour in.",
+    "",
+  ].join("\n"),
+);
+assert.ok(srt.endsWith("\n"), "SRT ends with a newline");
+for (const cue of srt.split("\n\n")) {
+  const [index, timing, ...textLines] = cue.split("\n");
+  assert.match(index, /^\d+$/, "cues are numbered");
+  assert.match(
+    timing,
+    /^\d{2}:\d{2}:\d{2},\d{3} --> \d{2}:\d{2}:\d{2},\d{3}$/,
+    "SRT timing lines use comma milliseconds",
+  );
+  assert.ok(textLines.length > 0, "each cue has text");
+  assert.ok(
+    textLines.every((line) => line.length <= 42),
+    "each SRT row is at most 42 characters",
+  );
+}
+
+// A segment whose end is not after its start still gets a playable cue.
+const degenerate = buildSrt([{ t0_ms: 5000, t1_ms: 0, text: "Recovered" }]);
+assert.ok(
+  degenerate.includes("00:00:05,000 --> 00:00:06,000"),
+  "zero-length cues get a one-second fallback",
+);
+
+// --- VTT ----------------------------------------------------------------
+
+const vtt = buildVtt(segments);
+assert.ok(vtt.startsWith("WEBVTT\n\n"), "VTT starts with the header");
+assert.ok(vtt.endsWith("\n"), "VTT ends with a newline");
+for (const cue of vtt.slice("WEBVTT\n\n".length).split("\n\n")) {
+  const [timing, ...textLines] = cue.split("\n");
+  assert.match(
+    timing,
+    /^\d{2}:\d{2}:\d{2}\.\d{3} --> \d{2}:\d{2}:\d{2}\.\d{3}$/,
+    "VTT timing lines use dot milliseconds",
+  );
+  assert.ok(textLines.length > 0, "each cue has text");
+  assert.ok(
+    textLines.every((line) => line.length <= 42),
+    "each VTT row is at most 42 characters",
+  );
+}
+assert.ok(
+  vtt.includes("00:00:00.000 --> 00:00:01.000\nFirst thing said."),
+  "the first cue carries the first segment",
+);
+
+// --- File names ----------------------------------------------------------
+
 const entry = {
   id: 1,
   file_name: "a.wav",
@@ -90,10 +197,35 @@ const entry = {
 
 const local = new Date(1730642700 * 1000);
 const pad = (value: number) => String(value).padStart(2, "0");
+const stamp = `${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}-${pad(local.getHours())}${pad(local.getMinutes())}`;
+
+// The suggested name is the entry's title plus its date.
+assert.equal(suggestedExportFileName(entry), `t-${stamp}.md`);
+assert.equal(suggestedExportFileName(entry, "srt"), `t-${stamp}.srt`);
+assert.equal(suggestedExportFileName(entry, "vtt"), `t-${stamp}.vtt`);
+assert.equal(EXPORT_EXTENSIONS.srt, "srt");
+assert.equal(EXPORT_EXTENSIONS.vtt, "vtt");
+
+// Titles that filenames cannot carry are cleaned up.
+const titled = { ...entry, title: 'Lecture: "Q3" <draft>?' } as HistoryEntry;
 assert.equal(
-  suggestedExportFileName(entry),
-  `transcript-${local.getFullYear()}-${pad(local.getMonth() + 1)}-${pad(local.getDate())}-${pad(local.getHours())}${pad(local.getMinutes())}.md`,
+  suggestedExportFileName(titled, "srt"),
+  `Lecture Q3 draft-${stamp}.srt`,
 );
+assert.equal(suggestedTitleFallback(), `transcript-${stamp}.srt`);
+
+function suggestedTitleFallback() {
+  const untitled = { ...entry, title: "  ?  " } as HistoryEntry;
+  return suggestedExportFileName(untitled, "srt");
+}
+
+// An unreadable date falls back to a plain name in the chosen format.
+const noDate = { ...entry, timestamp: Number.NaN } as HistoryEntry;
+assert.equal(suggestedExportFileName(noDate, "srt"), "transcript.srt");
+assert.equal(suggestedExportFileName(noDate), "transcript.md");
+
+assert.equal(sanitizeTitleStem(""), "transcript");
+assert.equal(sanitizeTitleStem("name..."), "name");
 
 assert.equal(baseName("/Users/es/Notes/transcript.md"), "transcript.md");
 assert.equal(baseName("C:\\Users\\es\\notes.md"), "notes.md");
