@@ -17,7 +17,8 @@
     "postProcessing": "Pascaproses",
     "history": "Riwayat",
     "debug": "Debug",
-    "about": "Tentang"
+    "about": "Tentang",
+    "integrations": "Integrations"
   },
   "onboarding": {
     "customModelDescription": "Tidak didukung secara resmi",
@@ -1028,6 +1029,32 @@
       },
       "tagline": "Dictation that never leaves your machine.",
       "esLine": "Built for NTNU Entreprenørskolen"
+    },
+    "integrations": {
+      "mcp": {
+        "title": "MCP Server",
+        "enable": {
+          "label": "Local MCP server",
+          "description": "Let Claude Desktop and Cursor read your meeting notes over MCP, on this machine only. The server listens on 127.0.0.1 and requires a token."
+        },
+        "statusChecking": "Checking…",
+        "statusRunning": "Running on 127.0.0.1:{{port}}",
+        "statusNotRunning": "Not running",
+        "port": {
+          "label": "Port"
+        },
+        "portInvalid": "Enter a port between 1 and 65535.",
+        "token": {
+          "label": "Token"
+        },
+        "tokenReveal": "Show token",
+        "tokenHide": "Hide token",
+        "tokenCopy": "Copy token",
+        "tokenCopied": "Token copied",
+        "tokenRegenerate": "Generate a new token",
+        "tokenHint": "Shown only now — copy it right away. MCP clients sign every request with it.",
+        "setupHint": "Connect Claude Desktop or Cursor via MCP; the README has the exact setup."
+      }
     }
   },
   "footer": {

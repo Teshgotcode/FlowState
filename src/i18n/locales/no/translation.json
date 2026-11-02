@@ -17,7 +17,8 @@
     "postProcessing": "Etterbehandling",
     "history": "Historikk",
     "debug": "Feilsøking",
-    "about": "Om"
+    "about": "Om",
+    "integrations": "Integrasjoner"
   },
   "onboarding": {
     "customModelDescription": "Ikke offisielt støttet",
@@ -1028,6 +1029,32 @@
       },
       "tagline": "Diktering som aldri forlater maskinen.",
       "esLine": "Laget for Entreprenørskolen ved NTNU"
+    },
+    "integrations": {
+      "mcp": {
+        "title": "MCP-server",
+        "enable": {
+          "label": "Lokal MCP-server",
+          "description": "La Claude Desktop og Cursor lese møtenotatene dine over MCP, kun på denne maskinen. Serveren lytter kun på 127.0.0.1 og krever en token."
+        },
+        "statusChecking": "Sjekker…",
+        "statusRunning": "Kjører på 127.0.0.1:{{port}}",
+        "statusNotRunning": "Kjører ikke",
+        "port": {
+          "label": "Port"
+        },
+        "portInvalid": "Skriv inn en port mellom 1 og 65535.",
+        "token": {
+          "label": "Token"
+        },
+        "tokenReveal": "Vis token",
+        "tokenHide": "Skjul token",
+        "tokenCopy": "Kopier token",
+        "tokenCopied": "Token kopiert",
+        "tokenRegenerate": "Lag en ny token",
+        "tokenHint": "Vises bare nå — kopier den med én gang. MCP-klientene signerer forespørslene sine med den.",
+        "setupHint": "Koble Claude Desktop eller Cursor til via MCP; README har det nøyaktige oppsettet."
+      }
     }
   },
   "footer": {

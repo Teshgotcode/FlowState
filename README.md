@@ -35,6 +35,65 @@ Forvalget er `whisper-large-v3-turbo` (0,89 GB). Den fikk 6,1 % feil på norsk o
 
 Vil du ha mer enn rå tekst? Etterbehandling kan kjøre en lokal språkmodell over det du sa: «Rydd notatet» fikser tegnsetting og fyllord, «Møtepunkter» lager sammendrag og tiltaksliste fra en gruppetime. På Mac med Apple Silicon brukes Apple Intelligence direkte på maskinen. På Windows setter du opp [Ollama](https://ollama.com) en gang, så peker FlowState på `localhost:11434`. Skytjenester kan slås på manuelt om du vil, men de er aldri på som standard.
 
+## MCP: møtenotater rett inn i Claude Desktop og Cursor
+
+Wispr lar notatene dine brukes i Claude og ChatGPT — via skyen sin. FlowState gir deg det samme uten sky: en MCP-server på din egen maskin, som leser FlowStates egne data.
+
+Slå den på i **Innstillinger → Integrasjoner**. Du velger port, og en tilfeldig token vises én gang — kopier den med én gang. Serveren er per maskin og per bruker (hver bruker starter sin egen prosess mot sin egen app, vi drifter ingen felles server), lytter **kun på 127.0.0.1**, og krever token på hver forespørsel — feil token gir 401. Den leser kun fra historikkdatabasen (SQLite åpnes skrivebeskyttet) og skriver aldri noe. Slått av i innstillingene = ingen prosess, ingen port.
+
+Serveren tilbyr fire verktøy:
+
+| Verktøy | Hva det gjør |
+|---|---|
+| `list_meetings` | lister opptatte møter, nyest først |
+| `get_meeting` | ett møte: transkript, tidsstempler og notatutkast |
+| `get_transcript` | transkriptet til et møte eller en diktering, ordrett |
+| `search_history` | søk i alle transkripsjoner etter ord eller frase |
+
+### Koble til Claude Desktop (stdio)
+
+Claude Desktop starter serveren selv, som egen prosess på maskinen din. Åpne konfigurasjonen (Claude Desktop → Settings → Developer → Edit Config) og legg til:
+
+```json
+{
+  "mcpServers": {
+    "flowstate": {
+      "command": "/Applications/FlowState.app/Contents/MacOS/flowstate-mcp",
+      "args": ["--stdio"]
+    }
+  }
+}
+```
+
+Binæren ligger ved siden av app-binæren. Uten `--db` finner den historikkdatabasen selv — `~/Library/Application Support/com.teshgotcode.flowstate/history.db` på macOS, `%APPDATA%\com.teshgotcode.flowstate\history.db` på Windows. Bygger du fra kildekode, ligger den i byggmappen din; da kan du også peke eksplisitt med `--db`.
+
+### Koble til Cursor (localhost HTTP)
+
+Når serveren er påslått i FlowState, kobler du deg til den som allerede kjører. I Cursor: Settings → MCP → Add server:
+
+```json
+{
+  "mcpServers": {
+    "flowstate": {
+      "url": "http://127.0.0.1:7869/mcp",
+      "headers": { "Authorization": "Bearer <din-token>" }
+    }
+  }
+}
+```
+
+Bytt ut porten mot din egen, og lim inn tokenen fra Innstillinger → Integrasjoner (den vises bare én gang; «Lag en ny token» lager en ny om du mistet den). Enhver MCP-klient som kan HTTP, kobler til på samme måte — Claude Desktop inkludert.
+
+### Test serveren uten en klient
+
+```bash
+# HTTP: 401 uten token, 200 med riktig token
+curl -X POST http://127.0.0.1:7869/mcp -H "Authorization: Bearer <din-token>" -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"list_meetings","arguments":{}}}'
+
+# stdio: én JSON-linje inn, én svarlinje ut
+echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | flowstate-mcp --stdio
+```
+
 ## Krav
 
 - macOS 14+ (Apple Silicon anbefalt) eller Windows
