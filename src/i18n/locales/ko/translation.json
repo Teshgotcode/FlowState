@@ -606,7 +606,16 @@
         "placeholder": "단어 추가",
         "add": "추가",
         "remove": "{{word}} 제거",
-        "duplicate": "\"{{word}}\"이(가) 이미 존재합니다"
+        "duplicate": "\"{{word}}\"이(가) 이미 존재합니다",
+        "learnTitle": "Learn from corrections",
+        "learnDescription": "Compare transcriptions with the text you correct and suggest words you keep having to fix. Everything stays on this device.",
+        "suggestionsTitle": "Suggested words",
+        "suggestionsDescription": "Words you have corrected at least twice that are not in the dictionary yet. Nothing is added automatically.",
+        "suggestionsEmpty": "No suggestions yet. Words you correct twice will show up here.",
+        "suggestionAdd": "Add {{word}}",
+        "suggestionIgnore": "Ignore {{word}}",
+        "suggestionCount": "Corrected {{count}} times",
+        "suggestionError": "Could not update the suggestion for \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Markdown으로 내보내기",
       "markdownFile": "Markdown 문서",
       "exportSaved": "전사가 {{name}}(으)로 저장되었습니다.",
-      "exportFailed": "전사를 내보내지 못했습니다."
+      "exportFailed": "전사를 내보내지 못했습니다.",
+      "correct": "Correct this",
+      "correctSave": "Save",
+      "correctCancel": "Cancel",
+      "correctSaved": "Transcription corrected",
+      "correctError": "Could not save the correction"
     },
     "debug": {
       "title": "디버그",

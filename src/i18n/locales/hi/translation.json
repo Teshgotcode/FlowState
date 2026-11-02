@@ -606,7 +606,16 @@
         "placeholder": "शब्द जोड़ें",
         "add": "जोड़ें",
         "remove": "{{word}} हटाएं",
-        "duplicate": "\"{{word}}\" पहले से मौजूद है"
+        "duplicate": "\"{{word}}\" पहले से मौजूद है",
+        "learnTitle": "Learn from corrections",
+        "learnDescription": "Compare transcriptions with the text you correct and suggest words you keep having to fix. Everything stays on this device.",
+        "suggestionsTitle": "Suggested words",
+        "suggestionsDescription": "Words you have corrected at least twice that are not in the dictionary yet. Nothing is added automatically.",
+        "suggestionsEmpty": "No suggestions yet. Words you correct twice will show up here.",
+        "suggestionAdd": "Add {{word}}",
+        "suggestionIgnore": "Ignore {{word}}",
+        "suggestionCount": "Corrected {{count}} times",
+        "suggestionError": "Could not update the suggestion for \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Markdown के रूप में निर्यात करें",
       "markdownFile": "Markdown दस्तावेज़",
       "exportSaved": "प्रतिलिपि {{name}} के रूप में सहेज दी गई।",
-      "exportFailed": "प्रतिलिपि निर्यात नहीं की जा सकी।"
+      "exportFailed": "प्रतिलिपि निर्यात नहीं की जा सकी।",
+      "correct": "Correct this",
+      "correctSave": "Save",
+      "correctCancel": "Cancel",
+      "correctSaved": "Transcription corrected",
+      "correctError": "Could not save the correction"
     },
     "debug": {
       "title": "डिबग",

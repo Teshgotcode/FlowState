@@ -606,7 +606,16 @@
         "placeholder": "Wort hinzufügen",
         "add": "Hinzufügen",
         "remove": "{{word}} entfernen",
-        "duplicate": "\"{{word}}\" existiert bereits"
+        "duplicate": "\"{{word}}\" existiert bereits",
+        "learnTitle": "Aus Korrekturen lernen",
+        "learnDescription": "Vergleicht Transkriptionen mit dem Text, den du korrigierst, und schlägt Wörter vor, die du immer wieder korrigieren musst. Alles bleibt auf diesem Gerät.",
+        "suggestionsTitle": "Vorgeschlagene Wörter",
+        "suggestionsDescription": "Wörter, die du mindestens zweimal korrigiert hast und die noch nicht im Wörterbuch stehen. Nichts wird automatisch hinzugefügt.",
+        "suggestionsEmpty": "Noch keine Vorschläge. Wörter, die du zweimal korrigierst, erscheinen hier.",
+        "suggestionAdd": "{{word}} hinzufügen",
+        "suggestionIgnore": "{{word}} ignorieren",
+        "suggestionCount": "{{count}}-mal korrigiert",
+        "suggestionError": "Der Vorschlag für „{{word}}“ konnte nicht aktualisiert werden"
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Als Markdown exportieren",
       "markdownFile": "Markdown-Dokument",
       "exportSaved": "Transkript wurde als {{name}} gespeichert.",
-      "exportFailed": "Das Transkript konnte nicht exportiert werden."
+      "exportFailed": "Das Transkript konnte nicht exportiert werden.",
+      "correct": "Diesen Text korrigieren",
+      "correctSave": "Speichern",
+      "correctCancel": "Abbrechen",
+      "correctSaved": "Transkription korrigiert",
+      "correctError": "Die Korrektur konnte nicht gespeichert werden"
     },
     "debug": {
       "title": "Debug",

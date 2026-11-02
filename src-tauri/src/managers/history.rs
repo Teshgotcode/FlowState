@@ -610,6 +610,35 @@ impl HistoryManager {
         Ok(entry)
     }
 
+    /// The "correct this" flow: replaces only the transcription text with
+    /// what the user edited it into, leaving the audio, metadata and any
+    /// post-processed copy alone. The updated entry is announced like any
+    /// other change, so the history window reflects it.
+    pub fn update_transcription_text(&self, id: i64, text: &str) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let updated = conn.execute(
+            "UPDATE transcription_history SET transcription_text = ?1 WHERE id = ?2",
+            params![text, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        let entry = conn.query_row(
+            &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+            params![id],
+            Self::map_history_entry,
+        )?;
+        debug!("Corrected transcription for history entry {}", id);
+        if let Err(e) = (HistoryUpdatePayload::Updated {
+            entry: entry.clone(),
+        })
+        .emit(&self.app_handle)
+        {
+            error!("Failed to emit history-updated event: {}", e);
+        }
+        Ok(entry)
+    }
+
     /// Keep a generated meeting note on the entry's metadata, beside the
     /// transcript it was written from. Only the metadata column changes; the
     /// transcription is never touched. The updated entry is announced so the

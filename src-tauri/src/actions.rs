@@ -425,6 +425,21 @@ pub(crate) async fn process_transcription_output(
 
     if post_process {
         if let Some(processed_text) = post_process_transcription(&settings, &final_text).await {
+            // The rewrite the LLM just made is a correction too — the user
+            // asked for that prompt — so its diff against the raw
+            // transcription feeds the dictionary learner. Recorded only
+            // when learning is on, and only to the local tally.
+            if settings.learn_from_corrections {
+                if let Some(learner) =
+                    app.try_state::<crate::managers::word_suggestions::WordSuggestionLearner>()
+                {
+                    learner.record_correction(
+                        transcription,
+                        &processed_text,
+                        &settings.custom_words,
+                    );
+                }
+            }
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 

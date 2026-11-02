@@ -606,7 +606,16 @@
         "placeholder": "Lägg till ett ord",
         "add": "Lägg till",
         "remove": "Ta bort {{word}}",
-        "duplicate": "\"{{word}}\" finns redan"
+        "duplicate": "\"{{word}}\" finns redan",
+        "learnTitle": "Lär av rättningarna",
+        "learnDescription": "Jämför transkriptioner med texten du rättar och föreslår ord du måste rätta om och om igen. Allt finns kvar på den här enheten.",
+        "suggestionsTitle": "Föreslagna ord",
+        "suggestionsDescription": "Ord du har rättat minst två gånger som ännu inte finns i ordlistan. Ingenting läggs till automatiskt.",
+        "suggestionsEmpty": "Inga förslag ännu. Ord du rättar två gånger hamnar här.",
+        "suggestionAdd": "Lägg till {{word}}",
+        "suggestionIgnore": "Ignorera {{word}}",
+        "suggestionCount": "Rättat {{count}} gånger",
+        "suggestionError": "Kunde inte uppdatera förslaget för \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Exportera som Markdown",
       "markdownFile": "Markdown-dokument",
       "exportSaved": "Transkriptet sparades som {{name}}.",
-      "exportFailed": "Transkriptet kunde inte exporteras."
+      "exportFailed": "Transkriptet kunde inte exporteras.",
+      "correct": "Rätta den här",
+      "correctSave": "Spara",
+      "correctCancel": "Avbryt",
+      "correctSaved": "Transkriptionen har rättats",
+      "correctError": "Kunde inte spara rättningen"
     },
     "debug": {
       "title": "Felsökning",

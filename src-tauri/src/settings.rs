@@ -482,6 +482,12 @@ pub struct AppSettings {
     pub log_level: LogLevel,
     #[serde(default = "default_custom_words")]
     pub custom_words: Vec<String>,
+    /// Whether the dictionary learns from corrections the user makes — the
+    /// explicit "correct this" flow in history, and the diff against
+    /// LLM post-processed text. Everything stays on this device; off means
+    /// no corrections are recorded at all.
+    #[serde(default = "default_learn_from_corrections")]
+    pub learn_from_corrections: bool,
     /// Spoken text templates ("say trigger, get expansion"), expanded after
     /// transcription in [`post_process_transcription_text`].
     #[serde(default = "default_snippets")]
@@ -730,6 +736,10 @@ fn default_app_language() -> String {
 }
 
 fn default_show_tray_icon() -> bool {
+    true
+}
+
+fn default_learn_from_corrections() -> bool {
     true
 }
 
@@ -1113,6 +1123,7 @@ pub fn get_default_settings() -> AppSettings {
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),
+        learn_from_corrections: true,
         snippets: Vec::new(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),

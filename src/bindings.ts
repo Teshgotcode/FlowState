@@ -141,6 +141,18 @@ async changeWordCorrectionThresholdSetting(threshold: number) : Promise<Result<n
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Whether the dictionary learns from corrections. Off means no correction
+ * is ever recorded — the tally file simply stops being touched.
+ */
+async changeLearnFromCorrectionsSetting(value: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_learn_from_corrections_setting", { value }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changeExtraRecordingBufferSetting(ms: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_extra_recording_buffer_setting", { ms }) };
@@ -1055,6 +1067,56 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * The words worth adding to the dictionary, most-corrected first. Empty
+ * while learning is switched off — an off switch means nothing is learned,
+ * not that learned data is hidden.
+ */
+async getWordSuggestions() : Promise<Result<WordSuggestion[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_word_suggestions") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Legg til": puts the word in `custom_words` — so the next transcription
+ * can use it — and retires the suggestion for good.
+ */
+async acceptWordSuggestion(word: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("accept_word_suggestion", { word }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Ignorer": keeps the word out of the dictionary and out of the list until
+ * fresh corrections earn it a second chance.
+ */
+async ignoreWordSuggestion(word: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("ignore_word_suggestion", { word }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * "Rett denne": replaces a history entry's transcription with the user's
+ * edited text, and — with learning on — counts the correction toward
+ * dictionary suggestions. Returns the updated entry.
+ */
+async correctHistoryEntry(id: number, text: string) : Promise<Result<HistoryEntry, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("correct_history_entry", { id, text }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Start a meeting session: a recording that runs until it is stopped, not
  * until a dictation hotkey comes up. Its audio is written to a working file
  * while it records, and a live decode keeps a running transcript.
@@ -1249,6 +1311,13 @@ spoken_languages?: string[]; overlay_position?: OverlayPosition;
  * it there, and the pinned choice persists across restarts.
  */
 meeting_bar_position?: OverlayPosition | null; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
+/**
+ * Whether the dictionary learns from corrections the user makes — the
+ * explicit "correct this" flow in history, and the diff against
+ * LLM post-processed text. Everything stays on this device; off means
+ * no corrections are recorded at all.
+ */
+learn_from_corrections?: boolean; 
 /**
  * Spoken text templates ("say trigger, get expansion"), expanded after
  * transcription in [`post_process_transcription_text`].
@@ -1824,6 +1893,10 @@ export type TranscriptionOutcome =
 export type TypingTool = "auto" | "wtype" | "kwtype" | "dotool" | "ydotool" | "xdotool"
 export type VadBackend = "silero" | "earshot"
 export type WindowsMicrophonePermissionStatus = { supported: boolean; overall_access: PermissionAccess; device_access: PermissionAccess; app_access: PermissionAccess; desktop_app_access: PermissionAccess }
+/**
+ * One suggestion for the Dictionary settings page.
+ */
+export type WordSuggestion = { word: string; count: number }
 
 /** tauri-specta globals **/
 

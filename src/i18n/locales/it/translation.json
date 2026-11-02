@@ -606,7 +606,16 @@
         "placeholder": "Aggiungi una parola",
         "add": "Aggiungi",
         "remove": "Rimuovi {{word}}",
-        "duplicate": "\"{{word}}\" esiste già"
+        "duplicate": "\"{{word}}\" esiste già",
+        "learnTitle": "Impara dalle correzioni",
+        "learnDescription": "Confronta le trascrizioni con il testo che correggi e suggerisce le parole che correggi più e più volte. Tutto resta su questo dispositivo.",
+        "suggestionsTitle": "Parole suggerite",
+        "suggestionsDescription": "Parole corrette almeno due volte che non sono ancora nel dizionario. Nulla viene aggiunto automaticamente.",
+        "suggestionsEmpty": "Ancora nessun suggerimento. Le parole corrette due volte compariranno qui.",
+        "suggestionAdd": "Aggiungi {{word}}",
+        "suggestionIgnore": "Ignora {{word}}",
+        "suggestionCount": "Corretto {{count}} volte",
+        "suggestionError": "Impossibile aggiornare il suggerimento per \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Esporta come Markdown",
       "markdownFile": "Documento Markdown",
       "exportSaved": "Trascrizione salvata come {{name}}.",
-      "exportFailed": "Impossibile esportare la trascrizione."
+      "exportFailed": "Impossibile esportare la trascrizione.",
+      "correct": "Correggi questo",
+      "correctSave": "Salva",
+      "correctCancel": "Annulla",
+      "correctSaved": "Trascrizione corretta",
+      "correctError": "Impossibile salvare la correzione"
     },
     "debug": {
       "title": "Debug",

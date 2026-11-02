@@ -7,3 +7,4 @@ pub mod model;
 pub mod model_capabilities;
 pub mod transcription;
 pub mod transcription_jobs;
+pub mod word_suggestions;

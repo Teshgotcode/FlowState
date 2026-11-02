@@ -39,6 +39,7 @@ pub use utils::{env_flag_enabled, flowstate_env_flag_enabled};
 use env_filter::Builder as EnvFilterBuilder;
 use managers::audio::AudioRecordingManager;
 use managers::history::HistoryManager;
+use managers::word_suggestions::WordSuggestionLearner;
 use managers::meeting::MeetingManager;
 use managers::model::ModelManager;
 use managers::transcription::TranscriptionManager;
@@ -125,6 +126,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             shortcut::change_overlay_style_setting,
             shortcut::change_debug_mode_setting,
             shortcut::change_word_correction_threshold_setting,
+            shortcut::change_learn_from_corrections_setting,
             shortcut::change_extra_recording_buffer_setting,
             shortcut::change_language_detection_setting,
             shortcut::change_language_detection_window_setting,
@@ -239,6 +241,10 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::history::transcribe_file,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
+            commands::word_suggestions::get_word_suggestions,
+            commands::word_suggestions::accept_word_suggestion,
+            commands::word_suggestions::ignore_word_suggestion,
+            commands::word_suggestions::correct_history_entry,
             commands::meeting::start_meeting,
             commands::meeting::stop_meeting,
             commands::meeting::cancel_meeting,
@@ -410,6 +416,12 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    // The dictionary's local correction tally. One JSON file in the app data
+    // directory, never anywhere else.
+    let word_suggestions_path = portable::app_data_dir(app_handle)
+        .expect("Failed to resolve app data directory")
+        .join("word-suggestions.json");
+    app_handle.manage(WordSuggestionLearner::new(word_suggestions_path));
     app_handle.manage(tray::TrayState::new());
     app_handle.manage(TranscriptionJobManager::new(app_handle));
     app_handle.manage(MeetingManager::new(app_handle));
