@@ -13,6 +13,7 @@ import {
   FileAudio,
   FilePlus,
   FolderOpen,
+  Pencil,
   RotateCcw,
   ScrollText,
   Search,
@@ -37,6 +38,7 @@ import { formatDateTime } from "@/utils/dateFormat";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
 import { Input } from "../../ui/Input";
+import { Textarea } from "../../ui/Textarea";
 import { copyToClipboard } from "./clipboard";
 import { MeetingBadge } from "./MeetingBadge";
 import { splitHighlight } from "./searchHighlight";
@@ -330,6 +332,15 @@ export const HistorySettings: React.FC = () => {
     };
   }, []);
 
+  // A corrected entry takes the place of the old one, in the list and in
+  // any search results.
+  const swapEntry = (updated: HistoryEntry) => {
+    const swap = (prev: HistoryEntry[]) =>
+      prev.map((e) => (e.id === updated.id ? updated : e));
+    setEntries(swap);
+    setSearchResults(swap);
+  };
+
   const toggleSaved = async (id: number) => {
     // Optimistic update, in the plain list and in any search results
     const flip = (entry: HistoryEntry): HistoryEntry => ({
@@ -477,6 +488,7 @@ export const HistorySettings: React.FC = () => {
                 job={jobs[entry.id]}
                 onToggleSaved={() => toggleSaved(entry.id)}
                 onCopyText={() => copyToClipboard(entry.transcription_text)}
+                onCorrected={swapEntry}
                 getAudioUrl={getAudioUrl}
                 deleteAudio={deleteAudioEntry}
                 retryTranscription={commands.retryHistoryEntryTranscription}
@@ -560,6 +572,8 @@ interface HistoryEntryProps {
   job?: ActiveJobStatus;
   onToggleSaved: () => void;
   onCopyText: () => Promise<boolean>;
+  /** Receives the entry after a saved "correct this" edit. */
+  onCorrected: (entry: HistoryEntry) => void;
   getAudioUrl: (fileName: string) => Promise<string | null>;
   deleteAudio: (id: number) => Promise<void>;
   retryTranscription: (id: number) => Promise<void>;
@@ -579,6 +593,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   job,
   onToggleSaved,
   onCopyText,
+  onCorrected,
   getAudioUrl,
   deleteAudio,
   retryTranscription,
@@ -594,6 +609,11 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const [cancelling, setCancelling] = useState(false);
   // The transcript window for this entry, with its timed segments.
   const [showTranscript, setShowTranscript] = useState(false);
+  // "Rett denne": the user fixes the transcription right here, and the
+  // before/after pair feeds the dictionary learner (when it's on).
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [savingCorrection, setSavingCorrection] = useState(false);
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
@@ -661,6 +681,24 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     setTimeout(() => setShowCopied(false), 2000);
   };
 
+  const startEditing = () => {
+    setDraft(entry.transcription_text);
+    setEditing(true);
+  };
+
+  const saveCorrection = async () => {
+    setSavingCorrection(true);
+    const result = await commands.correctHistoryEntry(entry.id, draft);
+    setSavingCorrection(false);
+    if (result.status === "error") {
+      toast.error(t("settings.history.correctError"));
+      return;
+    }
+    setEditing(false);
+    onCorrected(result.data);
+    toast.success(t("settings.history.correctSaved"));
+  };
+
   const handleDeleteEntry = async () => {
     try {
       await deleteAudio(entry.id);
@@ -724,6 +762,14 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             )}
           </IconButton>
           <IconButton
+            onClick={startEditing}
+            disabled={!hasTranscription || retrying}
+            active={editing}
+            title={t("settings.history.correct")}
+          >
+            <Pencil width={16} height={16} />
+          </IconButton>
+          <IconButton
             onClick={onToggleSaved}
             active={entry.saved}
             title={
@@ -767,6 +813,37 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
       </div>
 
       <div className="flex flex-col items-start gap-1 pb-2">
+        {editing ? (
+          <div className="w-full space-y-2 pt-1">
+            <Textarea
+              value={draft}
+              onChange={(event) => setDraft(event.target.value)}
+              variant="compact"
+              className="w-full font-normal"
+              disabled={savingCorrection}
+              aria-label={t("settings.history.correct")}
+              autoFocus
+            />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => void saveCorrection()}
+                disabled={savingCorrection || draft === entry.transcription_text}
+              >
+                {t("settings.history.correctSave")}
+              </Button>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={() => setEditing(false)}
+                disabled={savingCorrection}
+              >
+                {t("settings.history.correctCancel")}
+              </Button>
+            </div>
+          </div>
+        ) : (
         <p
           ref={textRef}
           className={`italic text-sm w-full ${
@@ -815,7 +892,8 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             t("settings.history.transcriptionFailed")
           )}
         </p>
-        {hasTranscription && !retrying && (expanded || overflows) && (
+        )}
+        {hasTranscription && !retrying && !editing && (expanded || overflows) && (
           <button
             type="button"
             onClick={() => setExpanded(!expanded)}

@@ -606,7 +606,16 @@
         "placeholder": "Legg til et ord",
         "add": "Legg til",
         "remove": "Fjern {{word}}",
-        "duplicate": "«{{word}}» finnes allerede"
+        "duplicate": "«{{word}}» finnes allerede",
+        "learnTitle": "Lær av rettelser",
+        "learnDescription": "Sammenlign transkripsjoner med teksten du retter, og foreslå ord du må rette om og om igjen. Alt lagres på denne enheten.",
+        "suggestionsTitle": "Foreslåtte ord",
+        "suggestionsDescription": "Ord du har rettet minst to ganger som ikke finnes i ordboken ennå. Ingenting legges til automatisk.",
+        "suggestionsEmpty": "Ingen forslag ennå. Ord du retter to ganger havner her.",
+        "suggestionAdd": "Legg til {{word}}",
+        "suggestionIgnore": "Ignorer {{word}}",
+        "suggestionCount": "Rettet {{count}} ganger",
+        "suggestionError": "Kunne ikke oppdatere forslaget for «{{word}}»"
       },
       "snippets": {
         "title": "Tekstmaler",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Eksporter som Markdown",
       "markdownFile": "Markdown-dokument",
       "exportSaved": "Transkriptet ble lagret som {{name}}.",
-      "exportFailed": "Transkriptet kunne ikke eksporteres."
+      "exportFailed": "Transkriptet kunne ikke eksporteres.",
+      "correct": "Rett denne",
+      "correctSave": "Lagre",
+      "correctCancel": "Avbryt",
+      "correctSaved": "Transkripsjonen er rettet",
+      "correctError": "Kunne ikke lagre rettelsen"
     },
     "debug": {
       "title": "Feilsøking",

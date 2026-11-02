@@ -606,7 +606,16 @@
         "placeholder": "Adicionar uma palavra",
         "add": "Adicionar",
         "remove": "Remover {{word}}",
-        "duplicate": "\"{{word}}\" já existe"
+        "duplicate": "\"{{word}}\" já existe",
+        "learnTitle": "Aprender com as correções",
+        "learnDescription": "Compara as transcrições com o texto que corrige e sugere palavras que corrige repetidamente. Tudo fica neste dispositivo.",
+        "suggestionsTitle": "Palavras sugeridas",
+        "suggestionsDescription": "Palavras corrigidas pelo menos duas vezes que ainda não estão no dicionário. Nada é adicionado automaticamente.",
+        "suggestionsEmpty": "Ainda sem sugestões. As palavras que corrigir duas vezes aparecerão aqui.",
+        "suggestionAdd": "Adicionar {{word}}",
+        "suggestionIgnore": "Ignorar {{word}}",
+        "suggestionCount": "Corrigido {{count}} vezes",
+        "suggestionError": "Não foi possível atualizar a sugestão para \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Exportar como Markdown",
       "markdownFile": "Documento Markdown",
       "exportSaved": "Transcrição guardada como {{name}}.",
-      "exportFailed": "Não foi possível exportar a transcrição."
+      "exportFailed": "Não foi possível exportar a transcrição.",
+      "correct": "Corrigir isto",
+      "correctSave": "Guardar",
+      "correctCancel": "Cancelar",
+      "correctSaved": "Transcrição corrigida",
+      "correctError": "Não foi possível guardar a correção"
     },
     "debug": {
       "title": "Depuração",

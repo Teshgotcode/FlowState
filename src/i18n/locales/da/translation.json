@@ -606,7 +606,16 @@
         "placeholder": "Tilføj et ord",
         "add": "Tilføj",
         "remove": "Fjern {{word}}",
-        "duplicate": "\"{{word}}\" findes allerede"
+        "duplicate": "\"{{word}}\" findes allerede",
+        "learnTitle": "Lær af rettelserne",
+        "learnDescription": "Sammenligner transkriptioner med teksten, du retter, og foreslår ord, du må rette igen og igen. Alt forbliver på denne enhed.",
+        "suggestionsTitle": "Foreslåede ord",
+        "suggestionsDescription": "Ord, du har rettet mindst to gange, som endnu ikke findes i ordbogen. Intet tilføjes automatisk.",
+        "suggestionsEmpty": "Ingen forslag endnu. Ord, du retter to gange, havner her.",
+        "suggestionAdd": "Tilføj {{word}}",
+        "suggestionIgnore": "Ignorer {{word}}",
+        "suggestionCount": "Rettet {{count}} gange",
+        "suggestionError": "Kunne ikke opdatere forslaget for \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Eksporter som Markdown",
       "markdownFile": "Markdown-dokument",
       "exportSaved": "Transskriptionen blev gemt som {{name}}.",
-      "exportFailed": "Transskriptionen kunne ikke eksporteres."
+      "exportFailed": "Transskriptionen kunne ikke eksporteres.",
+      "correct": "Ret denne",
+      "correctSave": "Gem",
+      "correctCancel": "Annuller",
+      "correctSaved": "Transkriptionen er rettet",
+      "correctError": "Kunne ikke gemme rettelsen"
     },
     "debug": {
       "title": "Fejlfinding",

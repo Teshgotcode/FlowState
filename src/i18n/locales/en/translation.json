@@ -606,7 +606,16 @@
         "placeholder": "Add a word",
         "add": "Add",
         "remove": "Remove {{word}}",
-        "duplicate": "\"{{word}}\" already exists"
+        "duplicate": "\"{{word}}\" already exists",
+        "learnTitle": "Learn from corrections",
+        "learnDescription": "Compare transcriptions with the text you correct and suggest words you keep having to fix. Everything stays on this device.",
+        "suggestionsTitle": "Suggested words",
+        "suggestionsDescription": "Words you have corrected at least twice that are not in the dictionary yet. Nothing is added automatically.",
+        "suggestionsEmpty": "No suggestions yet. Words you correct twice will show up here.",
+        "suggestionAdd": "Add {{word}}",
+        "suggestionIgnore": "Ignore {{word}}",
+        "suggestionCount": "Corrected {{count}} times",
+        "suggestionError": "Could not update the suggestion for \"{{word}}\""
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Export as Markdown",
       "markdownFile": "Markdown document",
       "exportSaved": "Transcript saved as {{name}}.",
-      "exportFailed": "The transcript could not be exported."
+      "exportFailed": "The transcript could not be exported.",
+      "correct": "Correct this",
+      "correctSave": "Save",
+      "correctCancel": "Cancel",
+      "correctSaved": "Transcription corrected",
+      "correctError": "Could not save the correction"
     },
     "debug": {
       "title": "Debug",

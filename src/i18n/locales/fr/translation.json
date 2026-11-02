@@ -606,7 +606,16 @@
         "placeholder": "Ajouter un mot",
         "add": "Ajouter",
         "remove": "Supprimer {{word}}",
-        "duplicate": "\"{{word}}\" existe déjà"
+        "duplicate": "\"{{word}}\" existe déjà",
+        "learnTitle": "Apprendre des corrections",
+        "learnDescription": "Compare les transcriptions au texte que vous corrigez et suggère les mots que vous corrigez encore et encore. Tout reste sur cet appareil.",
+        "suggestionsTitle": "Mots suggérés",
+        "suggestionsDescription": "Des mots corrigés au moins deux fois qui ne sont pas encore dans le dictionnaire. Rien n'est ajouté automatiquement.",
+        "suggestionsEmpty": "Aucune suggestion pour l'instant. Les mots corrigés deux fois apparaîtront ici.",
+        "suggestionAdd": "Ajouter {{word}}",
+        "suggestionIgnore": "Ignorer {{word}}",
+        "suggestionCount": "Corrigé {{count}} fois",
+        "suggestionError": "Impossible de mettre à jour la suggestion pour « {{word}} »"
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Exporter en Markdown",
       "markdownFile": "Document Markdown",
       "exportSaved": "Transcription enregistrée sous {{name}}.",
-      "exportFailed": "La transcription n'a pas pu être exportée."
+      "exportFailed": "La transcription n'a pas pu être exportée.",
+      "correct": "Corriger ceci",
+      "correctSave": "Enregistrer",
+      "correctCancel": "Annuler",
+      "correctSaved": "Transcription corrigée",
+      "correctError": "Impossible d'enregistrer la correction"
     },
     "debug": {
       "title": "Débogage",

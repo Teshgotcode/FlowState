@@ -897,6 +897,28 @@ pub fn change_whats_new_last_seen_version_setting(
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.custom_words = words;
+    // Keep the word suggestion learner's idea of "already known" in step
+    // with the real dictionary, so a word the user removes can be learned
+    // about again.
+    if let Some(learner) =
+        app.try_state::<crate::managers::word_suggestions::WordSuggestionLearner>()
+    {
+        learner.sync_dictionary(&settings.custom_words);
+    }
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// Whether the dictionary learns from corrections. Off means no correction
+/// is ever recorded — the tally file simply stops being touched.
+#[tauri::command]
+#[specta::specta]
+pub fn change_learn_from_corrections_setting(
+    app: AppHandle,
+    value: bool,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.learn_from_corrections = value;
     settings::write_settings(&app, settings);
     Ok(())
 }

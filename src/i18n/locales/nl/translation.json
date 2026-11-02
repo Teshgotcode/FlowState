@@ -606,7 +606,16 @@
         "placeholder": "Woord toevoegen",
         "add": "Toevoegen",
         "remove": "{{word}} verwijderen",
-        "duplicate": "\"{{word}}\" bestaat al"
+        "duplicate": "\"{{word}}\" bestaat al",
+        "learnTitle": "Leren van correcties",
+        "learnDescription": "Vergelijkt transcripties met de tekst die je corrigeert en stelt woorden voor die je steeds weer moet herstellen. Alles blijft op dit apparaat.",
+        "suggestionsTitle": "Voorgestelde woorden",
+        "suggestionsDescription": "Woorden die je minstens twee keer hebt gecorrigeerd en nog niet in het woordenboek staan. Er wordt niets automatisch toegevoegd.",
+        "suggestionsEmpty": "Nog geen suggesties. Woorden die je twee keer corrigeert, verschijnen hier.",
+        "suggestionAdd": "{{word}} toevoegen",
+        "suggestionIgnore": "{{word}} negeren",
+        "suggestionCount": "{{count}} keer gecorrigeerd",
+        "suggestionError": "De suggestie voor \"{{word}}\" kon niet worden bijgewerkt"
       },
       "snippets": {
         "title": "Snippets",
@@ -794,7 +803,12 @@
       "exportMarkdown": "Exporteren als Markdown",
       "markdownFile": "Markdown-document",
       "exportSaved": "Transcript opgeslagen als {{name}}.",
-      "exportFailed": "Het transcript kon niet worden geëxporteerd."
+      "exportFailed": "Het transcript kon niet worden geëxporteerd.",
+      "correct": "Dit corrigeren",
+      "correctSave": "Opslaan",
+      "correctCancel": "Annuleren",
+      "correctSaved": "Transcriptie gecorrigeerd",
+      "correctError": "De correctie kon niet worden opgeslagen"
     },
     "debug": {
       "title": "Probleemoplossing",
