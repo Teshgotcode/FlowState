@@ -1,4 +1,5 @@
 use crate::managers::meeting::{MeetingManager, MeetingStatus, StoppedMeeting};
+use crate::managers::meeting_note::{cancel_run, generate_for_entry, MeetingNoteOutcome};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 
@@ -61,4 +62,27 @@ pub fn start_meeting_bar_drag(app: AppHandle) -> Result<(), String> {
 pub fn open_meeting_bar_menu(app: AppHandle) -> Result<(), String> {
     crate::overlay::show_meeting_bar_menu(&app);
     Ok(())
+}
+/// Generate a meeting note for a finished meeting's history entry: chunk its
+/// transcript, extract a structured draft with the configured local LLM,
+/// merge the parts and keep the note beside the transcript, above it in the
+/// transcript window. Runs only on this explicit call; the note never leaves
+/// the machine, and the transcript itself is never modified.
+#[tauri::command]
+#[specta::specta]
+pub async fn generate_meeting_note(
+    app: AppHandle,
+    entry_id: i64,
+) -> Result<MeetingNoteOutcome, String> {
+    generate_for_entry(&app, entry_id)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+/// Stop the note generation running for `entry_id`: the current LLM call is
+/// dropped and nothing is saved. Returns whether a generation was running.
+#[tauri::command]
+#[specta::specta]
+pub async fn cancel_meeting_note(entry_id: i64) -> Result<bool, String> {
+    Ok(cancel_run(entry_id))
 }

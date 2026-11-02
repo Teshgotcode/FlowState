@@ -1073,6 +1073,33 @@ async getMeetingStatus() : Promise<MeetingStatus> {
     return await TAURI_INVOKE("get_meeting_status");
 },
 /**
+ * Generate a meeting note for a finished meeting's history entry: chunk its
+ * transcript, extract a structured draft with the configured local LLM,
+ * merge the parts and keep the note beside the transcript, above it in the
+ * transcript window. Runs only on this explicit call; the note never leaves
+ * the machine, and the transcript itself is never modified.
+ */
+async generateMeetingNote(entryId: number) : Promise<Result<MeetingNoteOutcome, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("generate_meeting_note", { entryId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stop the note generation running for `entry_id`: the current LLM call is
+ * dropped and nothing is saved. Returns whether a generation was running.
+ */
+async cancelMeetingNote(entryId: number) : Promise<Result<boolean, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("cancel_meeting_note", { entryId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Begin dragging the floating meeting bar (idle disc or recording pill).
  * The frontend calls this once the pointer has crossed its click/drag
  * threshold, so a plain click still starts or stops the meeting; the native
@@ -1311,7 +1338,13 @@ duration_secs?: number | null;
  * from before the field existed, and transcriptions whose model produces
  * none, read as `None`.
  */
-segments?: TranscriptSegment[] | null }
+segments?: TranscriptSegment[] | null; 
+/**
+ * The draft meeting note a local LLM wrote over the transcript, when the
+ * user asked for one. Kept beside the transcript; the transcript itself
+ * is never changed by it.
+ */
+meeting_note?: MeetingNote | null }
 /**
  * Where a history entry's audio came from, beyond a dictation take. Old
  * entries predate the field and read as `None`; a value this build doesn't
@@ -1397,6 +1430,77 @@ export type LanguageStatus =
  */
 { kind: "auto_unavailable"; language: string; reason: AutoUnavailableReason }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * One action item from the meeting: what to do, and who owns it. The owner is
+ * the name the transcript itself mentions as responsible; an empty string
+ * when no name is mentioned.
+ */
+export type MeetingActionItem = { task?: string; owner?: string }
+/**
+ * The generated meeting note: a draft the user must check, not a record of
+ * what was decided. `model` names the LLM that wrote it, and `generated_at`
+ * when, so the label in the transcript window can say both.
+ */
+export type MeetingNote = { summary: string; decisions: string[]; action_items: MeetingActionItem[]; open_questions: string[]; model: string; 
+/**
+ * Unix seconds when the note was generated.
+ */
+generated_at: number }
+/**
+ * Why a note could not be generated. The frontend maps each reason to a
+ * localized message; `detail` never reaches the user, only the log.
+ */
+export type MeetingNoteFailure = 
+/**
+ * The entry is not a meeting session.
+ */
+"not_a_meeting" | 
+/**
+ * The entry has no transcript to make a note of.
+ */
+"no_transcript" | 
+/**
+ * No post-processing provider is selected.
+ */
+"no_provider" | 
+/**
+ * The selected provider has no model configured.
+ */
+"no_model" | 
+/**
+ * The selected provider cannot write notes: it is not a local
+ * OpenAI-compatible endpoint (a cloud API, or Apple Intelligence, which
+ * has no structured-output API).
+ */
+"no_local_llm" | 
+/**
+ * A generation is already running for this entry.
+ */
+"already_generating" | 
+/**
+ * The local LLM could not be reached, or answered with an error.
+ */
+"llm_unreachable" | 
+/**
+ * The local LLM answered, but no note could be read from the answer.
+ */
+"invalid_response" | 
+/**
+ * The user pressed cancel; nothing was saved.
+ */
+"cancelled"
+/**
+ * What a click on "generate" comes back with: the note, or why there is none.
+ */
+export type MeetingNoteOutcome = 
+/**
+ * The note was generated and saved on the entry's metadata.
+ */
+{ outcome: "generated"; note: MeetingNote } | 
+/**
+ * Nothing was saved; `reason` tells the window what to tell the user.
+ */
+{ outcome: "failed"; reason: MeetingNoteFailure; detail: string | null }
 /**
  * Emitted whenever the meeting session's stage changes, so a window can
  * follow along without polling.
