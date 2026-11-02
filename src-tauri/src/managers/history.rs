@@ -11,6 +11,7 @@ use tauri::AppHandle;
 use tauri_specta::Event;
 
 use crate::language_detection::{LanguageDecision, LanguageSource};
+use crate::managers::transcription::TranscriptSegment;
 
 /// Database migrations for transcription history.
 /// Each migration is applied in order. The library tracks which migrations
@@ -128,12 +129,33 @@ pub struct HistoryMetadata {
     /// Seconds the recording ran (a meeting), when it is known.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub duration_secs: Option<u64>,
+    /// The transcription's timed segments (t0_ms, t1_ms, text — the model's
+    /// own text, not post-processed), when the model produced any. Entries
+    /// from before the field existed, and transcriptions whose model produces
+    /// none, read as `None`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub segments: Option<Vec<TranscriptSegment>>,
+}
+
+impl HistoryMetadata {
+    /// Whether it holds any fact worth storing.
+    fn is_empty(&self) -> bool {
+        self.duration_secs.is_none() && self.segments.is_none()
+    }
 }
 
 pub struct HistoryManager {
     app_handle: AppHandle,
     recordings_dir: PathBuf,
     db_path: PathBuf,
+}
+
+/// Metadata for a fresh entry, keeping only the optional facts it has.
+fn fresh_metadata(segments: &[TranscriptSegment]) -> Option<HistoryMetadata> {
+    (!segments.is_empty()).then(|| HistoryMetadata {
+        duration_secs: None,
+        segments: Some(segments.to_vec()),
+    })
 }
 
 /// A transcription's language as its two columns.
@@ -337,6 +359,9 @@ impl HistoryManager {
 
     /// Save a new history entry to the database.
     /// The WAV file should already have been written to the recordings directory.
+    /// One flat record of one save; a params struct would only move the same
+    /// fields around.
+    #[allow(clippy::too_many_arguments)]
     pub fn save_entry(
         &self,
         file_name: String,
@@ -345,6 +370,7 @@ impl HistoryManager {
         post_processed_text: Option<String>,
         post_process_prompt: Option<String>,
         language: Option<LanguageDecision>,
+        segments: Vec<TranscriptSegment>,
     ) -> Result<HistoryEntry> {
         let (language, language_source) = split_language(language);
         let entry = self.insert_entry(HistoryEntry {
@@ -361,7 +387,7 @@ impl HistoryManager {
             language,
             language_source,
             source: None,
-            metadata: None,
+            metadata: fresh_metadata(&segments),
         })?;
 
         self.cleanup_old_entries()?;
@@ -417,6 +443,7 @@ impl HistoryManager {
             source: Some(HistorySource::Meeting),
             metadata: Some(HistoryMetadata {
                 duration_secs: Some(duration_secs),
+                segments: None,
             }),
         })?;
 
@@ -489,23 +516,42 @@ impl HistoryManager {
         post_processed_text: Option<String>,
         post_process_prompt: Option<String>,
         language: Option<LanguageDecision>,
+        segments: Vec<TranscriptSegment>,
     ) -> Result<HistoryEntry> {
         let (language, language_source) = split_language(language);
         let conn = self.get_connection()?;
+        // Keep the facts already stored (a meeting's duration); this run's
+        // segments replace whatever the previous run left.
+        let existing = conn
+            .query_row(
+                &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+                params![id],
+                Self::map_history_entry,
+            )
+            .optional()?;
+        let mut metadata = existing
+            .and_then(|entry| entry.metadata)
+            .unwrap_or_default();
+        metadata.segments = (!segments.is_empty()).then_some(segments);
+        let metadata_json = (!metadata.is_empty())
+            .then(|| serde_json::to_string(&metadata))
+            .and_then(Result::ok);
         let updated = conn.execute(
             "UPDATE transcription_history
              SET transcription_text = ?1,
                  post_processed_text = ?2,
                  post_process_prompt = ?3,
                  language = ?4,
-                 language_source = ?5
-             WHERE id = ?6",
+                 language_source = ?5,
+                 metadata = ?6
+             WHERE id = ?7",
             params![
                 transcription_text,
                 post_processed_text,
                 post_process_prompt,
                 language,
                 language_source.map(LanguageSource::as_str),
+                metadata_json,
                 id
             ],
         )?;
@@ -963,6 +1009,72 @@ mod tests {
 
         assert_eq!(entry.timestamp, 100);
         assert_eq!(entry.transcription_text, "completed");
+    }
+
+    #[test]
+    fn old_metadata_without_segments_opens_cleanly() {
+        // Entries stored before the segments field existed must still open.
+        for stored in ["{\"duration_secs\":120}", "{}"] {
+            let metadata: HistoryMetadata =
+                serde_json::from_str(stored).expect("old metadata opens");
+            assert!(metadata.segments.is_none(), "{stored}");
+        }
+        let with_duration: HistoryMetadata =
+            serde_json::from_str("{\"duration_secs\":120}").expect("old metadata opens");
+        assert_eq!(with_duration.duration_secs, Some(120));
+    }
+
+    #[test]
+    fn metadata_round_trips_segments() {
+        let metadata = HistoryMetadata {
+            duration_secs: Some(90),
+            segments: Some(vec![TranscriptSegment {
+                t0_ms: 0,
+                t1_ms: 1500,
+                text: "Hei der.".to_string(),
+            }]),
+        };
+        let stored = serde_json::to_string(&metadata).expect("store metadata");
+
+        assert_eq!(
+            serde_json::from_str::<HistoryMetadata>(&stored).expect("read metadata"),
+            metadata
+        );
+    }
+
+    #[test]
+    fn an_entrys_segments_are_read_back_with_its_metadata() {
+        let conn = setup_conn();
+        conn.execute(
+            "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, metadata)
+             VALUES ('a.wav', 100, 'a', 'Hei der.',
+                     '{\"segments\":[{\"t0_ms\":0,\"t1_ms\":1500,\"text\":\"Hei der.\"},{\"t0_ms\":1500,\"t1_ms\":3200,\"text\":\"Verden.\"}]}')",
+            [],
+        )
+        .expect("insert entry with segments");
+
+        let entry = HistoryManager::get_latest_entry_with_conn(&conn)
+            .expect("fetch latest entry")
+            .expect("entry exists");
+
+        let segments = entry
+            .metadata
+            .expect("metadata stored")
+            .segments
+            .expect("segments stored");
+        assert_eq!(
+            segments
+                .iter()
+                .map(|segment| (segment.t0_ms, segment.t1_ms, segment.text.as_str()))
+                .collect::<Vec<_>>(),
+            vec![(0, 1500, "Hei der."), (1500, 3200, "Verden.")]
+        );
+        assert!(
+            segments
+                .windows(2)
+                .all(|pair| pair[0].t0_ms <= pair[1].t0_ms),
+            "stored segment start times must be monotone"
+        );
     }
 
     #[test]

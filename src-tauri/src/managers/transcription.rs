@@ -965,10 +965,11 @@ impl TranscriptionManager {
             return Ok(Transcription {
                 text: String::new(),
                 language: None,
+                segments: Vec::new(),
             });
         }
 
-        let outcome = match live {
+        let mut outcome = match live {
             Some(outcome) => outcome,
             None => self.decode_batch(audio)?,
         };
@@ -976,6 +977,7 @@ impl TranscriptionManager {
         let language = outcome
             .setup
             .spoken_language(outcome.model_detected_language.as_deref());
+        let segments = std::mem::take(&mut outcome.segments);
         let final_result = finish_text(outcome, &settings);
 
         let translation_note = if settings.translate_to_english {
@@ -1008,6 +1010,7 @@ impl TranscriptionManager {
         Ok(Transcription {
             text: final_result,
             language: Some(language),
+            segments,
         })
     }
 
@@ -1149,11 +1152,12 @@ impl TranscriptionManager {
                     (vec![transcript], setup)
                 }
             };
-        let (text, model_detected_language) = join_chunks(transcripts);
+        let (text, model_detected_language, segments) = join_chunks(transcripts);
         Ok(RunOutcome {
             setup,
             text,
             model_detected_language,
+            segments,
         })
     }
 
@@ -1186,12 +1190,30 @@ struct BatchContext {
     setup: RunSetup,
 }
 
+/// One segment of a transcription with its timing, in milliseconds from the
+/// start of the whole recording. The text is the model's own; post-processing
+/// applies to the transcription's full text, not per segment. Built for the
+/// history entries that keep them (Whisper produces these for free; streaming
+/// models may not).
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
+pub struct TranscriptSegment {
+    /// When the segment starts.
+    pub t0_ms: i64,
+    /// When the segment ends.
+    pub t1_ms: i64,
+    /// What the model heard in it.
+    pub text: String,
+}
+
 /// A finished transcription.
 pub struct Transcription {
     pub text: String,
     /// The language it ran in and how that was chosen; `None` when there was
     /// no audio to run.
     pub language: Option<LanguageDecision>,
+    /// The model's timed segments on the recording's timeline; empty when the
+    /// model produced none.
+    pub segments: Vec<TranscriptSegment>,
 }
 
 /// What one transcription decoded (live or in batch), with how its runs were
@@ -1201,6 +1223,9 @@ struct RunOutcome {
     text: String,
     /// The language the model itself detected, if it reported one.
     model_detected_language: Option<String>,
+    /// The model's timed segments, already on the whole recording's timeline;
+    /// empty when the model produced none.
+    segments: Vec<TranscriptSegment>,
 }
 
 /// One transcription's final text: its output language resolved, then
@@ -1210,6 +1235,7 @@ fn finish_text(outcome: RunOutcome, settings: &AppSettings) -> String {
         setup,
         text,
         model_detected_language,
+        ..
     } = outcome;
     let output_language = setup.output_language(settings, model_detected_language);
     debug!("Output language evidence: {:?}", output_language);
@@ -1358,19 +1384,59 @@ fn engine_error(e: EngineError) -> anyhow::Error {
     }
 }
 
-/// One transcription's text from its chunks, in order, and the model's
-/// detected language (Whisper's audio-based LID, auto mode only; `None` when a
-/// language hint was passed). Chunks that disagree leave it unknown. A single
-/// transcript passes through untouched.
-fn join_chunks(transcripts: Vec<Transcript>) -> (String, Option<String>) {
+/// One transcription's text from its chunks, in order, the timed segments of
+/// every chunk in order, and the model's detected language (Whisper's
+/// audio-based LID, auto mode only; `None` when a language hint was passed).
+/// Chunks that disagree leave it unknown. A single transcript passes through
+/// untouched.
+///
+/// Segments are expected to already sit on the whole recording's timeline:
+/// a long-form decode shifts each chunk's onto it as it decodes (see
+/// [`offset_segments`]), so here they only line up in order.
+fn join_chunks(transcripts: Vec<Transcript>) -> (String, Option<String>, Vec<TranscriptSegment>) {
     let language = agreed_language(&transcripts);
+    let segments = transcripts
+        .iter()
+        .flat_map(|transcript| timed_segments(&transcript.segments))
+        .collect();
     let text = match <[Transcript; 1]>::try_from(transcripts) {
         Ok([one]) => one.text,
         Err(many) => {
             chunking::join_transcripts(&many.iter().map(|t| t.text.as_str()).collect::<Vec<_>>())
         }
     };
-    (text, language)
+    (text, language, segments)
+}
+
+/// A decode's timed segments, in order: (t0_ms, t1_ms, text) rows. Untimed
+/// rows (a speaker-attributed model without timestamps reports them with
+/// t0_ms == t1_ms == 0) are dropped — a zero time would break the monotone
+/// timings the transcript window relies on.
+pub(super) fn timed_segments(segments: &[transcribe_cpp::Segment]) -> Vec<TranscriptSegment> {
+    segments
+        .iter()
+        .filter(|segment| segment.t1_ms > segment.t0_ms)
+        .map(|segment| TranscriptSegment {
+            t0_ms: segment.t0_ms,
+            t1_ms: segment.t1_ms,
+            text: segment.text.clone(),
+        })
+        .collect()
+}
+
+/// Shifts a chunk's segment times onto the whole recording's timeline:
+/// `offset_ms` is where the chunk starts in it. A chunk decodes on its own, so
+/// its model-reported times only count from its own start.
+pub(super) fn offset_segments(segments: &mut [transcribe_cpp::Segment], offset_ms: i64) {
+    for segment in segments {
+        segment.t0_ms += offset_ms;
+        segment.t1_ms += offset_ms;
+    }
+}
+
+/// Where `samples` of the models' 16 kHz audio falls, in milliseconds.
+pub(super) fn samples_to_ms(samples: usize) -> i64 {
+    samples as i64 * 1000 / i64::from(crate::audio_toolkit::constants::WHISPER_SAMPLE_RATE)
 }
 
 /// The language every chunk's model reported, if they all agree.
@@ -1976,6 +2042,7 @@ pub fn get_available_accelerators(tm: &TranscriptionManager) -> AvailableAcceler
 #[cfg(test)]
 mod tests {
     use super::*;
+    use transcribe_cpp::Segment;
 
     fn languages(codes: &[&str]) -> Vec<String> {
         codes.iter().map(|code| (*code).to_string()).collect()
@@ -2388,6 +2455,124 @@ mod tests {
         assert!(is_norwegian_language("nb"));
         assert!(is_norwegian_language("nn"));
         assert!(!is_norwegian_language("en"));
+    }
+
+    /// A model segment row, as transcribe-cpp reports it.
+    fn model_segment(t0_ms: i64, t1_ms: i64, text: &str) -> Segment {
+        Segment {
+            t0_ms,
+            t1_ms,
+            text: text.to_string(),
+            ..Default::default()
+        }
+    }
+
+    fn chunk_transcript(text: &str, segments: Vec<Segment>, language: Option<&str>) -> Transcript {
+        Transcript {
+            text: text.to_string(),
+            segments,
+            language: language.map(str::to_string),
+            ..Default::default()
+        }
+    }
+
+    fn timed(text: &str, t0_ms: i64, t1_ms: i64) -> TranscriptSegment {
+        TranscriptSegment {
+            t0_ms,
+            t1_ms,
+            text: text.to_string(),
+        }
+    }
+
+    #[test]
+    fn join_chunks_keeps_a_single_transcripts_timed_segments() {
+        let transcript = chunk_transcript(
+            "Hei der. Verden.",
+            vec![
+                model_segment(0, 1500, "Hei der."),
+                model_segment(1500, 3200, "Verden."),
+                // An untimed row (t0_ms == t1_ms == 0) is dropped: its zero
+                // time would break the monotone timings.
+                model_segment(0, 0, "uten tid"),
+            ],
+            Some("nb"),
+        );
+
+        let (text, language, segments) = join_chunks(vec![transcript]);
+
+        assert_eq!(text, "Hei der. Verden.");
+        assert_eq!(language.as_deref(), Some("nb"));
+        assert_eq!(
+            segments,
+            vec![timed("Hei der.", 0, 1500), timed("Verden.", 1500, 3200)]
+        );
+    }
+
+    #[test]
+    fn join_chunks_preserves_segments_across_chunks_in_time_order() {
+        // A chunked decode shifts each chunk's times onto the whole
+        // recording's timeline as it decodes, exactly as ChunkedDecode and
+        // the background job do; two chunks cut at 2 s and 5 s.
+        let mut first = chunk_transcript(
+            "Første del.",
+            vec![
+                model_segment(0, 900, "Første"),
+                model_segment(900, 1900, "del."),
+            ],
+            Some("nb"),
+        );
+        let mut second = chunk_transcript(
+            "Andre del.",
+            vec![
+                model_segment(0, 700, "Andre"),
+                model_segment(700, 1600, "del."),
+            ],
+            Some("nb"),
+        );
+        offset_segments(&mut first.segments, samples_to_ms(2 * 16_000));
+        offset_segments(&mut second.segments, samples_to_ms(5 * 16_000));
+
+        let (text, language, segments) = join_chunks(vec![first, second]);
+
+        assert_eq!(text, "Første del. Andre del.");
+        assert_eq!(language.as_deref(), Some("nb"));
+        // Every chunk's segments line up after the previous chunk's, so the
+        // whole run's t0_ms is monotone.
+        assert_eq!(
+            segments,
+            vec![
+                timed("Første", 2000, 2900),
+                timed("del.", 2900, 3900),
+                timed("Andre", 5000, 5700),
+                timed("del.", 5700, 6600),
+            ]
+        );
+        assert!(
+            segments
+                .windows(2)
+                .all(|pair| pair[0].t0_ms <= pair[1].t0_ms),
+            "segment start times must be monotone, got {:?}",
+            segments
+                .iter()
+                .map(|segment| segment.t0_ms)
+                .collect::<Vec<_>>()
+        );
+    }
+
+    #[test]
+    fn offset_segments_shifts_a_chunk_onto_the_recordings_timeline() {
+        let mut segments = vec![
+            model_segment(0, 1200, "en"),
+            model_segment(1200, 2400, "to"),
+        ];
+
+        offset_segments(&mut segments, samples_to_ms(30 * 16_000));
+
+        assert_eq!(segments[0].t0_ms, 30_000);
+        assert_eq!(segments[0].t1_ms, 31_200);
+        assert_eq!(segments[1].t0_ms, 31_200);
+        assert_eq!(segments[1].t1_ms, 32_400);
+        assert_eq!(segments[1].text, "to");
     }
 }
 

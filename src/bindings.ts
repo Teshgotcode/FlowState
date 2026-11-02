@@ -1289,7 +1289,14 @@ export type HistoryMetadata = {
 /**
  * Seconds the recording ran (a meeting), when it is known.
  */
-duration_secs?: number | null }
+duration_secs?: number | null; 
+/**
+ * The transcription's timed segments (t0_ms, t1_ms, text — the model's
+ * own text, not post-processed), when the model produced any. Entries
+ * from before the field existed, and transcriptions whose model produces
+ * none, read as `None`.
+ */
+segments?: TranscriptSegment[] | null }
 /**
  * Where a history entry's audio came from, beyond a dictation take. Old
  * entries predate the field and read as `None`; a value this build doesn't
@@ -1581,6 +1588,26 @@ export type StreamWorkKind = "transcribing" | "polishing"
  */
 export type Theme = "system" | "light" | "dark"
 export type TranscribeAcceleratorSetting = "auto" | "cpu" | "gpu"
+/**
+ * One segment of a transcription with its timing, in milliseconds from the
+ * start of the whole recording. The text is the model's own; post-processing
+ * applies to the transcription's full text, not per segment. Built for the
+ * history entries that keep them (Whisper produces these for free; streaming
+ * models may not).
+ */
+export type TranscriptSegment = { 
+/**
+ * When the segment starts.
+ */
+t0_ms: number; 
+/**
+ * When the segment ends.
+ */
+t1_ms: number; 
+/**
+ * What the model heard in it.
+ */
+text: string }
 /**
  * Emitted when a dictation finishes (not on cancel); onboarding uses it to measure speed.
  */

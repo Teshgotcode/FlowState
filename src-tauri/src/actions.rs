@@ -749,6 +749,7 @@ impl ShortcutAction for TranscribeAction {
                         Ok(Transcription {
                             text: transcription,
                             language,
+                            segments,
                         }) => {
                             debug!(
                                 "Transcription completed in {:?}: '{}'",
@@ -791,6 +792,7 @@ impl ShortcutAction for TranscribeAction {
                                     processed.post_processed_text.clone(),
                                     processed.post_process_prompt.clone(),
                                     language,
+                                    segments,
                                 ) {
                                     error!("Failed to save history entry: {}", err);
                                 }
@@ -892,6 +894,7 @@ impl ShortcutAction for TranscribeAction {
                                     None,
                                     None,
                                     None,
+                                    Vec::new(),
                                 ) {
                                     error!("Failed to save failed history entry: {}", save_err);
                                 }

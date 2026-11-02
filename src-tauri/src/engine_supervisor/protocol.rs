@@ -10,8 +10,8 @@ use serde::{Deserialize, Serialize};
 use std::io::{self, Read, Write};
 use std::path::PathBuf;
 use transcribe_cpp::{
-    Backend, Capabilities, DeviceType, RunOptions, StreamOptions, StreamText, StreamUpdate,
-    Transcript,
+    Backend, Capabilities, DeviceType, RunOptions, Segment, StreamOptions, StreamText,
+    StreamUpdate, Transcript,
 };
 
 /// Refuse frames larger than this: a garbage length must not turn into a
@@ -44,10 +44,13 @@ pub enum Request {
     },
     /// Followed by the PCM frame to feed.
     Feed,
-    /// `want_language`: also report the model's detected language (costs a
-    /// transcript snapshot, so only asked for when it can change the outcome).
+    /// `want_language`: also report the model's detected language;
+    /// `want_segments`: also report its timed segments. Each costs a
+    /// transcript snapshot, so each is only asked for when its answer is
+    /// kept.
     Finalize {
         want_language: bool,
+        want_segments: bool,
     },
     StreamReset,
 }
@@ -82,6 +85,9 @@ pub enum Response {
         update: StreamUpdate,
         text: StreamText,
         language: Option<String>,
+        /// The model's timed segments; empty when not asked for or it
+        /// produced none.
+        segments: Vec<Segment>,
     },
     Ok,
     Error(String),

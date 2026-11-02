@@ -30,7 +30,9 @@ use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex, MutexGuard};
 use std::thread;
 use std::time::{Duration, Instant};
-use transcribe_cpp::{Backend, RunOptions, StreamOptions, StreamText, StreamUpdate, Transcript};
+use transcribe_cpp::{
+    Backend, RunOptions, Segment, StreamOptions, StreamText, StreamUpdate, Transcript,
+};
 
 /// Spawn, backend init and device listing. Listing first opens the GPU,
 /// which on macOS compiles ggml's Metal library when the system shader cache
@@ -172,6 +174,9 @@ pub struct Finalized {
     pub text: StreamText,
     /// The model's detected language, when asked for.
     pub language: Option<String>,
+    /// The model's timed segments; empty when not asked for or it produced
+    /// none.
+    pub segments: Vec<Segment>,
     pub elapsed: Duration,
 }
 
@@ -200,6 +205,7 @@ enum Command {
     Finalize {
         id: u64,
         want_language: bool,
+        want_segments: bool,
         epoch: u64,
         reply: Reply<Result<Option<Finalized>, EngineError>>,
     },
@@ -527,15 +533,21 @@ impl StreamHandle {
         let _ = self.commands.send(Command::Feed { id: self.id, pcm });
     }
 
-    /// Flush the stream and return its final text. `Ok(None)` if the stream
-    /// was lost or failed; fall back to batch transcription then.
-    /// `Err(Cancelled)` if [`EngineSupervisor::cancel`] stopped it.
-    pub fn finalize(mut self, want_language: bool) -> Result<Option<Finalized>, EngineError> {
+    /// Flush the stream and return its final text, and its detected language
+    /// and timed segments when asked for. `Ok(None)` if the stream was lost or
+    /// failed; fall back to batch transcription then. `Err(Cancelled)` if
+    /// [`EngineSupervisor::cancel`] stopped it.
+    pub fn finalize(
+        mut self,
+        want_language: bool,
+        want_segments: bool,
+    ) -> Result<Option<Finalized>, EngineError> {
         self.finished = true;
         let (reply, answer) = mpsc::channel();
         let command = Command::Finalize {
             id: self.id,
             want_language,
+            want_segments,
             epoch: self.epoch,
             reply,
         };
@@ -671,10 +683,11 @@ impl Owner {
                 Command::Finalize {
                     id,
                     want_language,
+                    want_segments,
                     epoch,
                     reply,
                 } => {
-                    let _ = reply.send(self.finalize(id, want_language, epoch));
+                    let _ = reply.send(self.finalize(id, want_language, want_segments, epoch));
                 }
                 Command::StreamReset { id } => {
                     if self.stream.as_ref().is_some_and(|s| s.id == id) {
@@ -997,6 +1010,7 @@ impl Owner {
         &mut self,
         id: u64,
         want_language: bool,
+        want_segments: bool,
         epoch: u64,
     ) -> Result<Option<Finalized>, EngineError> {
         // Checked first: a stream lost to a cancel must report the cancel,
@@ -1016,15 +1030,25 @@ impl Owner {
         }
         let deadline = self.deadlines().audio(ms_to_samples(stream.pending_ms));
         let started = Instant::now();
-        match self.call_work(&Request::Finalize { want_language }, None, deadline, epoch) {
+        match self.call_work(
+            &Request::Finalize {
+                want_language,
+                want_segments,
+            },
+            None,
+            deadline,
+            epoch,
+        ) {
             Ok(Response::Finalized {
                 update,
                 text,
                 language,
+                segments,
             }) => Ok(Some(Finalized {
                 update,
                 text,
                 language,
+                segments,
                 elapsed: started.elapsed(),
             })),
             Ok(other) => {
@@ -1561,7 +1585,7 @@ mod tests {
         let stream =
             engine.start_stream(RunOptions::default(), StreamOptions::default(), |_| {})?;
         feed_paced(&stream, pcm);
-        stream.finalize(false)
+        stream.finalize(false, false)
     }
 
     /// Block until the owner is waiting on `what` (a [`request_name`]) in
@@ -1686,7 +1710,7 @@ mod tests {
             .start_stream(RunOptions::default(), StreamOptions::default(), |_| {})
             .unwrap();
         feed_paced(&stream, &pcm);
-        let finalize = thread::spawn(move || stream.finalize(false));
+        let finalize = thread::spawn(move || stream.finalize(false, false));
         wait_in_flight(&engine, "stream finalize");
         let t = Instant::now();
         engine.cancel();
@@ -1716,7 +1740,7 @@ mod tests {
         wait_in_flight(&engine, "stream feed");
         let t = Instant::now();
         engine.cancel();
-        let result = stream.finalize(false);
+        let result = stream.finalize(false, false);
         println!("hung feed cancelled {:?} after cancel()", t.elapsed());
         assert!(matches!(result, Err(EngineError::Cancelled)));
         assert!(t.elapsed() < Duration::from_secs(2));
