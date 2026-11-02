@@ -21,11 +21,12 @@ mod memory;
 mod overlay;
 mod paste_tx;
 pub mod portable;
+mod scratchpad;
 mod secure_input;
 mod settings;
-mod sync;
 mod shortcut;
 mod signal_handle;
+mod sync;
 mod system_languages;
 mod transcription_coordinator;
 mod tray;
@@ -270,6 +271,9 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::cancel_meeting_ask,
             commands::meeting::start_meeting_bar_drag,
             commands::meeting::open_meeting_bar_menu,
+            commands::scratchpad::open_scratchpad,
+            commands::scratchpad::get_scratchpad_note,
+            commands::scratchpad::save_scratchpad_note,
             helpers::clamshell::is_laptop,
         ])
         .events(collect_events![
@@ -1235,7 +1239,12 @@ pub fn run(cli_args: CliArgs) {
         .on_menu_event(|app, event| {
             // The meeting bar's context menu item; the tray's own menu keeps
             // its dedicated handler below the tray icon.
-            if event.id.as_ref() == crate::overlay::MEETING_BAR_HIDE_FOR_HOUR_ID {
+            if event.id.as_ref() == crate::overlay::MEETING_BAR_SCRATCHPAD_ID {
+                // The Scratchpad: a quick note from anywhere. The window
+                // keeps its text locally; dictation taken while it is
+                // focused lands in the note instead of another app.
+                crate::scratchpad::open_window(app);
+            } else if event.id.as_ref() == crate::overlay::MEETING_BAR_HIDE_FOR_HOUR_ID {
                 // Wispr's "Hide for 1 hour": the idle disc goes away for an
                 // hour, until restart, or until a meeting starts.
                 crate::overlay::hide_meeting_bar_for(app, 3600);

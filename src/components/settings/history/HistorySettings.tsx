@@ -41,6 +41,7 @@ import { Input } from "../../ui/Input";
 import { Textarea } from "../../ui/Textarea";
 import { copyToClipboard } from "./clipboard";
 import { MeetingBadge } from "./MeetingBadge";
+import { NoteBadge } from "./NoteBadge";
 import { splitHighlight } from "./searchHighlight";
 import { TranscriptDialog } from "./TranscriptDialog";
 import { pickAndTranscribeFiles } from "./transcribeFiles";
@@ -730,6 +731,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         <div className="flex items-center gap-2 min-w-0">
           <p className="text-sm font-medium shrink-0">{formattedDate}</p>
           {entry.source === "meeting" && <MeetingBadge />}
+          {entry.source === "note" && <NoteBadge />}
           {entry.source_name && (
             <span
               className="flex items-center gap-1 min-w-0 text-sm text-ink-3"

@@ -8,7 +8,8 @@
     "quit": "Ukončit",
     "cancel": "Zrušit",
     "secureInputWarning": "⚠ Zkratky blokuje Secure Input",
-    "meetingBarHideForHour": "Skrýt na 1 hodinu"
+    "meetingBarHideForHour": "Skrýt na 1 hodinu",
+    "scratchpadOpen": "Rychlá poznámka"
   },
   "sidebar": {
     "general": "Obecné",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Ptát se lze jen na nahrávky schůzek.",
         "failedEmptyQuestion": "Nejdřív napište otázku.",
         "failed": "Na otázku se nepodařilo odpovědět."
-      }
+      },
+      "note": "Poznámka"
     },
     "debug": {
       "title": "Ladění",
@@ -1194,5 +1196,11 @@
     "learnMore": "Jak to vyřešit",
     "recorderBlocked": "Zkratky teď nelze nahrát — Secure Input v macOS blokuje události kláves. Nejprve vyřešte upozornění na Secure Input.",
     "dismiss": "Zavřít"
+  },
+  "scratchpad": {
+    "title": "Rychlá poznámka",
+    "placeholder": "Diktujte nebo pište — poznámka zůstává tady, lokálně.",
+    "copy": "Kopírovat",
+    "copied": "Zkopírováno"
   }
 }

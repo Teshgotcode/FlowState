@@ -8,7 +8,8 @@
     "quit": "退出",
     "cancel": "取消",
     "secureInputWarning": "⚠ 快捷键被 Secure Input 阻止",
-    "meetingBarHideForHour": "隐藏 1 小时"
+    "meetingBarHideForHour": "隐藏 1 小时",
+    "scratchpadOpen": "便笺本"
   },
   "sidebar": {
     "general": "通用",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "只能对会议录音提问。",
         "failedEmptyQuestion": "请先输入问题。",
         "failed": "无法回答这个问题。"
-      }
+      },
+      "note": "便笺"
     },
     "debug": {
       "title": "调试",
@@ -1194,5 +1196,11 @@
     "learnMore": "如何解决",
     "recorderBlocked": "当前无法录制快捷键——macOS 的 Secure Input 正在阻止按键事件。请先解决 Secure Input 警告。",
     "dismiss": "关闭"
+  },
+  "scratchpad": {
+    "title": "便笺本",
+    "placeholder": "听写或输入——便笺保存在这里（本地）。",
+    "copy": "复制",
+    "copied": "已复制"
   }
 }

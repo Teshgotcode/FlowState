@@ -8,7 +8,8 @@
     "quit": "Beenden",
     "cancel": "Abbrechen",
     "secureInputWarning": "⚠ Tastenkürzel durch Secure Input blockiert",
-    "meetingBarHideForHour": "Für 1 Stunde ausblenden"
+    "meetingBarHideForHour": "Für 1 Stunde ausblenden",
+    "scratchpadOpen": "Schnellnotiz"
   },
   "sidebar": {
     "general": "Allgemein",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Nur Meeting-Aufnahmen können befragt werden.",
         "failedEmptyQuestion": "Schreibe zuerst eine Frage.",
         "failed": "Die Frage konnte nicht beantwortet werden."
-      }
+      },
+      "note": "Notiz"
     },
     "debug": {
       "title": "Debug",
@@ -1194,5 +1196,11 @@
     "learnMore": "So behebst du das",
     "recorderBlocked": "Tastenkürzel können gerade nicht aufgezeichnet werden — macOS Secure Input blockiert Tastenereignisse. Behebe zuerst die Secure-Input-Warnung.",
     "dismiss": "Ausblenden"
+  },
+  "scratchpad": {
+    "title": "Schnellnotiz",
+    "placeholder": "Diktiere oder tippe — die Notiz bleibt hier, lokal.",
+    "copy": "Kopieren",
+    "copied": "Kopiert"
   }
 }

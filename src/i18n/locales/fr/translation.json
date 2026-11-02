@@ -8,7 +8,8 @@
     "quit": "Quitter",
     "cancel": "Annuler",
     "secureInputWarning": "⚠ Raccourcis bloqués par Secure Input",
-    "meetingBarHideForHour": "Masquer pendant 1 heure"
+    "meetingBarHideForHour": "Masquer pendant 1 heure",
+    "scratchpadOpen": "Brouillon rapide"
   },
   "sidebar": {
     "general": "Général",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Seuls les enregistrements de réunion peuvent être interrogés.",
         "failedEmptyQuestion": "Écris d'abord une question.",
         "failed": "La question n'a pas pu obtenir de réponse."
-      }
+      },
+      "note": "Note"
     },
     "debug": {
       "title": "Débogage",
@@ -1194,5 +1196,11 @@
     "learnMore": "Comment résoudre ce problème",
     "recorderBlocked": "Impossible d'enregistrer un raccourci pour le moment : Secure Input de macOS bloque les événements clavier. Résolvez d'abord l'avertissement Secure Input.",
     "dismiss": "Ignorer"
+  },
+  "scratchpad": {
+    "title": "Brouillon rapide",
+    "placeholder": "Dictez ou tapez — la note reste ici, en local.",
+    "copy": "Copier",
+    "copied": "Copié"
   }
 }

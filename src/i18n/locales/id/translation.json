@@ -8,7 +8,8 @@
     "quit": "Keluar",
     "cancel": "Batal",
     "secureInputWarning": "⚠ Pintasan diblokir oleh Secure Input",
-    "meetingBarHideForHour": "Sembunyikan selama 1 jam"
+    "meetingBarHideForHour": "Sembunyikan selama 1 jam",
+    "scratchpadOpen": "Catatan cepat"
   },
   "sidebar": {
     "general": "Umum",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Hanya rekaman rapat yang bisa ditanya.",
         "failedEmptyQuestion": "Tulis pertanyaan dulu.",
         "failed": "Pertanyaan tidak dapat dijawab."
-      }
+      },
+      "note": "Catatan"
     },
     "debug": {
       "title": "Debug",
@@ -1194,5 +1196,11 @@
     "learnMore": "Cara memperbaiki",
     "recorderBlocked": "Pintasan tidak dapat direkam saat ini — macOS Secure Input memblokir peristiwa tombol. Selesaikan peringatan Secure Input terlebih dahulu.",
     "dismiss": "Tutup"
+  },
+  "scratchpad": {
+    "title": "Catatan cepat",
+    "placeholder": "Dikte atau ketik — catatan tersimpan di sini, secara lokal.",
+    "copy": "Salin",
+    "copied": "Tersalin"
   }
 }

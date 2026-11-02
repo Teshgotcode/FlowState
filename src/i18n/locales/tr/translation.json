@@ -8,7 +8,8 @@
     "quit": "Çıkış",
     "cancel": "İptal",
     "secureInputWarning": "⚠ Kısayollar Secure Input tarafından engelleniyor",
-    "meetingBarHideForHour": "1 saat gizle"
+    "meetingBarHideForHour": "1 saat gizle",
+    "scratchpadOpen": "Hızlı not"
   },
   "sidebar": {
     "general": "Genel",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Yalnızca toplantı kayıtları hakkında soru sorulabilir.",
         "failedEmptyQuestion": "Önce bir soru yazın.",
         "failed": "Soruya yanıt verilemedi."
-      }
+      },
+      "note": "Not"
     },
     "debug": {
       "title": "Hata Ayıklama",
@@ -1194,5 +1196,11 @@
     "learnMore": "Bu nasıl düzeltilir",
     "recorderBlocked": "Şu anda kısayol kaydedilemiyor — macOS Secure Input tuş olaylarını engelliyor. Önce Secure Input uyarısını giderin.",
     "dismiss": "Kapat"
+  },
+  "scratchpad": {
+    "title": "Hızlı not",
+    "placeholder": "Dikte et veya yaz — not burada, yerel olarak saklanır.",
+    "copy": "Kopyala",
+    "copied": "Kopyalandı"
   }
 }

@@ -8,7 +8,8 @@
     "quit": "Surt",
     "cancel": "Cancel·la",
     "secureInputWarning": "⚠ Dreceres blocades per l'entrada segura",
-    "meetingBarHideForHour": "Amaga durant 1 hora"
+    "meetingBarHideForHour": "Amaga durant 1 hora",
+    "scratchpadOpen": "Esborrany ràpid"
   },
   "sidebar": {
     "general": "General",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Només es poden consultar els enregistraments de reunions.",
         "failedEmptyQuestion": "Escriu primer una pregunta.",
         "failed": "No s'ha pogut respondre la pregunta."
-      }
+      },
+      "note": "Nota"
     },
     "debug": {
       "title": "Depuració",
@@ -1194,5 +1196,11 @@
     "learnMore": "Com es resol",
     "recorderBlocked": "Ara no se'n poden enregistrar dreceres: l'entrada segura del macOS bloca els esdeveniments de tecla. Resol primer l'avís d'entrada segura.",
     "dismiss": "Descarta"
+  },
+  "scratchpad": {
+    "title": "Esborrany ràpid",
+    "placeholder": "Dicteu o escriviu — la nota es guarda aquí, localment.",
+    "copy": "Copia",
+    "copied": "Copiat"
   }
 }

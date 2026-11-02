@@ -8,7 +8,8 @@
     "quit": "結束",
     "cancel": "取消",
     "secureInputWarning": "⚠ 快捷鍵被 Secure Input 阻擋",
-    "meetingBarHideForHour": "隱藏 1 小時"
+    "meetingBarHideForHour": "隱藏 1 小時",
+    "scratchpadOpen": "便箋"
   },
   "sidebar": {
     "general": "一般",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "只能對會議錄音提問。",
         "failedEmptyQuestion": "請先輸入問題。",
         "failed": "無法回答這個問題。"
-      }
+      },
+      "note": "便箋"
     },
     "debug": {
       "title": "偵錯",
@@ -1194,5 +1196,11 @@
     "learnMore": "如何解決",
     "recorderBlocked": "目前無法錄製快捷鍵——macOS 的 Secure Input 正在阻擋按鍵事件。請先解決 Secure Input 警告。",
     "dismiss": "關閉"
+  },
+  "scratchpad": {
+    "title": "便箋",
+    "placeholder": "聽寫或輸入——便箋保存在這裡（本機）。",
+    "copy": "複製",
+    "copied": "已複製"
   }
 }

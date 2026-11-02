@@ -8,7 +8,8 @@
     "quit": "יציאה",
     "cancel": "ביטול",
     "secureInputWarning": "⚠ קיצורי המקשים חסומים על ידי Secure Input",
-    "meetingBarHideForHour": "הסתר למשך שעה"
+    "meetingBarHideForHour": "הסתר למשך שעה",
+    "scratchpadOpen": "פתק מהיר"
   },
   "sidebar": {
     "general": "כללי",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "אפשר לשאול רק על הקלטות פגישות.",
         "failedEmptyQuestion": "קודם כתבו שאלה.",
         "failed": "לא ניתן היה לענות על השאלה."
-      }
+      },
+      "note": "פתק"
     },
     "debug": {
       "title": "ניפוי שגיאות",
@@ -1194,5 +1196,11 @@
     "learnMore": "איך לתקן את זה",
     "recorderBlocked": "לא ניתן להקליט קיצורים כרגע — Secure Input של macOS חוסם אירועי מקשים. פתור תחילה את אזהרת Secure Input.",
     "dismiss": "התעלם"
+  },
+  "scratchpad": {
+    "title": "פתק מהיר",
+    "placeholder": "הקליטו או הקלידו — הפתק נשמר כאן, מקומית.",
+    "copy": "העתק",
+    "copied": "הועתק"
   }
 }

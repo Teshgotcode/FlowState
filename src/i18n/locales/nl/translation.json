@@ -8,7 +8,8 @@
     "quit": "Afsluiten",
     "cancel": "Annuleren",
     "secureInputWarning": "⚠ Sneltoetsen geblokkeerd door Secure Input",
-    "meetingBarHideForHour": "1 uur verbergen"
+    "meetingBarHideForHour": "1 uur verbergen",
+    "scratchpadOpen": "Kladblok"
   },
   "sidebar": {
     "general": "Algemeen",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Alleen vergaderopnames kunnen bevraagd worden.",
         "failedEmptyQuestion": "Schrijf eerst een vraag.",
         "failed": "De vraag kon niet beantwoord worden."
-      }
+      },
+      "note": "Notitie"
     },
     "debug": {
       "title": "Probleemoplossing",
@@ -1194,5 +1196,11 @@
     "learnMore": "Hoe je dit oplost",
     "recorderBlocked": "Sneltoetsen kunnen nu niet worden opgenomen — Secure Input van macOS blokkeert toetsgebeurtenissen. Los eerst de Secure Input-waarschuwing op.",
     "dismiss": "Sluiten"
+  },
+  "scratchpad": {
+    "title": "Kladblok",
+    "placeholder": "Dicteer of typ — de notitie blijft hier, lokaal.",
+    "copy": "Kopiëren",
+    "copied": "Gekopieerd"
   }
 }

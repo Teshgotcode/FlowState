@@ -8,7 +8,8 @@
     "quit": "Zamknij",
     "cancel": "Anuluj",
     "secureInputWarning": "⚠ Skróty zablokowane przez Secure Input",
-    "meetingBarHideForHour": "Ukryj na godzinę"
+    "meetingBarHideForHour": "Ukryj na godzinę",
+    "scratchpadOpen": "Szybka notatka"
   },
   "sidebar": {
     "general": "Ogólne",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "Pytać można tylko nagrań spotkań.",
         "failedEmptyQuestion": "Najpierw napisz pytanie.",
         "failed": "Na pytanie nie udało się odpowiedzieć."
-      }
+      },
+      "note": "Notatka"
     },
     "debug": {
       "title": "Debugowanie",
@@ -1194,5 +1196,11 @@
     "learnMore": "Jak to naprawić",
     "recorderBlocked": "Nie można teraz nagrać skrótu — Secure Input w macOS blokuje zdarzenia klawiszy. Najpierw rozwiąż ostrzeżenie o Secure Input.",
     "dismiss": "Odrzuć"
+  },
+  "scratchpad": {
+    "title": "Szybka notatka",
+    "placeholder": "Nadiktuj lub napisz — notatka zostaje tutaj, lokalnie.",
+    "copy": "Kopiuj",
+    "copied": "Skopiowano"
   }
 }

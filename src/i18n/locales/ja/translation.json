@@ -8,7 +8,8 @@
     "quit": "終了",
     "cancel": "キャンセル",
     "secureInputWarning": "⚠ Secure Input でショートカットがブロック中",
-    "meetingBarHideForHour": "1時間非表示にする"
+    "meetingBarHideForHour": "1時間非表示にする",
+    "scratchpadOpen": "スクラッチパッド"
   },
   "sidebar": {
     "general": "一般",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "会議の録音についてのみ質問できます。",
         "failedEmptyQuestion": "まず質問を入力してください。",
         "failed": "質問に答えられませんでした。"
-      }
+      },
+      "note": "メモ"
     },
     "debug": {
       "title": "デバッグ",
@@ -1194,5 +1196,11 @@
     "learnMore": "解決方法",
     "recorderBlocked": "現在ショートカットを記録できません。macOS の Secure Input がキーイベントをブロックしています。先に Secure Input の警告を解消してください。",
     "dismiss": "閉じる"
+  },
+  "scratchpad": {
+    "title": "スクラッチパッド",
+    "placeholder": "話すか入力してください —メモはここにローカル保存されます。",
+    "copy": "コピー",
+    "copied": "コピーしました"
   }
 }

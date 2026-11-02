@@ -1392,6 +1392,41 @@ async openMeetingBarMenu() : Promise<Result<null, string>> {
 }
 },
 /**
+ * Open the Scratchpad: the small note window with the caret ready, shown
+ * from the meeting bar's menu. The note persists locally between opens.
+ */
+async openScratchpad() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("open_scratchpad") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The Scratchpad note's current text ("" before the first save).
+ */
+async getScratchpadNote() : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_scratchpad_note") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Save the note's text to `scratchpad.txt` in the app data directory.
+ * Local only — the note never leaves the machine.
+ */
+async saveScratchpadNote(content: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("save_scratchpad_note", { content }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Checks if the Mac is a laptop by detecting battery presence
  * 
  * This uses pmset to check for battery information.
@@ -1674,7 +1709,11 @@ export type HistorySource =
 /**
  * A meeting session: an explicit start/stop recording, not a hotkey take.
  */
-"meeting"
+"meeting" | 
+/**
+ * A take dictated into the Scratchpad's note window.
+ */
+"note"
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * Result of changing keyboard implementation

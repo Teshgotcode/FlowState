@@ -8,7 +8,8 @@
     "quit": "إنهاء",
     "cancel": "إلغاء",
     "secureInputWarning": "⚠ الاختصارات محجوبة بواسطة Secure Input",
-    "meetingBarHideForHour": "إخفاء لمدة ساعة"
+    "meetingBarHideForHour": "إخفاء لمدة ساعة",
+    "scratchpadOpen": "المسودة السريعة"
   },
   "sidebar": {
     "general": "عام",
@@ -839,7 +840,8 @@
         "failedNotMeeting": "يمكن السؤال عن تسجيلات الاجتماعات فقط.",
         "failedEmptyQuestion": "اكتب سؤالًا أولًا.",
         "failed": "تعذّر الإجابة عن السؤال."
-      }
+      },
+      "note": "ملاحظة"
     },
     "debug": {
       "title": "تصحيح الأخطاء",
@@ -1194,5 +1196,11 @@
     "learnMore": "كيفية الإصلاح",
     "recorderBlocked": "لا يمكن تسجيل الاختصارات الآن — يحجب Secure Input في macOS أحداث المفاتيح. عالج تحذير Secure Input أولاً.",
     "dismiss": "تجاهل"
+  },
+  "scratchpad": {
+    "title": "المسودة السريعة",
+    "placeholder": "أمْلِ أو اكتب — الملاحظة تُحفظ هنا محليًا.",
+    "copy": "نسخ",
+    "copied": "تم النسخ"
   }
 }
