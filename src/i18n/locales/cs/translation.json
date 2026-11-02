@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Hledat v přepisu",
       "transcriptNoMatches": "Žádné segmenty neodpovídají „{{query}}“.",
       "transcriptEmpty": "Tato položka nemá žádné segmenty s časovými razítky.",
+      "searchPlaceholder": "Hledat v historii",
+      "searching": "Hledám...",
+      "searchNoResults": "Žádné výsledky pro \"{{query}}\".",
+      "searchResultCount": "Výsledky: {{count}}",
       "meetingNote": {
         "title": "Poznámka z porady",
         "description": "Návrh napsaný místním modelem LLM. Nic neopouští počítač.",

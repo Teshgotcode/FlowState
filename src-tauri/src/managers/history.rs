@@ -58,6 +58,29 @@ pub struct PaginatedHistory {
     pub has_more: bool,
 }
 
+/// One page of `search_history` matches plus the full match count, so the
+/// frontend can say how many hits a query found without paging everything.
+#[derive(Clone, Debug, Serialize, Deserialize, Type)]
+pub struct SearchedHistory {
+    pub entries: Vec<HistoryEntry>,
+    /// Every entry matching the query, not just this page.
+    pub total: i64,
+    pub has_more: bool,
+}
+
+/// Escape `%`, `_` and `\\` so a user query only matches itself as a
+/// `LIKE` pattern instead of acting as a wildcard.
+fn escape_like_pattern(query: &str) -> String {
+    let mut escaped = String::with_capacity(query.len());
+    for ch in query.chars() {
+        if ch == '%' || ch == '_' || ch == '\\' {
+            escaped.push('\\');
+        }
+        escaped.push(ch);
+    }
+    escaped
+}
+
 #[derive(Clone, Debug, Serialize, Deserialize, Type, tauri_specta::Event)]
 #[serde(tag = "action")]
 pub enum HistoryUpdatePayload {
@@ -811,6 +834,58 @@ impl HistoryManager {
         Ok(PaginatedHistory { entries, has_more })
     }
 
+    /// Case-insensitive substring search over `title` and
+    /// `transcription_text`, newest first. An empty query matches everything,
+    /// so the frontend only calls this with a real query; the plain list
+    /// stays `get_history_entries`.
+    pub async fn search_history(
+        &self,
+        query: &str,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Result<SearchedHistory> {
+        let conn = self.get_connection()?;
+        Self::search_history_with_conn(&conn, query, limit, offset)
+    }
+
+    fn search_history_with_conn(
+        conn: &Connection,
+        query: &str,
+        limit: Option<usize>,
+        offset: Option<usize>,
+    ) -> Result<SearchedHistory> {
+        const MATCHES: &str = "title LIKE ?1 ESCAPE '\\' OR transcription_text LIKE ?1 ESCAPE '\\'";
+        // LIKE is case-insensitive for ASCII by default; CJK and accented
+        // letters match exactly, which is what a dictation search expects.
+        let pattern = format!("%{}%", escape_like_pattern(query.trim()));
+        let limit = limit.map(|l| l.min(100)).unwrap_or(50) as i64;
+        let offset = offset.unwrap_or(0) as i64;
+
+        let total: i64 = conn.query_row(
+            &format!("SELECT COUNT(*) FROM transcription_history WHERE {MATCHES}"),
+            params![pattern],
+            |row| row.get(0),
+        )?;
+
+        let mut stmt = conn.prepare(&format!(
+            "SELECT {ENTRY_COLUMNS}
+             FROM transcription_history
+             WHERE {MATCHES}
+             ORDER BY id DESC
+             LIMIT ?2 OFFSET ?3"
+        ))?;
+        let entries = stmt
+            .query_map(params![pattern, limit, offset], Self::map_history_entry)?
+            .collect::<std::result::Result<Vec<_>, _>>()?;
+
+        let has_more = offset + (entries.len() as i64) < total;
+        Ok(SearchedHistory {
+            entries,
+            total,
+            has_more,
+        })
+    }
+
     #[cfg(test)]
     fn get_latest_entry_with_conn(conn: &Connection) -> Result<Option<HistoryEntry>> {
         let mut stmt = conn.prepare(&format!(
@@ -1179,5 +1254,105 @@ mod tests {
             .expect("completed entry exists");
 
         assert_eq!(entry.transcription_text, "dictated");
+    }
+
+    #[test]
+    fn search_matches_text_case_insensitively_and_newest_first() {
+        let conn = setup_conn();
+        insert_entry(&conn, 100, "hello world", None);
+        insert_entry(&conn, 200, "a HELLO again", None);
+        insert_entry(&conn, 300, "nothing here", None);
+
+        let result = HistoryManager::search_history_with_conn(&conn, "hello", Some(10), None)
+            .expect("search history");
+
+        assert_eq!(result.total, 2);
+        assert!(!result.has_more);
+        let ids: Vec<i64> = result.entries.iter().map(|e| e.id).collect();
+        // Newest entry with a match first.
+        assert_eq!(ids, [2, 1]);
+    }
+
+    #[test]
+    fn search_matches_titles_and_pages_with_offset() {
+        let conn = setup_conn();
+        insert_entry(&conn, 100, "alpha", None);
+        insert_entry(&conn, 200, "beta", None);
+        // A match in the auto-generated title, not the text.
+        conn.execute(
+            "UPDATE transcription_history SET title = 'Meeting Recap' WHERE id = 2",
+            [],
+        )
+        .expect("set title");
+
+        let by_text = HistoryManager::search_history_with_conn(&conn, "recap", Some(10), None)
+            .expect("search by title");
+        assert_eq!(by_text.total, 1);
+        assert_eq!(by_text.entries[0].id, 2);
+        assert!(!by_text.has_more);
+
+        // Both entries match "a"; a one-entry page is followed by the
+        // second-newest match.
+        let page = HistoryManager::search_history_with_conn(&conn, "a", Some(1), None)
+            .expect("first page");
+        assert_eq!(page.entries.len(), 1);
+        assert_eq!(page.entries[0].id, 2);
+        assert!(page.has_more);
+        let next = HistoryManager::search_history_with_conn(&conn, "a", Some(1), Some(1))
+            .expect("second page");
+        assert_eq!(next.entries.len(), 1);
+        assert_eq!(next.entries[0].id, 1);
+        assert!(!next.has_more);
+    }
+
+    #[test]
+    fn search_over_many_entries_stays_fast() {
+        let conn = setup_conn();
+        for i in 0..1500 {
+            insert_entry(
+                &conn,
+                i,
+                &format!("dictation number {} with some everyday words", i),
+                None,
+            );
+        }
+
+        let start = std::time::Instant::now();
+        for query in ["everyday", "number 700", "zzz", "dictation"] {
+            let result = HistoryManager::search_history_with_conn(&conn, query, Some(30), None)
+                .expect("search history");
+            assert!(result.total > 0 || query == "zzz");
+        }
+        let elapsed = start.elapsed();
+        println!("4 searches over 1500 entries took {:?}", elapsed);
+        assert!(
+            elapsed.as_millis() < 500,
+            "search over 1500 entries took {:?}",
+            elapsed
+        );
+    }
+
+    #[test]
+    fn search_without_matches_and_escaped_wildcards() {
+        let conn = setup_conn();
+        insert_entry(&conn, 100, "50% done", None);
+        insert_entry(&conn, 200, "plain text", None);
+
+        let none = HistoryManager::search_history_with_conn(&conn, "missing", Some(10), None)
+            .expect("search without matches");
+        assert_eq!(none.total, 0);
+        assert!(none.entries.is_empty());
+        assert!(!none.has_more);
+
+        // A literal % only matches entries containing a %.
+        let escaped = HistoryManager::search_history_with_conn(&conn, "50%", Some(10), None)
+            .expect("search escaped wildcard");
+        assert_eq!(escaped.total, 1);
+        assert_eq!(escaped.entries[0].transcription_text, "50% done");
+
+        // The unescaped wildcard would match both; escaping keeps it literal.
+        let broad = HistoryManager::search_history_with_conn(&conn, "0% d", Some(10), None)
+            .expect("search wildcard as wildcard");
+        assert_eq!(broad.total, 1);
     }
 }

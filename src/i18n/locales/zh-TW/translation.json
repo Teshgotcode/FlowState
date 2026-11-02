@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "搜尋逐字稿",
       "transcriptNoMatches": "沒有符合「{{query}}」的段落。",
       "transcriptEmpty": "此項目沒有含時間戳記的段落。",
+      "searchPlaceholder": "搜尋記錄",
+      "searching": "搜尋中...",
+      "searchNoResults": "沒有「{{query}}」的結果。",
+      "searchResultCount": "結果：{{count}}",
       "meetingNote": {
         "title": "會議紀錄",
         "description": "由本機 LLM 撰寫的草稿。任何內容都不會離開這台電腦。",

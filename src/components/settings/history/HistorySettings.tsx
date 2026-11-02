@@ -15,6 +15,7 @@ import {
   FolderOpen,
   RotateCcw,
   ScrollText,
+  Search,
   Star,
   Trash2,
   X,
@@ -35,8 +36,10 @@ import {
 import { formatDateTime } from "@/utils/dateFormat";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
+import { Input } from "../../ui/Input";
 import { copyToClipboard } from "./clipboard";
 import { MeetingBadge } from "./MeetingBadge";
+import { splitHighlight } from "./searchHighlight";
 import { TranscriptDialog } from "./TranscriptDialog";
 import { pickAndTranscribeFiles } from "./transcribeFiles";
 
@@ -62,6 +65,32 @@ const IconButton: React.FC<{
 );
 
 const PAGE_SIZE = 30;
+
+// Keystrokes rest this long before a search runs, so typing a word fires
+// one query instead of one per letter.
+const SEARCH_DEBOUNCE_MS = 250;
+
+// Wraps every case-insensitive match of `query` in `text` with a <mark> so
+// search hits stand out in an entry.
+const HighlightedText: React.FC<{ text: string; query: string }> = ({
+  text,
+  query,
+}) => (
+  <>
+    {splitHighlight(text, query).map((part, index) =>
+      part.match ? (
+        <mark
+          key={index}
+          className="rounded-sm bg-logo-primary/25 px-0.5 font-semibold text-text"
+        >
+          {part.text}
+        </mark>
+      ) : (
+        <React.Fragment key={index}>{part.text}</React.Fragment>
+      ),
+    )}
+  </>
+);
 
 // Long text folds to this many lines until "Show more".
 const FOLDED_LINES = 4;
@@ -100,10 +129,43 @@ export const HistorySettings: React.FC = () => {
   const entriesRef = useRef<HistoryEntry[]>([]);
   const loadingRef = useRef(false);
 
-  // Keep ref in sync for use in IntersectionObserver callback
+  // History search: the raw input, its debounced form, and the results
+  // page-by-page. An empty query leaves the plain list untouched.
+  const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<HistoryEntry[]>([]);
+  const [searchTotal, setSearchTotal] = useState(0);
+  const [searchHasMore, setSearchHasMore] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [openRequest, setOpenRequest] = useState<{
+    id: number;
+    token: number;
+  } | null>(null);
+  const searchResultsRef = useRef<HistoryEntry[]>([]);
+  const searchSeqRef = useRef(0);
+  const searchLoadingRef = useRef(false);
+  const openTokenRef = useRef(0);
+  const isSearching = debouncedQuery.length > 0;
+
+  // Keep refs in sync for use in IntersectionObserver callback
   useEffect(() => {
     entriesRef.current = entries;
   }, [entries]);
+
+  useEffect(() => {
+    searchResultsRef.current = searchResults;
+  }, [searchResults]);
+
+  // Debounce the query so a search runs once the user pauses, not per
+  // keystroke.
+  useEffect(() => {
+    const timer = setTimeout(
+      () => setDebouncedQuery(query.trim()),
+      SEARCH_DEBOUNCE_MS,
+    );
+    return () => clearTimeout(timer);
+  }, [query]);
 
   const loadPage = useCallback(async (cursor?: number) => {
     const isFirstPage = cursor === undefined;
@@ -137,22 +199,92 @@ export const HistorySettings: React.FC = () => {
     }
   }, []);
 
+  const searchPage = useCallback(
+    async (searchQuery: string, offset: number) => {
+      // Load-more pages wait their turn; a fresh query supersedes whatever is
+      // in flight through the sequence number below.
+      const isNewSearch = offset === 0;
+      if (!isNewSearch && searchLoadingRef.current) return;
+      searchLoadingRef.current = true;
+      if (isNewSearch) setSearching(true);
+      const seq = ++searchSeqRef.current;
+
+      try {
+        const result = await commands.searchHistory(
+          searchQuery,
+          PAGE_SIZE,
+          offset,
+        );
+        // A newer search superseded this one; drop the stale page.
+        if (seq !== searchSeqRef.current) return;
+        if (result.status === "ok") {
+          const { entries: newEntries, total, has_more } = result.data;
+          setSearchResults((prev) =>
+            isNewSearch
+              ? newEntries
+              : [
+                  ...prev,
+                  ...newEntries.filter(
+                    (entry) =>
+                      !prev.some((existing) => existing.id === entry.id),
+                  ),
+                ],
+          );
+          setSearchTotal(total);
+          setSearchHasMore(has_more);
+        }
+      } catch (error) {
+        console.error("Failed to search history entries:", error);
+      } finally {
+        if (seq === searchSeqRef.current) {
+          if (isNewSearch) setSearching(false);
+          searchLoadingRef.current = false;
+        }
+      }
+    },
+    [],
+  );
+
+  // A new query starts from its first page; an empty one ends the search
+  // and the plain list shows again, unchanged.
+  useEffect(() => {
+    setActiveIndex(0);
+    if (debouncedQuery) {
+      void searchPage(debouncedQuery, 0);
+    } else {
+      searchSeqRef.current += 1;
+      searchLoadingRef.current = false;
+      setSearching(false);
+      setSearchResults([]);
+      setSearchTotal(0);
+      setSearchHasMore(false);
+    }
+  }, [debouncedQuery, searchPage]);
+
   // Initial load
   useEffect(() => {
     loadPage();
   }, [loadPage]);
 
-  // Infinite scroll via IntersectionObserver
+  // Infinite scroll via IntersectionObserver, for the plain list and for
+  // search results alike.
   useEffect(() => {
-    if (loading) return;
+    if (loading || searching) return;
 
     const sentinel = sentinelRef.current;
-    if (!sentinel || !hasMore) return;
+    if (!sentinel) return;
+    if (isSearching ? !searchHasMore : !hasMore) return;
 
     const observer = new IntersectionObserver(
       (observerEntries) => {
         const first = observerEntries[0];
-        if (first.isIntersecting) {
+        if (!first.isIntersecting) return;
+        if (isSearching) {
+          const results = searchResultsRef.current;
+          if (results.length > 0) {
+            void searchPage(debouncedQuery, results.length);
+          }
+        } else {
           const lastEntry = entriesRef.current[entriesRef.current.length - 1];
           if (lastEntry) {
             loadPage(lastEntry.id);
@@ -164,7 +296,16 @@ export const HistorySettings: React.FC = () => {
 
     observer.observe(sentinel);
     return () => observer.disconnect();
-  }, [loading, hasMore, loadPage]);
+  }, [
+    loading,
+    searching,
+    isSearching,
+    hasMore,
+    searchHasMore,
+    debouncedQuery,
+    loadPage,
+    searchPage,
+  ]);
 
   // Listen for new entries added from the transcription pipeline
   useEffect(() => {
@@ -190,24 +331,26 @@ export const HistorySettings: React.FC = () => {
   }, []);
 
   const toggleSaved = async (id: number) => {
-    // Optimistic update
-    setEntries((prev) =>
-      prev.map((e) => (e.id === id ? { ...e, saved: !e.saved } : e)),
-    );
+    // Optimistic update, in the plain list and in any search results
+    const flip = (entry: HistoryEntry): HistoryEntry => ({
+      ...entry,
+      saved: !entry.saved,
+    });
+    const apply = (fn: (prev: HistoryEntry[]) => HistoryEntry[]) => {
+      setEntries(fn);
+      setSearchResults(fn);
+    };
+    apply((prev) => prev.map((e) => (e.id === id ? flip(e) : e)));
     try {
       const result = await commands.toggleHistoryEntrySaved(id);
       if (result.status !== "ok") {
         // Revert on failure
-        setEntries((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, saved: !e.saved } : e)),
-        );
+        apply((prev) => prev.map((e) => (e.id === id ? flip(e) : e)));
       }
     } catch (error) {
       console.error("Failed to toggle saved status:", error);
       // Revert on failure
-      setEntries((prev) =>
-        prev.map((e) => (e.id === id ? { ...e, saved: !e.saved } : e)),
-      );
+      apply((prev) => prev.map((e) => (e.id === id ? flip(e) : e)));
     }
   };
 
@@ -233,8 +376,9 @@ export const HistorySettings: React.FC = () => {
   );
 
   const deleteAudioEntry = async (id: number) => {
-    // Optimistically remove
+    // Optimistically remove, from the plain list and any search results
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    setSearchResults((prev) => prev.filter((e) => e.id !== id));
     try {
       const result = await commands.deleteHistoryEntry(id);
       if (result.status !== "ok") {
@@ -267,15 +411,55 @@ export const HistorySettings: React.FC = () => {
     }
   };
 
+  // Keyboard navigation over the search results: the arrows move between
+  // hits, Enter opens the one under the cursor, Esc clears the search.
+  const handleSearchKeyDown = (
+    event: React.KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      if (searchResults.length > 0) {
+        setActiveIndex((index) =>
+          Math.min(index + 1, searchResults.length - 1),
+        );
+      }
+    } else if (event.key === "ArrowUp") {
+      event.preventDefault();
+      setActiveIndex((index) => Math.max(index - 1, 0));
+    } else if (event.key === "Enter") {
+      const entry = searchResults[activeIndex];
+      if (entry) {
+        openTokenRef.current += 1;
+        setOpenRequest({ id: entry.id, token: openTokenRef.current });
+      }
+    } else if (event.key === "Escape") {
+      setQuery("");
+    }
+  };
+
+  const displayEntries = isSearching ? searchResults : entries;
+
   let content: React.ReactNode;
 
-  if (loading) {
+  if (isSearching && searching) {
+    content = (
+      <div className="px-4 py-3 text-center text-ink-2">
+        {t("settings.history.searching")}
+      </div>
+    );
+  } else if (isSearching && searchResults.length === 0) {
+    content = (
+      <div className="px-4 py-3 text-center text-ink-2">
+        {t("settings.history.searchNoResults", { query: debouncedQuery })}
+      </div>
+    );
+  } else if (loading) {
     content = (
       <div className="px-4 py-3 text-center text-ink-2">
         {t("settings.history.loading")}
       </div>
     );
-  } else if (entries.length === 0) {
+  } else if (displayEntries.length === 0) {
     content = (
       <div className="px-4 py-3 text-center text-ink-2">
         {t("settings.history.empty")}
@@ -286,7 +470,7 @@ export const HistorySettings: React.FC = () => {
       <>
         <AudioPlayerGroup>
           <div className="divide-y divide-line">
-            {entries.map((entry) => (
+            {displayEntries.map((entry, index) => (
               <HistoryEntryComponent
                 key={entry.id}
                 entry={entry}
@@ -297,6 +481,10 @@ export const HistorySettings: React.FC = () => {
                 deleteAudio={deleteAudioEntry}
                 retryTranscription={commands.retryHistoryEntryTranscription}
                 cancelTranscription={commands.cancelHistoryEntryTranscription}
+                highlight={isSearching ? debouncedQuery : undefined}
+                forceExpanded={isSearching}
+                selected={isSearching && index === activeIndex}
+                openRequest={openRequest}
               />
             ))}
           </div>
@@ -329,6 +517,36 @@ export const HistorySettings: React.FC = () => {
             />
           </div>
         </div>
+        <div className="relative px-4">
+          <Search
+            className="pointer-events-none absolute top-1/2 left-6 h-3.5 w-3.5 -translate-y-1/2 text-ink-3"
+            aria-hidden="true"
+          />
+          <Input
+            variant="compact"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleSearchKeyDown}
+            placeholder={t("settings.history.searchPlaceholder")}
+            aria-label={t("settings.history.searchPlaceholder")}
+            className="w-full font-normal ps-8 pe-7"
+          />
+          {query && (
+            <button
+              type="button"
+              onClick={() => setQuery("")}
+              aria-label={t("common.clear")}
+              className="absolute top-1/2 right-6 -translate-y-1/2 cursor-pointer rounded p-0.5 text-ink-3 transition-colors hover:text-text"
+            >
+              <X className="h-3.5 w-3.5" aria-hidden="true" />
+            </button>
+          )}
+        </div>
+        {isSearching && searchTotal > 0 && (
+          <p className="px-4 text-xs text-ink-3">
+            {t("settings.history.searchResultCount", { count: searchTotal })}
+          </p>
+        )}
         <div className="bg-background border border-line rounded-lg overflow-visible">
           {content}
         </div>
@@ -346,6 +564,14 @@ interface HistoryEntryProps {
   deleteAudio: (id: number) => Promise<void>;
   retryTranscription: (id: number) => Promise<void>;
   cancelTranscription: (id: number) => Promise<void>;
+  /** The active search query; its hits are marked in the text. */
+  highlight?: string;
+  /** Search results never fold: a hit can sit past the fold line. */
+  forceExpanded?: boolean;
+  /** The hit the keyboard cursor is on, while a search is active. */
+  selected?: boolean;
+  /** Opens this entry when `token` changes, from the search box's Enter. */
+  openRequest?: { id: number; token: number } | null;
 }
 
 const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
@@ -357,6 +583,10 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   deleteAudio,
   retryTranscription,
   cancelTranscription,
+  highlight,
+  forceExpanded,
+  selected,
+  openRequest,
 }) => {
   const { t, i18n } = useTranslation();
   const [showCopied, setShowCopied] = useState(false);
@@ -367,6 +597,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const [expanded, setExpanded] = useState(false);
   const [overflows, setOverflows] = useState(false);
   const textRef = useRef<HTMLParagraphElement>(null);
+  const rootRef = useRef<HTMLDivElement>(null);
 
   // Queued or being transcribed in the background.
   const retrying = job !== undefined;
@@ -374,10 +605,30 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     if (!retrying) setCancelling(false);
   }, [retrying]);
   const hasTranscription = entry.transcription_text.trim().length > 0;
-  const folded = hasTranscription && !retrying && !expanded;
   // Only entries the model gave timed segments have a transcript to show;
   // old dictations render exactly as before, without the button.
   const hasSegments = (entry.metadata?.segments?.length ?? 0) > 0;
+  // Search results never fold, so a hit past the fold line stays visible.
+  useEffect(() => {
+    if (forceExpanded) setExpanded(true);
+  }, [forceExpanded]);
+  // Keep the keyboard cursor's entry in view.
+  useEffect(() => {
+    if (selected) {
+      rootRef.current?.scrollIntoView({ block: "nearest" });
+    }
+  }, [selected]);
+  // The search box opens this entry on Enter: its transcript window when it
+  // has segments, the full text otherwise.
+  useEffect(() => {
+    if (!openRequest || openRequest.id !== entry.id) return;
+    if (hasSegments || !hasTranscription) {
+      setShowTranscript(true);
+    } else {
+      setExpanded(true);
+    }
+  }, [openRequest, hasSegments, hasTranscription, entry.id]);
+  const folded = hasTranscription && !retrying && !expanded && !forceExpanded;
 
   // Offer "Show more" only when the folded text is actually cut off.
   useLayoutEffect(() => {
@@ -431,7 +682,12 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   }
 
   return (
-    <div className="px-4 py-2 pb-5 flex flex-col gap-3">
+    <div
+      ref={rootRef}
+      className={`px-4 py-2 pb-5 flex flex-col gap-3 ${
+        selected ? "bg-logo-primary/10" : ""
+      }`}
+    >
       <div className="flex justify-between items-center gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <p className="text-sm font-medium shrink-0">{formattedDate}</p>
@@ -541,14 +797,23 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             }
           `}</style>
           )}
-          {retrying
-            ? progressText
-            : hasTranscription
-              ? entry.transcription_text
-              : entry.source_name
-                ? // Cancelled, interrupted by a quit, or failed.
-                  t("settings.history.notTranscribed")
-                : t("settings.history.transcriptionFailed")}
+          {retrying ? (
+            progressText
+          ) : hasTranscription ? (
+            highlight ? (
+              <HighlightedText
+                text={entry.transcription_text}
+                query={highlight}
+              />
+            ) : (
+              entry.transcription_text
+            )
+          ) : entry.source_name ? (
+            // Cancelled, interrupted by a quit, or failed.
+            t("settings.history.notTranscribed")
+          ) : (
+            t("settings.history.transcriptionFailed")
+          )}
         </p>
         {hasTranscription && !retrying && (expanded || overflows) && (
           <button

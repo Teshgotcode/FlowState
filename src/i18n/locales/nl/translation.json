@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Zoeken in het transcript",
       "transcriptNoMatches": "Geen segmenten komen overeen met \"{{query}}\".",
       "transcriptEmpty": "Dit item heeft geen segmenten met tijdstempels.",
+      "searchPlaceholder": "Zoeken in geschiedenis",
+      "searching": "Zoeken...",
+      "searchNoResults": "Geen resultaten voor \"{{query}}\".",
+      "searchResultCount": "Resultaten: {{count}}",
       "meetingNote": {
         "title": "Vergadernotitie",
         "description": "Een concept geschreven door je lokale LLM. Niets verlaat de machine.",

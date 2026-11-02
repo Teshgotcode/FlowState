@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Tìm trong bản ghi chép",
       "transcriptNoMatches": "Không có phân đoạn nào khớp với \"{{query}}\".",
       "transcriptEmpty": "Mục này không có phân đoạn có dấu thời gian.",
+      "searchPlaceholder": "Tìm trong lịch sử",
+      "searching": "Đang tìm...",
+      "searchNoResults": "Không có kết quả cho \"{{query}}\".",
+      "searchResultCount": "Kết quả: {{count}}",
       "meetingNote": {
         "title": "Ghi chú cuộc họp",
         "description": "Bản nháp do LLM cục bộ của bạn viết. Không gì rời khỏi máy.",

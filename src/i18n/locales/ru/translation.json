@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Поиск по расшифровке",
       "transcriptNoMatches": "Ни один фрагмент не соответствует запросу «{{query}}».",
       "transcriptEmpty": "В этой записи нет фрагментов с отметками времени.",
+      "searchPlaceholder": "Поиск по истории",
+      "searching": "Поиск...",
+      "searchNoResults": "Нет результатов для \"{{query}}\".",
+      "searchResultCount": "Результаты: {{count}}",
       "meetingNote": {
         "title": "Заметка о встрече",
         "description": "Черновик, написанный локальной LLM. Ничего не покидает компьютер.",

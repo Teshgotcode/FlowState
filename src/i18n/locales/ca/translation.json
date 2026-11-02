@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Cerca a la transcripció",
       "transcriptNoMatches": "Cap segment coincideix amb \"{{query}}\".",
       "transcriptEmpty": "Aquesta entrada no té segments amb marques de temps.",
+      "searchPlaceholder": "Cerca a l'historial",
+      "searching": "Cercant...",
+      "searchNoResults": "Cap resultat per a \"{{query}}\".",
+      "searchResultCount": "Resultats: {{count}}",
       "meetingNote": {
         "title": "Nota de reunió",
         "description": "Un esborrany escrit pel teu LLM local. Res no surt de la màquina.",

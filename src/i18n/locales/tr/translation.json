@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Transkriptte ara",
       "transcriptNoMatches": "\"{{query}}\" ile eşleşen bölüm yok.",
       "transcriptEmpty": "Bu kaydın zaman damgalı bölümü yok.",
+      "searchPlaceholder": "Geçmişte ara",
+      "searching": "Aranıyor...",
+      "searchNoResults": "\"{{query}}\" için sonuç yok.",
+      "searchResultCount": "Sonuçlar: {{count}}",
       "meetingNote": {
         "title": "Toplantı notu",
         "description": "Yerel LLM tarafından yazılan bir taslak. Hiçbir şey makineden çıkmaz.",

@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Търсене в транскрипцията",
       "transcriptNoMatches": "Няма откъси, съответстващи на „{{query}}“.",
       "transcriptEmpty": "Този запис няма откъси с времеви марки.",
+      "searchPlaceholder": "Търсене в историята",
+      "searching": "Търсене...",
+      "searchNoResults": "Няма резултати за „{{query}}“.",
+      "searchResultCount": "Резултати: {{count}}",
       "meetingNote": {
         "title": "Бележка от срещата",
         "description": "Чернова, написана от локалния ви LLM. Нищо не напуска компютъра.",

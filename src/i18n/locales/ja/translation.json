@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "文字起こしを検索",
       "transcriptNoMatches": "「{{query}}」に一致するセグメントはありません。",
       "transcriptEmpty": "この項目にはタイムスタンプ付きのセグメントがありません。",
+      "searchPlaceholder": "履歴を検索",
+      "searching": "検索中...",
+      "searchNoResults": "「{{query}}」の結果はありません。",
+      "searchResultCount": "結果：{{count}}",
       "meetingNote": {
         "title": "会議メモ",
         "description": "ローカルLLMが書いた下書きです。データが端末の外に出ることはありません。",

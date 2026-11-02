@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Пошук у розшифровці",
       "transcriptNoMatches": "Жоден фрагмент не відповідає «{{query}}».",
       "transcriptEmpty": "У цьому записі немає фрагментів з мітками часу.",
+      "searchPlaceholder": "Пошук в історії",
+      "searching": "Пошук...",
+      "searchNoResults": "Немає результатів для \"{{query}}\".",
+      "searchResultCount": "Результати: {{count}}",
       "meetingNote": {
         "title": "Нотатка зі зустрічі",
         "description": "Чернетка, написана локальною LLM. Нічого не залишає комп'ютер.",

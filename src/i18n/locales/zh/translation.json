@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "搜索转录文本",
       "transcriptNoMatches": "没有与“{{query}}”匹配的段落。",
       "transcriptEmpty": "此条目没有带时间戳的段落。",
+      "searchPlaceholder": "搜索历史",
+      "searching": "搜索中...",
+      "searchNoResults": "没有\"{{query}}\"的结果。",
+      "searchResultCount": "结果：{{count}}",
       "meetingNote": {
         "title": "会议纪要",
         "description": "由本地 LLM 编写的草稿。任何内容都不会离开这台电脑。",

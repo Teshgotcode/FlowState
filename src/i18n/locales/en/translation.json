@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Search the transcript",
       "transcriptNoMatches": "No segments match \"{{query}}\".",
       "transcriptEmpty": "This entry has no timed segments.",
+      "searchPlaceholder": "Search history",
+      "searching": "Searching...",
+      "searchNoResults": "No results for \"{{query}}\".",
+      "searchResultCount": "Results: {{count}}",
       "meetingNote": {
         "title": "Meeting note",
         "description": "A draft written by your local LLM. Nothing leaves the machine.",

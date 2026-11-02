@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "ट्रान्सक्रिप्टमा खोज्नुहोस्",
       "transcriptNoMatches": "\"{{query}}\" संग मिल्ने खण्डहरू छैनन्।",
       "transcriptEmpty": "यो प्रविष्टिमा समय-चिह्न सहितका खण्डहरू छैनन्।",
+      "searchPlaceholder": "इतिहास खोज्नुहोस्",
+      "searching": "खोज्दै...",
+      "searchNoResults": "\"{{query}}\" का कुनै नतिजा छैन।",
+      "searchResultCount": "नतिजा: {{count}}",
       "meetingNote": {
         "title": "बैठक नोट",
         "description": "तपाईंको स्थानीय LLM ले लेखेको ड्राफ्ट। कुनै पनि कुरा कम्प्युटरबाट बाहिर जाँदैन।",

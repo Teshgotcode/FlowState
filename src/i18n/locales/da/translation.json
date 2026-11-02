@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Søg i transskriptionen",
       "transcriptNoMatches": "Ingen segmenter matcher \"{{query}}\".",
       "transcriptEmpty": "Denne post har ingen tidsstemplede segmenter.",
+      "searchPlaceholder": "Søg i historikken",
+      "searching": "Søger...",
+      "searchNoResults": "Ingen resultater for \"{{query}}\".",
+      "searchResultCount": "Resultater: {{count}}",
       "meetingNote": {
         "title": "Mødenotat",
         "description": "Et udkast skrevet af din lokale LLM. Intet forlader maskinen.",

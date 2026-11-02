@@ -738,6 +738,10 @@
       "transcriptSearchPlaceholder": "Transkript durchsuchen",
       "transcriptNoMatches": "Keine Segmente passen zu „{{query}}“.",
       "transcriptEmpty": "Dieser Eintrag hat keine Segmente mit Zeitstempeln.",
+      "searchPlaceholder": "Verlauf durchsuchen",
+      "searching": "Suche läuft...",
+      "searchNoResults": "Keine Ergebnisse für \"{{query}}\".",
+      "searchResultCount": "Ergebnisse: {{count}}",
       "meetingNote": {
         "title": "Besprechungsnotiz",
         "description": "Ein Entwurf, den dein lokales LLM schreibt. Nichts verlässt den Computer.",
