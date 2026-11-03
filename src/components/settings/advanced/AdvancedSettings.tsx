@@ -25,6 +25,7 @@ import { LanguageDetection } from "../LanguageDetection";
 import { AccelerationSelector } from "../AccelerationSelector";
 import { LazyStreamClose } from "../LazyStreamClose";
 import { FillerWordRemoval } from "../FillerWordRemoval";
+import { VoiceCommands } from "../VoiceCommands";
 import { VadBackendSelector } from "../VadBackendSelector";
 
 export const AdvancedSettings: React.FC = () => {
@@ -54,6 +55,7 @@ export const AdvancedSettings: React.FC = () => {
         <VoiceActivityDetection descriptionMode="tooltip" grouped={true} />
         <LongFormChunking descriptionMode="tooltip" grouped={true} />
         <FillerWordRemoval descriptionMode="tooltip" grouped={true} />
+        <VoiceCommands />
         <CustomWords descriptionMode="tooltip" grouped />
         <Snippets descriptionMode="tooltip" grouped />
         <AppendTrailingSpace descriptionMode="tooltip" grouped={true} />

@@ -1,7 +1,7 @@
 use crate::audio_toolkit::chunking;
 use crate::audio_toolkit::{
-    apply_custom_words, apply_snippets, detect_output_language, normalize_transcription_output,
-    remove_filler_words, OutputLanguageEvidence,
+    apply_custom_words, apply_snippets, apply_voice_commands, detect_output_language,
+    normalize_transcription_output, remove_filler_words, OutputLanguageEvidence,
 };
 use crate::chinese_script::{convert_chinese_script, ChineseVariety};
 use crate::engine_supervisor::{
@@ -1753,6 +1753,7 @@ fn post_process_transcription_text(
         let output_language = match output_language {
             OutputLanguageEvidence::Unknown
                 if converts_script
+                    || settings.voice_commands_enabled
                     || (settings.filler_word_removal_enabled
                         && settings.custom_filler_words.is_none()) =>
             {
@@ -1799,6 +1800,16 @@ fn post_process_transcription_text(
 
         let normalized = normalize_transcription_output(&without_fillers);
 
+        // Spoken punctuation and emoji commands ("komma" → ",", "ny linje" →
+        // a line break) run after whitespace cleanup — so inserted line
+        // breaks survive its trailing trim — and before snippet expansion,
+        // which then matches the tidied text.
+        let voice_normalized = apply_voice_commands(
+            &normalized,
+            &output_language,
+            settings.voice_commands_enabled,
+        );
+
         // Snippet expansion runs last in this local cleanup, and always before
         // the LLM post-processing that `process_transcription_output` runs
         // afterwards — the model polish sees the already-expanded text.
@@ -1810,15 +1821,17 @@ fn post_process_transcription_text(
         // 3. filler-word removal — the spoken trigger keeps clean word
         //    boundaries.
         // 4. whitespace normalization — the text is tidy before insertion.
-        // 5. snippet expansion — expansions are inserted verbatim, never
+        // 5. voice commands — spoken punctuation/emoji ("komma", "ny linje")
+        //    becomes characters, with language-gated fail-closed matching.
+        // 6. snippet expansion — expansions are inserted verbatim, never
         //    rewritten by the steps above.
         // Translate mode is unaffected: whisper's translation happens inside
         // the model, on the audio, so this only ever expands text that has
         // already been translated.
         if settings.snippets.is_empty() {
-            normalized
+            voice_normalized
         } else {
-            apply_snippets(&normalized, &settings.snippets)
+            apply_snippets(&voice_normalized, &settings.snippets)
         }
     })
 }
@@ -2168,6 +2181,46 @@ mod tests {
         });
 
         assert_eq!(result, raw);
+    }
+
+    #[test]
+    fn voice_commands_rewrite_spoken_punctuation() {
+        let settings = AppSettings::default();
+        let result = post_process_transcription_text(
+            "Hei komma ny linje Hvordan går det spørsmålstegn".to_string(),
+            &settings,
+            false,
+            &OutputLanguageEvidence::UserSelected("nb".to_string()),
+            &languages(&["nb", "en"]),
+        );
+
+        assert_eq!(result, "Hei,\nHvordan går det?");
+    }
+
+    #[test]
+    fn voice_commands_keep_plain_mentions_and_respect_the_toggle() {
+        let mut settings = AppSettings::default();
+
+        // A trailing "komma" the speaker *mentions* stays a word.
+        let result = post_process_transcription_text(
+            "Jeg liker komma".to_string(),
+            &settings,
+            false,
+            &OutputLanguageEvidence::UserSelected("nb".to_string()),
+            &languages(&["nb", "en"]),
+        );
+        assert_eq!(result, "Jeg liker komma");
+
+        // Off means untouched, even mid-sentence commands.
+        settings.voice_commands_enabled = false;
+        let result = post_process_transcription_text(
+            "Hei komma ny linje".to_string(),
+            &settings,
+            false,
+            &OutputLanguageEvidence::UserSelected("nb".to_string()),
+            &languages(&["nb", "en"]),
+        );
+        assert_eq!(result, "Hei komma ny linje");
     }
 
     #[test]

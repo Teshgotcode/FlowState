@@ -671,6 +671,10 @@
         "title": "Opvulwoorden verwijderen",
         "description": "Verwijdert veelvoorkomende aarzelwoorden uit transcripties. Schakel dit uit om ze te behouden."
       },
+      "voiceCommands": {
+        "title": "Gesproken leestekens & emoji",
+        "description": "Spreek leestekens en emoji uit bij naam — «komma», «nieuwe regel», «smiley» — en ze worden als tekens ingevoegd. Alleen Noors en Engels; woorden die deel uitmaken van een zin blijven staan."
+      },
       "chineseScript": {
         "title": "Chinees schrift",
         "description": "Schrijft Mandarijnse en Kantonese transcripties in vereenvoudigde tekens, of in traditionele tekens zoals gebruikt in Taiwan of Hongkong. Andere talen blijven ongewijzigd.",

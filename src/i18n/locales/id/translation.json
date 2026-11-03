@@ -671,6 +671,10 @@
         "title": "Hapus Kata Pengisi",
         "description": "Menghapus kata pengisi umum dari transkripsi. Nonaktifkan untuk mempertahankannya."
       },
+      "voiceCommands": {
+        "title": "Perintah tanda baca & emoji lisan",
+        "description": "Ucapkan tanda baca dan emoji dengan namanya — «koma», «baris baru», «smiley» — dan keduanya disisipkan sebagai karakter. Hanya Norwegia dan Inggris; kata yang menjadi bagian kalimat dibiarkan."
+      },
       "chineseScript": {
         "title": "Aksara Tionghoa",
         "description": "Menulis transkripsi Mandarin dan Kanton dengan aksara Sederhana, atau aksara Tradisional seperti yang ditulis di Taiwan atau Hong Kong. Bahasa lain tidak diubah.",

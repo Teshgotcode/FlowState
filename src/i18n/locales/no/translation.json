@@ -671,6 +671,10 @@
         "title": "Fjern fyllord",
         "description": "Fjerner vanlige nølingsord fra transkripsjoner. Slå av for å beholde dem."
       },
+      "voiceCommands": {
+        "title": "Tegn- og emoji-kommandoer",
+        "description": "Si tegn og emoji direkte — «komma», «ny linje», «smilefjes» — så settes de inn som tegn. Bare norsk og engelsk; ord som inngår i en setning, blir stående."
+      },
       "chineseScript": {
         "title": "Kinesisk skrift",
         "description": "Skriver transkripsjoner av mandarin og kantonesisk med forenklede tegn, eller med tradisjonelle tegn slik de skrives i Taiwan eller Hongkong. Andre språk endres ikke.",

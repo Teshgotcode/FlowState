@@ -671,6 +671,10 @@
         "title": "Eliminar muletillas",
         "description": "Elimina las muletillas más comunes de las transcripciones. Desactívalo para conservarlas."
       },
+      "voiceCommands": {
+        "title": "Comandos hablados de signos y emojis",
+        "description": "Dicta la puntuación y los emoji por su nombre — «coma», «nueva línea», «carita sonriente» — y se insertan como caracteres. Solo noruego e inglés; las palabras que forman parte de una frase se dejan tal cual."
+      },
       "chineseScript": {
         "title": "Escritura china",
         "description": "Escribe las transcripciones en mandarín y cantonés con caracteres simplificados, o con caracteres tradicionales tal como se escriben en Taiwán o Hong Kong. Los demás idiomas no se modifican.",

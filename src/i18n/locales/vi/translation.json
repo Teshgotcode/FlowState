@@ -671,6 +671,10 @@
         "title": "Loại bỏ từ đệm",
         "description": "Loại bỏ các từ ngập ngừng phổ biến khỏi bản chép lời. Tắt để giữ lại các từ này."
       },
+      "voiceCommands": {
+        "title": "Lệnh dấu câu và emoji bằng lời",
+        "description": "Đọc tên dấu câu và emoji — «phẩy», «dòng mới», «mặt cười» — để chèn chúng dưới dạng ký tự. Chỉ tiếng Na Uy và tiếng Anh; từ nằm trong câu được giữ nguyên."
+      },
       "chineseScript": {
         "title": "Chữ Hán giản thể/phồn thể",
         "description": "Ghi bản chép tiếng Quan Thoại và tiếng Quảng Đông bằng chữ Giản thể, hoặc chữ Phồn thể như được viết ở Đài Loan hay Hồng Kông. Các ngôn ngữ khác không bị thay đổi.",
