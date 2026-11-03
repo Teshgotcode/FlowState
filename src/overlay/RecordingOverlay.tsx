@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
 import { commands, events } from "@/bindings";
 import type {
+  ActiveStyleInfo,
   StreamPhase,
   StreamPhaseEvent,
   StreamTextEvent,
@@ -56,6 +57,13 @@ const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
+  // The tone/style the dictation will be cleaned up in (per-app rule or the
+  // globally selected prompt), plus the little quick-switch menu.
+  const [styleInfo, setStyleInfo] = useState<ActiveStyleInfo | null>(null);
+  const [styleMenuPos, setStyleMenuPos] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
   // `Stream::play()` returning does not mean hardware callbacks are flowing.
   // Stay visually in an arming state until the backend processes the first
   // actual microphone sample chunk.
@@ -538,6 +546,88 @@ const RecordingOverlay: React.FC = () => {
     ? t("overlay.loadingModel")
     : t("overlay.transcribing");
 
+  // ---- Style (tone) chip + local quick-switch menu ----
+  // The backend resolves the active style from the focused app; the overlay
+  // only shows it (and lets the user switch it) — templates live in local
+  // settings, nothing leaves the machine.
+  useEffect(() => {
+    if (!isVisible) return;
+    let cancelled = false;
+    commands
+      .getActiveStyle()
+      .then((info) => {
+        if (!cancelled) setStyleInfo(info);
+      })
+      .catch((err) => console.warn("Failed to read the active style:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [isVisible, state]);
+
+  const pickStyle = async (styleId: string) => {
+    setStyleMenuPos(null);
+    try {
+      // When a per-app rule matched the focused app, retarget that rule;
+      // otherwise switch the globally selected style.
+      if (styleInfo?.matchedRuleKey) {
+        const result = await commands.setAppStyleRule(
+          styleInfo.matchedRuleKey,
+          styleId,
+        );
+        if (result.status === "error") throw new Error(result.error);
+      } else {
+        const result = await commands.setPostProcessSelectedPrompt(styleId);
+        if (result.status === "error") throw new Error(result.error);
+      }
+      const info = await commands.getActiveStyle();
+      setStyleInfo(info);
+    } catch (err) {
+      console.warn("Failed to switch the dictation style:", err);
+    }
+  };
+
+  const openStyleMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    setStyleMenuPos({
+      x: Math.max(4, Math.min(event.clientX, window.innerWidth - 190)),
+      y: Math.max(4, Math.min(event.clientY, window.innerHeight - 40)),
+    });
+  };
+
+  const styleMenu =
+    styleInfo && styleMenuPos ? (
+      <>
+        <div
+          className="sstyle-backdrop"
+          onPointerDown={() => setStyleMenuPos(null)}
+        />
+        <div
+          className="sstyle-menu"
+          style={{ left: styleMenuPos.x, top: styleMenuPos.y }}
+          role="menu"
+        >
+          <div className="sstyle-menu-title">
+            {t("overlay.style.menuTitle")}
+          </div>
+          {styleInfo.styles.map((style) => (
+            <button
+              key={style.id}
+              type="button"
+              role="menuitemradio"
+              aria-checked={style.id === styleInfo.styleId}
+              className={`sstyle-item ${
+                style.id === styleInfo.styleId ? "active" : ""
+              }`}
+              onClick={() => pickStyle(style.id)}
+            >
+              {style.name}
+            </button>
+          ))}
+        </div>
+      </>
+    ) : null;
+
   // ---- Shared building blocks (one visual language for every overlay form) ----
   const waveform = (
     <div className={`swave ${captureReady ? "ready" : "arming"}`}>
@@ -575,6 +665,11 @@ const RecordingOverlay: React.FC = () => {
     <div className="sbase">
       <div className="sbase-l">
         <span className={`sdot ${captureReady ? "ready" : "arming"}`} />
+        {styleInfo?.postProcessEnabled && styleInfo.styleName ? (
+          <span className="sstyle-chip" title={t("overlay.style.chipTitle")}>
+            {styleInfo.styleName}
+          </span>
+        ) : null}
       </div>
       {waveform}
       {(state === "command" || commandHint) && (
@@ -619,7 +714,12 @@ const RecordingOverlay: React.FC = () => {
     const collapsed = working && !hasText;
 
     return (
-      <div dir={direction} className={`ov-stage ${position}`}>
+      <div
+        dir={direction}
+        className={`ov-stage ${position}`}
+        onContextMenu={openStyleMenu}
+      >
+        {styleMenu}
         <div
           key={session}
           className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
@@ -674,7 +774,9 @@ const RecordingOverlay: React.FC = () => {
     <div
       dir={direction}
       className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
+      onContextMenu={openStyleMenu}
     >
+      {styleMenu}
       <div
         className={`scard compact ${working && isVisible ? "cworking" : ""}`}
       >

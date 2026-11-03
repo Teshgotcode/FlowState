@@ -747,6 +747,18 @@
         "cancel": "Annulla",
         "selectToEdit": "Scegli un prompt qui sopra per visualizzare o modificare i dettagli.",
         "createFirst": "Clicca 'Crea un nuovo prompt' qui sopra per creare il tuo primo prompt di post-elaborazione."
+      },
+      "styleRules": {
+        "groupTitle": "Per-App Styles",
+        "title": "App Rules",
+        "description": "Bind a style to an app: when that app is focused, its rule is used. As soon as any rule exists, apps without a rule fall back to the Neutral style.",
+        "empty": "No rules yet. Example: Slack = Short.",
+        "appPlaceholder": "App name or bundle id (e.g. Slack)",
+        "useCurrentApp": "Use Frontmost App",
+        "style": "Style",
+        "addRule": "Add Rule",
+        "remove": "Remove",
+        "currentAppUnavailable": "Could not detect the frontmost app."
       }
     },
     "history": {
@@ -1188,7 +1200,11 @@
       "recording": "Registrazione in corso"
     },
     "command": "Comando",
-    "commandFallback": "Nessuna selezione — dettatura normale"
+    "commandFallback": "Nessuna selezione — dettatura normale",
+    "style": {
+      "menuTitle": "Style",
+      "chipTitle": "Dictation style — right-click to switch"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} potrebbe bloccare 1 scorciatoia",

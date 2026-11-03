@@ -747,6 +747,18 @@
         "cancel": "रद्द करें",
         "selectToEdit": "जानकारी देखने और बदलाव करने के लिए, ऊपर कोई प्रॉम्प्ट चुनें.",
         "createFirst": "अपना पहला पोस्ट-प्रोसेसिंग प्रॉम्प्ट बनाने के लिए, ऊपर 'नया प्रॉम्प्ट बनाएं' पर क्लिक करें."
+      },
+      "styleRules": {
+        "groupTitle": "Per-App Styles",
+        "title": "App Rules",
+        "description": "Bind a style to an app: when that app is focused, its rule is used. As soon as any rule exists, apps without a rule fall back to the Neutral style.",
+        "empty": "No rules yet. Example: Slack = Short.",
+        "appPlaceholder": "App name or bundle id (e.g. Slack)",
+        "useCurrentApp": "Use Frontmost App",
+        "style": "Style",
+        "addRule": "Add Rule",
+        "remove": "Remove",
+        "currentAppUnavailable": "Could not detect the frontmost app."
       }
     },
     "history": {
@@ -1188,7 +1200,11 @@
       "recording": "रिकॉर्ड हो रहा है"
     },
     "command": "कमांड",
-    "commandFallback": "कुछ चयनित नहीं — सामान्य डिक्टेशन"
+    "commandFallback": "कुछ चयनित नहीं — सामान्य डिक्टेशन",
+    "style": {
+      "menuTitle": "Style",
+      "chipTitle": "Dictation style — right-click to switch"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} शायद 1 शॉर्टकट को ब्लॉक कर रहा है",

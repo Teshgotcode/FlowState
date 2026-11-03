@@ -747,6 +747,18 @@
         "cancel": "Avbryt",
         "selectToEdit": "Velg en prompt ovenfor for å se og redigere detaljene.",
         "createFirst": "Trykk «Opprett ny prompt» ovenfor for å lage din første etterbehandlingsprompt."
+      },
+      "styleRules": {
+        "groupTitle": "Stiler per app",
+        "title": "App-regler",
+        "description": "Knytt en stil til en app: når appen er i fokus, brukes regelen. Så snart minst én regel finnes, får apper uten regel stilen Nøytral.",
+        "empty": "Ingen regler ennå. Eksempel: Slack = Kort.",
+        "appPlaceholder": "App-navn eller bundle-id (f.eks. Slack)",
+        "useCurrentApp": "Bruk appen i fokus",
+        "style": "Stil",
+        "addRule": "Legg til regel",
+        "remove": "Fjern",
+        "currentAppUnavailable": "Klarte ikke å finne appen i fokus."
       }
     },
     "history": {
@@ -1188,7 +1200,11 @@
       "recording": "Tar opp"
     },
     "command": "Kommando",
-    "commandFallback": "Ingen merking — vanlig diktering"
+    "commandFallback": "Ingen merking — vanlig diktering",
+    "style": {
+      "menuTitle": "Stil",
+      "chipTitle": "Dikteringsstil — høyreklikk for å bytte"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkerer kanskje 1 snarvei",
