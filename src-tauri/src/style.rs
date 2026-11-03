@@ -71,14 +71,22 @@ pub fn resolve_style_id_for(
         if let Some(app) = frontmost {
             let bundle = app.bundle_id.as_deref().map(|s| s.trim().to_lowercase());
             let name = app.name.as_deref().map(|s| s.trim().to_lowercase());
-            for (key, style_id) in &settings.post_process_app_rules {
-                let key = key.trim().to_lowercase();
-                if key.is_empty() {
-                    continue;
-                }
-                if bundle.as_deref() == Some(key.as_str()) || name.as_deref() == Some(key.as_str())
-                {
-                    return (Some(style_id.clone()), Some(key));
+            // Sorted so resolution is deterministic — HashMap iteration order
+            // must never decide which rule wins when several keys match.
+            let mut rules: Vec<(String, &String)> = settings
+                .post_process_app_rules
+                .iter()
+                .map(|(k, v)| (k.trim().to_lowercase(), v))
+                .filter(|(k, _)| !k.is_empty())
+                .collect();
+            rules.sort();
+            // Bundle-id rules are checked before app-name rules so an exact
+            // bundle match always beats a more generic name match.
+            for app_key in [bundle.as_deref(), name.as_deref()] {
+                for (key, style_id) in &rules {
+                    if app_key == Some(key.as_str()) {
+                        return (Some(style_id.to_string()), Some(key.clone()));
+                    }
                 }
             }
         }
