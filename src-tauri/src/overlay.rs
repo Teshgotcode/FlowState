@@ -320,7 +320,7 @@ fn calculate_overlay_position(
 
 /// Which screen edge a view docks on. The dictation overlay follows the
 /// user's `overlay_position` setting; the meeting bar has its own dock edge —
-/// Wispr's `statusDockEdge` — once it has been dragged to one, and follows the
+/// the reference's `statusDockEdge` — once it has been dragged to one, and follows the
 /// dictation overlay's edge until then (the S-4c behaviour).
 fn overlay_position_for(settings: &AppSettings, state: &str) -> OverlayPosition {
     if is_dictation_state(state) {
@@ -416,7 +416,7 @@ fn monitor_for_point(app_handle: &AppHandle, x: f64, y: f64) -> Option<tauri::Mo
 }
 
 /// The edge of `area` a dropped bar belongs to: the one it was dropped
-/// closest to (Wispr's statusDockEdge snapping).
+/// closest to (the reference statusDockEdge snapping).
 fn nearest_overlay_edge(area: (f64, f64, f64, f64), x: f64, y: f64) -> OverlayPosition {
     let (area_x, area_y, area_w, area_h) = area;
     [
@@ -765,7 +765,7 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
             log::debug!("overlay '{}': show={:?}", state, show_elapsed);
         }
 
-        // macOS polish for the meeting bar (Wispr Flow Bar direction): the bar
+        // macOS polish for the meeting bar (the reference meeting bar direction): the bar
         // rides on the window server's own soft shadow, drawn from the window's
         // content shape — it can never intercept a click the way a transparent
         // margin would. The dictation overlay keeps its flat, shadow-less look.
@@ -954,8 +954,8 @@ fn is_meeting_recording(app_handle: &AppHandle) -> bool {
 // ============================================================
 // Meeting bar: drag-to-edge, right-click hide, hit-shape (S-4d)
 //
-// Wispr Flow Bar parity, round 2. The bar (idle disc and recording pill
-// alike) can be dragged to another screen edge like Wispr's statusDockEdge;
+// the reference meeting bar parity, round 2. The bar (idle disc and recording pill
+// alike) can be dragged to another screen edge like the reference statusDockEdge;
 // the disc offers "Hide for 1 hour" on right-click; and the window no longer
 // swallows clicks outside its visible content.
 // ============================================================
@@ -1042,7 +1042,7 @@ pub fn begin_meeting_bar_drag(app_handle: &AppHandle) {
 }
 
 /// Dock the meeting bar after its window has been still: snap it to the
-/// nearest edge of the monitor it was dropped on, save that edge (the Wispr
+/// nearest edge of the monitor it was dropped on, save that edge (the reference
 /// `statusDockEdge` choice, resumed on restart), and tell the webview to
 /// re-anchor. No-op for dictation views and for a bar that already sits at
 /// its docked spot — which is what every programmatic placement does.
@@ -1144,7 +1144,7 @@ pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
     });
 }
 
-/// The idle disc's right-click menu (Wispr's escape hatch). Native, not HTML:
+/// The idle disc's right-click menu (the reference's escape hatch). Native, not HTML:
 /// the disc's window is exactly the disc, so a menu could never render inside
 /// it. Pops at the cursor; the item is dispatched by the app-wide menu-event
 /// handler.

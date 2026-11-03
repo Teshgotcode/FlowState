@@ -5,6 +5,14 @@
 
 /* Register the shared color tokens (src/styles/theme.css) as Tailwind
    utilities */
+/* FlowState's UI face is the default for the whole main window; screens and
+   onboarding already opt into --font-display / --font-ui via Tailwind classes. */
+@layer base {
+  body {
+    font-family: var(--flow-font-ui);
+  }
+}
+
 @theme inline {
   --color-text: var(--color-text);
   --color-background: var(--color-background);
@@ -39,12 +47,8 @@
 /* Onboarding's scale in px (rem steps land on fractions at a 15px root).
    Names avoid Tailwind's defaults, which Settings still uses. */
 @theme {
-  --font-display:
-    ui-rounded, "SF Pro Rounded", system-ui, -apple-system,
-    "Segoe UI Variable Display", "Segoe UI", sans-serif;
-  --font-ui:
-    system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI", Roboto,
-    "Noto Sans", sans-serif;
+  --font-display: var(--flow-font-display);
+  --font-ui: var(--flow-font-ui);
   --font-cjk-subset:
     "Handy CJK Subset", -apple-system, "Segoe UI Variable Text", "Segoe UI",
     system-ui, sans-serif;
@@ -57,10 +61,11 @@
   --text-label: 12px; /* labels */
   --text-tag: 11px; /* tags, column codes, small grade chips */
 
-  --radius-panel: 16px; /* panels, the selected card */
-  --radius-card: 12px;
-  --radius-control: 10px; /* buttons, fields, table rows */
-  --radius-chip: 6px; /* grade chips */
+  /* FlowState's own rounding scale (see theme.css --flow-radius-*). */
+  --radius-panel: var(--flow-radius-panel);
+  --radius-card: var(--flow-radius-card);
+  --radius-control: var(--flow-radius-control);
+  --radius-chip: var(--flow-radius-chip);
 
   /* Onboarding's side gutter. */
   --spacing-gutter: 64px;

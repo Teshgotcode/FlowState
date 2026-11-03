@@ -1,6 +1,6 @@
 //! The Scratchpad: a small note window opened from the meeting bar.
 //!
-//! Wispr-style quick capture: one menu click opens a tiny note with the caret
+//! reference-style quick capture: one menu click opens a tiny note with the caret
 //! ready. A dictation taken while the window holds the focus lands in the
 //! note instead of the focused app, and the note's text is kept locally in
 //! `scratchpad.txt` under the app data directory — it is never uploaded

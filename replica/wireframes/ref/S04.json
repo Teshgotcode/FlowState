@@ -1,0 +1,45 @@
+{
+ "screen": "S04",
+ "blocks": [
+  {
+   "role": "header",
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "headline",
+   "x": 40,
+   "y": 130,
+   "w": 700,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "demo-window",
+   "x": 260,
+   "y": 240,
+   "w": 480,
+   "h": 340,
+   "kind": "region"
+  },
+  {
+   "role": "shortcut-hint",
+   "x": 300,
+   "y": 620,
+   "w": 400,
+   "h": 60,
+   "kind": "region"
+  },
+  {
+   "role": "footer-nav",
+   "x": 0,
+   "y": 873,
+   "w": 1000,
+   "h": 127,
+   "kind": "region"
+  }
+ ]
+}

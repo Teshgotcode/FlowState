@@ -1,0 +1,53 @@
+{
+ "screen": "S03",
+ "blocks": [
+  {
+   "role": "header",
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "title",
+   "x": 40,
+   "y": 140,
+   "w": 600,
+   "h": 70,
+   "kind": "region"
+  },
+  {
+   "role": "model-card-a",
+   "x": 40,
+   "y": 260,
+   "w": 440,
+   "h": 320,
+   "kind": "region"
+  },
+  {
+   "role": "model-card-b",
+   "x": 520,
+   "y": 260,
+   "w": 440,
+   "h": 320,
+   "kind": "region"
+  },
+  {
+   "role": "storage-note",
+   "x": 40,
+   "y": 620,
+   "w": 600,
+   "h": 50,
+   "kind": "region"
+  },
+  {
+   "role": "footer-nav",
+   "x": 0,
+   "y": 873,
+   "w": 1000,
+   "h": 127,
+   "kind": "region"
+  }
+ ]
+}

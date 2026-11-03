@@ -1,0 +1,45 @@
+{
+ "screen": "S09",
+ "blocks": [
+  {
+   "role": "sidebar",
+   "x": 0,
+   "y": 0,
+   "w": 200,
+   "h": 1000,
+   "kind": "region"
+  },
+  {
+   "role": "wordmark",
+   "x": 20,
+   "y": 24,
+   "w": 160,
+   "h": 90,
+   "kind": "own"
+  },
+  {
+   "role": "title",
+   "x": 200,
+   "y": 50,
+   "w": 480,
+   "h": 60,
+   "kind": "region"
+  },
+  {
+   "role": "integration-rows",
+   "x": 200,
+   "y": 120,
+   "w": 780,
+   "h": 680,
+   "kind": "region"
+  },
+  {
+   "role": "status-bar",
+   "x": 200,
+   "y": 820,
+   "w": 780,
+   "h": 140,
+   "kind": "region"
+  }
+ ]
+}

@@ -1,0 +1,21 @@
+{
+ "screen": "S12",
+ "blocks": [
+  {
+   "role": "textarea",
+   "x": 310,
+   "y": 254,
+   "w": 380,
+   "h": 450,
+   "kind": "region"
+  },
+  {
+   "role": "copy-footer",
+   "x": 300,
+   "y": 714,
+   "w": 400,
+   "h": 86,
+   "kind": "own"
+  }
+ ]
+}

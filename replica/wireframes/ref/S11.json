@@ -1,0 +1,29 @@
+{
+ "screen": "S11",
+ "blocks": [
+  {
+   "role": "meeting-title",
+   "x": 140,
+   "y": 330,
+   "w": 320,
+   "h": 60,
+   "kind": "region"
+  },
+  {
+   "role": "timer",
+   "x": 470,
+   "y": 340,
+   "w": 100,
+   "h": 50,
+   "kind": "region"
+  },
+  {
+   "role": "controls",
+   "x": 600,
+   "y": 330,
+   "w": 240,
+   "h": 60,
+   "kind": "region"
+  }
+ ]
+}

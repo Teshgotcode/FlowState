@@ -48,7 +48,7 @@ pub fn get_meeting_status(app: AppHandle) -> MeetingStatus {
 /// threshold, so a plain click still starts or stops the meeting; the native
 /// drag carries the window with the pointer, and the bar docks to the
 /// nearest screen edge when it settles — the choice is saved and resumed on
-/// restart (Wispr's statusDockEdge).
+/// restart (the reference statusDockEdge).
 #[tauri::command]
 #[specta::specta]
 pub fn start_meeting_bar_drag(app: AppHandle) -> Result<(), String> {

@@ -1,4 +1,4 @@
-//! Spoken punctuation and emoji commands ("Wispr-style" normalization).
+//! Spoken punctuation and emoji commands ("reference-style" normalization).
 //!
 //! After transcription, dictated phrases like "komma", "ny linje" or
 //! "smilefjes" are rewritten into the punctuation, line break or emoji the

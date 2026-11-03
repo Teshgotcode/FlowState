@@ -1413,7 +1413,7 @@ async cancelMeetingAsk(entryId: number) : Promise<Result<boolean, string>> {
  * threshold, so a plain click still starts or stops the meeting; the native
  * drag carries the window with the pointer, and the bar docks to the
  * nearest screen edge when it settles — the choice is saved and resumed on
- * restart (Wispr's statusDockEdge).
+ * restart (the reference statusDockEdge).
  */
 async startMeetingBarDrag() : Promise<Result<null, string>> {
     try {
@@ -1609,7 +1609,7 @@ selected_channel?: number | null; clamshell_microphone?: string | null; selected
  */
 spoken_languages?: string[]; overlay_position?: OverlayPosition; 
 /**
- * Which screen edge the floating meeting bar docks on — Wispr's
+ * Which screen edge the floating meeting bar docks on — the reference's
  * `statusDockEdge`. `None` (the default) keeps the bar on the dictation
  * overlay's edge (`overlay_position`); dragging the bar to an edge pins
  * it there, and the pinned choice persists across restarts.
@@ -1617,7 +1617,7 @@ spoken_languages?: string[]; overlay_position?: OverlayPosition;
 meeting_bar_position?: OverlayPosition | null; 
 /**
  * How many minutes a meeting may record before the meeting bar shows the
- * discreet "still going?" prompt with a Stop button (Wispr's meeting
+ * discreet "still going?" prompt with a Stop button (the reference's meeting
  * reminders, so a forgotten recording doesn't run for hours). `None`
  * turns the prompt off.
  */

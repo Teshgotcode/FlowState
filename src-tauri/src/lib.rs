@@ -1257,7 +1257,7 @@ pub fn run(cli_args: CliArgs) {
                 // focused lands in the note instead of another app.
                 crate::scratchpad::open_window(app);
             } else if event.id.as_ref() == crate::overlay::MEETING_BAR_HIDE_FOR_HOUR_ID {
-                // Wispr's "Hide for 1 hour": the idle disc goes away for an
+                // the reference's "Hide for 1 hour": the idle disc goes away for an
                 // hour, until restart, or until a meeting starts.
                 crate::overlay::hide_meeting_bar_for(app, 3600);
             }

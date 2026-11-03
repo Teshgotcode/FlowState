@@ -1,0 +1,53 @@
+{
+ "screen": "S01",
+ "blocks": [
+  {
+   "role": "header",
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "illustration",
+   "x": 520,
+   "y": 140,
+   "w": 440,
+   "h": 420,
+   "kind": "region"
+  },
+  {
+   "role": "headline",
+   "x": 40,
+   "y": 180,
+   "w": 420,
+   "h": 90,
+   "kind": "region"
+  },
+  {
+   "role": "subhead",
+   "x": 40,
+   "y": 290,
+   "w": 400,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "cta-primary",
+   "x": 40,
+   "y": 790,
+   "w": 220,
+   "h": 64,
+   "kind": "region"
+  },
+  {
+   "role": "footer-nav",
+   "x": 0,
+   "y": 873,
+   "w": 1000,
+   "h": 127,
+   "kind": "region"
+  }
+ ]
+}

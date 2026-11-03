@@ -105,7 +105,7 @@ const RecordingOverlay: React.FC = () => {
   const [position, setPosition] = useState<"top" | "bottom" | "left" | "right">(
     "bottom",
   );
-  // The meeting bar's own dock edge — Wispr's statusDockEdge: pinned by a drag
+  // The meeting bar's own dock edge — the reference statusDockEdge: pinned by a drag
   // once one has happened, following the dictation overlay's edge until then.
   const [barPosition, setBarPosition] = useState<
     "top" | "bottom" | "left" | "right"
@@ -129,7 +129,7 @@ const RecordingOverlay: React.FC = () => {
   // backend default is 60.
   const [reminderMinutes, setReminderMinutes] = useState(0);
   // Whether the prompt is on screen right now, plus the session (by its start
-  // time) that has already had it: once per meeting, Wispr-style.
+  // time) that has already had it: once per meeting, reference-style.
   const [nudgeOpen, setNudgeOpen] = useState(false);
   const nudgeDoneForRef = useRef(0);
   const nudgeOpenRef = useRef(false);
@@ -526,7 +526,7 @@ const RecordingOverlay: React.FC = () => {
     }
   };
 
-  // Wispr-style stop: save immediately, no confirmation dialog — the
+  // reference-style stop: save immediately, no confirmation dialog — the
   // recording lands in History. The pill shows "Saving…" until the stop
   // resolves (the history entry is in place by then) and the idle event
   // returns the bar to the disc.
