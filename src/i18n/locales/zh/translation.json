@@ -430,7 +430,15 @@
       "reminderOff": "关闭",
       "reminderMin30": "30 分钟",
       "reminderHour1": "1 小时",
-      "reminderHours2": "2 小时"
+      "reminderHours2": "2 小时",
+      "retentionTitle": "会议保留",
+      "retentionDescription": "已结束的会议保留多久。超过所选期限的会议会被永久删除——音频、转写和笔记一起——在 FlowState 启动时以及运行期间每天一次。听写不受影响。",
+      "retentionForever": "永久保留",
+      "retentionDays7": "7天",
+      "retentionDays30": "30天",
+      "retentionDays90": "90天",
+      "retentionPlaceholder": "选择保留期限...",
+      "retentionWarning": "删除是永久的，无法撤销。所有内容仅存储在这台设备上，绝不会发送到任何地方。"
     },
     "models": {
       "title": "模型",

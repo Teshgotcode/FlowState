@@ -430,7 +430,15 @@
       "reminderOff": "Aus",
       "reminderMin30": "30 Minuten",
       "reminderHour1": "1 Stunde",
-      "reminderHours2": "2 Stunden"
+      "reminderHours2": "2 Stunden",
+      "retentionTitle": "Aufbewahrung von Meetings",
+      "retentionDescription": "Wie lange abgeschlossene Meetings aufbewahrt werden. Meetings, die älter als der gewählte Zeitraum sind, werden dauerhaft gelöscht — Audio, Transkript und Notizen zusammen — wenn FlowState startet und einmal täglich, während er läuft. Diktate bleiben unberührt.",
+      "retentionForever": "Für immer",
+      "retentionDays7": "7 Tage",
+      "retentionDays30": "30 Tage",
+      "retentionDays90": "90 Tage",
+      "retentionPlaceholder": "Aufbewahrungsdauer wählen...",
+      "retentionWarning": "Die Löschung ist dauerhaft und kann nicht rückgängig gemacht werden. Alles wird nur auf diesem Gerät gespeichert — nichts wird je irgendwohin gesendet."
     },
     "models": {
       "title": "Modelle",

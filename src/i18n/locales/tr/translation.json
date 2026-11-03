@@ -430,7 +430,15 @@
       "reminderOff": "Kapalı",
       "reminderMin30": "30 dakika",
       "reminderHour1": "1 saat",
-      "reminderHours2": "2 saat"
+      "reminderHours2": "2 saat",
+      "retentionTitle": "Toplantı saklama",
+      "retentionDescription": "Tamamlanan toplantılar ne kadar süreyle saklanır. Seçilen süreden eski toplantılar kalıcı olarak silinir — ses, transkript ve notlar birlikte — FlowState başlarken ve çalışırken günde bir kez. Sesli girişler asla etkilenmez.",
+      "retentionForever": "Sonsuza dek",
+      "retentionDays7": "7 gün",
+      "retentionDays30": "30 gün",
+      "retentionDays90": "90 gün",
+      "retentionPlaceholder": "Saklama süresi seçin...",
+      "retentionWarning": "Silme kalıcıdır ve geri alınamaz. Her şey yalnızca bu cihazda saklanır — hiçbir şey hiçbir yere gönderilmez."
     },
     "models": {
       "title": "Modeller",

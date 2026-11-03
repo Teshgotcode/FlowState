@@ -430,7 +430,15 @@
       "reminderOff": "Откл.",
       "reminderMin30": "30 минут",
       "reminderHour1": "1 час",
-      "reminderHours2": "2 часа"
+      "reminderHours2": "2 часа",
+      "retentionTitle": "Хранение встреч",
+      "retentionDescription": "Как долго хранятся завершённые встречи. Встречи старше выбранного срока удаляются навсегда — звук, расшифровка и заметки вместе — при запуске FlowState и раз в день во время работы. Диктовки не затрагиваются.",
+      "retentionForever": "Навсегда",
+      "retentionDays7": "7 дней",
+      "retentionDays30": "30 дней",
+      "retentionDays90": "90 дней",
+      "retentionPlaceholder": "Выберите срок хранения...",
+      "retentionWarning": "Удаление необратимо. Всё хранится только на этом устройстве — ничего никуда не отправляется."
     },
     "models": {
       "title": "Модели",

@@ -430,7 +430,15 @@
       "reminderOff": "オフ",
       "reminderMin30": "30分",
       "reminderHour1": "1時間",
-      "reminderHours2": "2時間"
+      "reminderHours2": "2時間",
+      "retentionTitle": "会議の保持期間",
+      "retentionDescription": "終了した会議をどのくらい保持するかです。選択した期間より古い会議は、FlowState の起動時と、実行中は1日1回、音声・文字起こし・メモが一緒に完全に削除されます。ディクテーションには影響しません。",
+      "retentionForever": "無期限",
+      "retentionDays7": "7日",
+      "retentionDays30": "30日",
+      "retentionDays90": "90日",
+      "retentionPlaceholder": "保持期間を選択...",
+      "retentionWarning": "削除は元に戻せません。すべてこのデバイスにのみ保存され、どこにも送信されません。"
     },
     "models": {
       "title": "モデル",

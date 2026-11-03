@@ -430,7 +430,15 @@
       "reminderOff": "כבוי",
       "reminderMin30": "30 דקות",
       "reminderHour1": "שעה אחת",
-      "reminderHours2": "שעתיים"
+      "reminderHours2": "שעתיים",
+      "retentionTitle": "שמירת פגישות",
+      "retentionDescription": "כמה זמן נשמרות פגישות שהסתיימו. פגישות ישנות מהתקופה הנבחרת נמחקות לצמיתות — שמע, תמליל והערות יחד — בהפעלת FlowState ופעם ביום בזמן הריצה. הקלטות דיבור לא מושפעות.",
+      "retentionForever": "לתמיד",
+      "retentionDays7": "7 ימים",
+      "retentionDays30": "30 יום",
+      "retentionDays90": "90 יום",
+      "retentionPlaceholder": "בחרו תקופת שמירה...",
+      "retentionWarning": "המחיקה סופית ואינה ניתנת לביטול. הכול נשמר במכשיר הזה בלבד — שום דבר לא נשלח לשום מקום."
     },
     "models": {
       "title": "מודלים",

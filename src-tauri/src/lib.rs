@@ -250,6 +250,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::history::transcribe_file,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
+            commands::history::update_meeting_retention_period,
             commands::mcp::change_mcp_enabled_setting,
             commands::mcp::change_mcp_port_setting,
             commands::mcp::regenerate_mcp_token,
@@ -446,6 +447,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(model_manager.clone());
     app_handle.manage(transcription_manager.clone());
     app_handle.manage(history_manager.clone());
+    // Meetings past their retention period go now — audio, segments and note
+    // together — and again once a day while the app runs.
+    history_manager.spawn_meeting_retention_task();
     // The dictionary's local correction tally. One JSON file in the app data
     // directory, never anywhere else.
     let word_suggestions_path = portable::app_data_dir(app_handle)

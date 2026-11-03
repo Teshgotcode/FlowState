@@ -430,7 +430,15 @@
       "reminderOff": "Desactivat",
       "reminderMin30": "30 minuts",
       "reminderHour1": "1 hora",
-      "reminderHours2": "2 hores"
+      "reminderHours2": "2 hores",
+      "retentionTitle": "Retenció de reunions",
+      "retentionDescription": "Quant de temps es conserven les reunions finalitzades. Les reunions més antigues que el període triat s'eliminen permanentment — àudio, transcripció i notes junts — quan FlowState s'inicia i un cop al dia mentre s'executa. Els dictats mai no es veuen afectats.",
+      "retentionForever": "Per sempre",
+      "retentionDays7": "7 dies",
+      "retentionDays30": "30 dies",
+      "retentionDays90": "90 dies",
+      "retentionPlaceholder": "Seleccioneu el període de retenció...",
+      "retentionWarning": "L'eliminació és permanent i no es pot desfer. Tot s'emmagatzema només en aquest dispositiu — res no s'envia mai enlloc."
     },
     "models": {
       "title": "Models",

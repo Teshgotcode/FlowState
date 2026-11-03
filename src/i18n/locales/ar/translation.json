@@ -430,7 +430,15 @@
       "reminderOff": "معطّل",
       "reminderMin30": "30 دقيقة",
       "reminderHour1": "ساعة واحدة",
-      "reminderHours2": "ساعتان"
+      "reminderHours2": "ساعتان",
+      "retentionTitle": "الاحتفاظ بالاجتماعات",
+      "retentionDescription": "كم تُحفظ الاجتماعات المنتهية. الاجتماعات الأقدم من المدة المختارة تُحذف نهائيًا — الصوت والنص والملاحظات معًا — عند بدء FlowState ومرة يوميًا أثناء التشغيل. الأوامر الصوتية (الإملاء) لا تتأثر أبدًا.",
+      "retentionForever": "إلى الأبد",
+      "retentionDays7": "7 أيام",
+      "retentionDays30": "30 يومًا",
+      "retentionDays90": "90 يومًا",
+      "retentionPlaceholder": "اختر مدة الاحتفاظ...",
+      "retentionWarning": "الحذف نهائي ولا يمكن التراجع عنه. كل شيء يُخزَّن على هذا الجهاز فقط — لا يُرسَل أي شيء إلى أي مكان."
     },
     "models": {
       "title": "النماذج",

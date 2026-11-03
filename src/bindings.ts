@@ -1097,6 +1097,21 @@ async updateRecordingRetentionPeriod(period: string) : Promise<Result<null, stri
 }
 },
 /**
+ * Set how long finished meetings are kept before their audio, transcript
+ * segments and note are deleted together. Dictations are governed by their
+ * own setting and are never touched. The cleanup runs right here, again at
+ * app start, and once a day while the app runs; deletion is permanent and
+ * everything stays local to this device.
+ */
+async updateMeetingRetentionPeriod(period: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_meeting_retention_period", { period }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Turn the MCP server on or off. The first time it is turned on, a random
  * per-user token is generated; the Integrations panel shows it that once,
  * and the server will not start without one.
@@ -1618,7 +1633,13 @@ learn_from_corrections?: boolean;
  * Spoken text templates ("say trigger, get expansion"), expanded after
  * transcription in [`post_process_transcription_text`].
  */
-snippets?: Snippet[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
+snippets?: Snippet[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; 
+/**
+ * How long finished meetings are kept; separate from the dictation
+ * history above, because a meeting's audio, segments and note are
+ * deleted together as one unit.
+ */
+meeting_retention_period?: MeetingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
 /**
  * Per-app tone/style rules: maps an app (bundle id or localized name,
  * matched case-insensitively) to a post-processing prompt id. When any
@@ -2034,6 +2055,17 @@ export type MeetingNoteOutcome =
  * the right timestamp. Timestamps are `None` when the entry had no segments.
  */
 export type MeetingQuote = { t0_ms: number | null; t1_ms: number | null; text: string }
+/**
+ * How long finished meetings are kept before they are deleted, separately
+ * from the dictation history's [`RecordingRetentionPeriod`]. A meeting's
+ * audio, transcript segments and note are one unit: the period deletes all
+ * of it together, and never a dictation.
+ */
+export type MeetingRetentionPeriod = 
+/**
+ * Keep meetings until they are deleted by hand.
+ */
+"forever" | "days_7" | "days_30" | "days_90"
 /**
  * One finished piece of a meeting's live transcript, emitted as the
  * `meeting-segment` event while the meeting records, so its window can show
