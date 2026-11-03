@@ -394,6 +394,16 @@
           "push_to_talk": "Nimmt auf, solange die Tastenkombination gedrückt bleibt",
           "toggle": "Tastenkombination antippen, um die Aufnahme zu starten, erneut antippen zum Stoppen"
         }
+      },
+      "mousePtt": {
+        "title": "Maus als Push-to-Talk",
+        "description": "Halten Sie eine Maustaste gedrückt, um aufzunehmen, und lassen Sie los, um zu transkribieren — wie beim Tastaturkürzel. Der Klick wird nicht an andere Apps weitergegeben.",
+        "options": {
+          "off": "Aus",
+          "middle": "Mittlere Taste",
+          "back": "Seitentaste (Zurück)",
+          "forward": "Seitentaste (Vor)"
+        }
       }
     },
     "meeting": {

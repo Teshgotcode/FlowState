@@ -394,6 +394,16 @@
           "push_to_talk": "Tar opp mens du holder snarveien inne",
           "toggle": "Trykk snarveien for å starte opptaket, trykk igjen for å stoppe"
         }
+      },
+      "mousePtt": {
+        "title": "Mus som push-to-talk",
+        "description": "Hold en museknapp for å ta opp, slipp for å transkribere — som tastatursnarveien. Klikket sendes ikke videre til andre apper.",
+        "options": {
+          "off": "Av",
+          "middle": "Midtknapp",
+          "back": "Sideknapp (tilbake)",
+          "forward": "Sideknapp (frem)"
+        }
       }
     },
     "meeting": {

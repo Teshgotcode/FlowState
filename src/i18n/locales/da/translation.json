@@ -394,6 +394,16 @@
           "push_to_talk": "Optager, mens du holder genvejen nede",
           "toggle": "Tryk på genvejen for at starte optagelsen, tryk igen for at stoppe"
         }
+      },
+      "mousePtt": {
+        "title": "Mus som push-to-talk",
+        "description": "Hold en museknapp nede for at optage, slip for at transkribere — som tastaturgenvejen. Klikket sendes ikke videre til andre apps.",
+        "options": {
+          "off": "Fra",
+          "middle": "Midterknap",
+          "back": "Sideknap (tilbage)",
+          "forward": "Sideknap (frem)"
+        }
       }
     },
     "meeting": {

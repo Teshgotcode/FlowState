@@ -200,6 +200,22 @@ pub enum ShortcutActivation {
     HoldOrToggle,
 }
 
+/// Mouse button that can act as an extra push-to-talk trigger alongside the
+/// keyboard transcribe shortcut. `None` (missing in older stores) disables it.
+///
+/// Left/right buttons are deliberately not offered: they are the primary click
+/// buttons, and blocking them system-wide would break normal pointing.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum MousePttButton {
+    /// Scroll-wheel click.
+    Middle,
+    /// Side button 4 (often "back").
+    Back,
+    /// Side button 5 (often "forward").
+    Forward,
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum ClipboardHandling {
@@ -424,6 +440,11 @@ pub struct AppSettings {
     /// anything shorter is a tap that locks recording on.
     #[serde(default = "default_hold_threshold_ms")]
     pub hold_threshold_ms: u64,
+    /// Optional mouse button used as an extra push-to-talk trigger. Registered
+    /// through the handy-keys global input layer (the global-shortcut plugin
+    /// cannot observe mouse buttons), so the click never reaches other apps.
+    #[serde(default)]
+    pub mouse_ptt_button: Option<MousePttButton>,
     #[serde(default)]
     pub audio_feedback: bool,
     #[serde(default = "default_audio_feedback_volume")]
@@ -1176,6 +1197,7 @@ pub fn get_default_settings() -> AppSettings {
         bindings,
         shortcut_activation: ShortcutActivation::default(),
         hold_threshold_ms: default_hold_threshold_ms(),
+        mouse_ptt_button: None,
         audio_feedback: false,
         audio_feedback_volume: default_audio_feedback_volume(),
         sound_theme: default_sound_theme(),

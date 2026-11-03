@@ -394,6 +394,16 @@
           "push_to_talk": "Records while you hold the shortcut",
           "toggle": "Tap the shortcut to start recording, tap again to stop"
         }
+      },
+      "mousePtt": {
+        "title": "Mouse Push-to-Talk",
+        "description": "Hold a mouse button to record, release to transcribe — same as the keyboard shortcut. The click is not passed to other apps.",
+        "options": {
+          "off": "Off",
+          "middle": "Middle button",
+          "back": "Side button (back)",
+          "forward": "Side button (forward)"
+        }
       }
     },
     "meeting": {

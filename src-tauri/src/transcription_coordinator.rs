@@ -572,6 +572,8 @@ pub fn is_transcribe_binding(id: &str) -> bool {
     id == "transcribe"
         || id == "transcribe_with_post_process"
         || id == crate::command_mode::TRANSCRIBE_BINDING_ID
+        // The optional mouse push-to-talk trigger behaves like transcribe.
+        || id == crate::shortcut::MOUSE_PTT_BINDING_ID
 }
 
 impl TranscriptionCoordinator {

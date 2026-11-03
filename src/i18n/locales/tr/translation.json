@@ -394,6 +394,16 @@
           "push_to_talk": "Kısayolu basılı tuttuğunuz sürece kaydeder",
           "toggle": "Kaydı başlatmak için kısayola dokunun, durdurmak için tekrar dokunun"
         }
+      },
+      "mousePtt": {
+        "title": "Push-to-talk fare düğmesi",
+        "description": "Kaydetmek için bir fare düğmesini basılı tutun, bıraktığınızda metne dönüşür — klavye kısayolu gibi. Tıklama diğer uygulamalara iletilmez.",
+        "options": {
+          "off": "Kapalı",
+          "middle": "Orta düğme",
+          "back": "Yan düğme (geri)",
+          "forward": "Yan düğme (ileri)"
+        }
       }
     },
     "meeting": {

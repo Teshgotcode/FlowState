@@ -394,6 +394,16 @@
           "push_to_talk": "Nagrywa, dopóki trzymasz skrót",
           "toggle": "Dotknij skrótu, aby rozpocząć nagrywanie, dotknij ponownie, aby zatrzymać"
         }
+      },
+      "mousePtt": {
+        "title": "Mysz jako push-to-talk",
+        "description": "Przytrzymaj przycisk myszy, aby nagrywać, i puść, aby transkrybować — tak samo jak przy skrócie klawiszowym. Klik nie trafia do innych aplikacji.",
+        "options": {
+          "off": "Wyłączone",
+          "middle": "Przycisk środkowy",
+          "back": "Przycisk boczny (wstecz)",
+          "forward": "Przycisk boczny (dalej)"
+        }
       }
     },
     "meeting": {

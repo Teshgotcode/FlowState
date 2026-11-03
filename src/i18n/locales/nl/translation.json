@@ -394,6 +394,16 @@
           "push_to_talk": "Neemt op zolang je de sneltoets ingedrukt houdt",
           "toggle": "Tik op de sneltoets om de opname te starten, tik opnieuw om te stoppen"
         }
+      },
+      "mousePtt": {
+        "title": "Muis als push-to-talk",
+        "description": "Houd een muisknop ingedrukt om op te nemen en laat los om te transcriberen — net als de sneltoets. De klik wordt niet naar andere apps gestuurd.",
+        "options": {
+          "off": "Uit",
+          "middle": "Middelste knop",
+          "back": "Zijknop (terug)",
+          "forward": "Zijknop (vooruit)"
+        }
       }
     },
     "meeting": {

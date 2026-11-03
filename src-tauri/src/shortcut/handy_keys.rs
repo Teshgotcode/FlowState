@@ -259,6 +259,41 @@ impl HandyKeysState {
             .map_err(|_| "Failed to receive unregister response")?
     }
 
+    /// Register a hotkey addressed by id and string instead of a full
+    /// binding. The mouse push-to-talk trigger uses this: it has no
+    /// user-recordable entry in `bindings`.
+    pub fn register_raw(&self, binding_id: &str, hotkey_string: &str) -> Result<(), String> {
+        let (tx, rx) = mpsc::channel();
+        self.command_sender
+            .lock()
+            .map_err(|_| "Failed to lock command_sender")?
+            .send(ManagerCommand::Register {
+                binding_id: binding_id.to_string(),
+                hotkey_string: hotkey_string.to_string(),
+                response: tx,
+            })
+            .map_err(|_| "Failed to send register command")?;
+
+        rx.recv()
+            .map_err(|_| "Failed to receive register response")?
+    }
+
+    /// Unregister a hotkey addressed by id (no-op when never registered).
+    pub fn unregister_raw(&self, binding_id: &str) -> Result<(), String> {
+        let (tx, rx) = mpsc::channel();
+        self.command_sender
+            .lock()
+            .map_err(|_| "Failed to lock command_sender")?
+            .send(ManagerCommand::Unregister {
+                binding_id: binding_id.to_string(),
+                response: tx,
+            })
+            .map_err(|_| "Failed to send unregister command")?;
+
+        rx.recv()
+            .map_err(|_| "Failed to receive unregister response")?
+    }
+
     /// Start recording mode for a specific binding
     pub fn start_recording(&self, app: &AppHandle, binding_id: String) -> Result<(), String> {
         if self.is_recording.load(Ordering::SeqCst) {
@@ -423,7 +458,14 @@ pub fn validate_shortcut(raw: &str) -> Result<(), String> {
 
 /// Initialize handy-keys shortcuts
 pub fn init_shortcuts(app: &AppHandle) -> Result<(), String> {
-    let state = HandyKeysState::new(app.clone())?;
+    // A manager may already be running: mouse push-to-talk starts one even
+    // while the keyboard side uses the Tauri plugin. Reuse it — `manage`
+    // panics when the state type is already managed.
+    if app.try_state::<HandyKeysState>().is_none() {
+        let state = HandyKeysState::new(app.clone())?;
+        app.manage(state);
+    }
+    let state = app.state::<HandyKeysState>();
 
     let default_bindings = settings::get_default_settings().bindings;
     let user_settings = settings::load_or_create_app_settings(app);
@@ -452,9 +494,42 @@ pub fn init_shortcuts(app: &AppHandle) -> Result<(), String> {
         }
     }
 
-    app.manage(state);
     info!("handy-keys shortcuts initialized");
     Ok(())
+}
+
+/// Ensure a [`HandyKeysState`] exists even when the keyboard implementation is
+/// the Tauri global-shortcut plugin. Mouse-button push-to-talk is only
+/// observable through the handy-keys input layer, so a minimal manager (no
+/// keyboard hotkeys) is started on demand for it.
+pub fn ensure_state(app: &AppHandle) -> Result<(), String> {
+    if app.try_state::<HandyKeysState>().is_some() {
+        return Ok(());
+    }
+    let state = HandyKeysState::new(app.clone())?;
+    app.manage(state);
+    info!("handy-keys manager started for mouse push-to-talk");
+    Ok(())
+}
+
+/// Register a hotkey by id and string on the handy-keys manager.
+pub fn register_raw(
+    app: &AppHandle,
+    binding_id: &str,
+    hotkey_string: &str,
+) -> Result<(), String> {
+    let state = app
+        .try_state::<HandyKeysState>()
+        .ok_or("HandyKeysState not initialized")?;
+    state.register_raw(binding_id, hotkey_string)
+}
+
+/// Unregister a hotkey by id from the handy-keys manager.
+pub fn unregister_raw(app: &AppHandle, binding_id: &str) -> Result<(), String> {
+    let state = app
+        .try_state::<HandyKeysState>()
+        .ok_or("HandyKeysState not initialized")?;
+    state.unregister_raw(binding_id)
 }
 
 /// Register a shortcut

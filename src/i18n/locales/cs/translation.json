@@ -394,6 +394,16 @@
           "push_to_talk": "Nahrává, dokud držíte zkratku",
           "toggle": "Klepněte na zkratku pro zahájení nahrávání, klepněte znovu pro zastavení"
         }
+      },
+      "mousePtt": {
+        "title": "Myš jako push-to-talk",
+        "description": "Podržte tlačítko myši pro nahrávání a pusťte pro přepis — stejně jako u klávesové zkratky. Klik nepřejde do jiných aplikací.",
+        "options": {
+          "off": "Vypnuto",
+          "middle": "Prostřední tlačítko",
+          "back": "Boční tlačítko (zpět)",
+          "forward": "Boční tlačítko (vpřed)"
+        }
       }
     },
     "meeting": {

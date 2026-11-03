@@ -394,6 +394,16 @@
           "push_to_talk": "Graba mientras mantienes pulsado el atajo",
           "toggle": "Toca el atajo para empezar a grabar, tócalo de nuevo para detener"
         }
+      },
+      "mousePtt": {
+        "title": "Ratón como push-to-talk",
+        "description": "Mantén pulsado un botón del ratón para grabar y suelta para transcribir, igual que el atajo de teclado. El clic no se envía a otras aplicaciones.",
+        "options": {
+          "off": "Desactivado",
+          "middle": "Botón central",
+          "back": "Botón lateral (atrás)",
+          "forward": "Botón lateral (adelante)"
+        }
       }
     },
     "meeting": {
