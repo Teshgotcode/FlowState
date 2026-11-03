@@ -424,7 +424,13 @@
       "stopped": "会議は履歴に保存されました。",
       "liveTranscript": "ライブ文字起こし",
       "liveEmpty": "会議の進行に合わせて、ここに文字が表示されます。",
-      "jumpToBottom": "一番下へ"
+      "jumpToBottom": "一番下へ",
+      "reminderTitle": "会議リマインダー",
+      "reminderDescription": "セッションがこの時間だけ録音を続けると、会議バーの横に「まだ続いていますか？」という控えめな通知と停止ボタンを表示します。",
+      "reminderOff": "オフ",
+      "reminderMin30": "30分",
+      "reminderHour1": "1時間",
+      "reminderHours2": "2時間"
     },
     "models": {
       "title": "モデル",
@@ -1207,7 +1213,8 @@
       "start": "会議を開始",
       "stop": "停止",
       "saving": "保存中…",
-      "recording": "録音中"
+      "recording": "録音中",
+      "stillGoing": "会議はまだ続いていますか？"
     },
     "command": "コマンド",
     "commandFallback": "選択なし — 通常のディクテーション",

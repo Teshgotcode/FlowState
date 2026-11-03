@@ -1,3 +1,4 @@
+use crate::settings::{get_settings, write_settings};
 use crate::managers::meeting::{MeetingManager, MeetingStatus, StoppedMeeting};
 use crate::managers::meeting_ask::{ask_about_entry, cancel_ask, MeetingAskOutcome};
 use crate::managers::meeting_note::{cancel_run, generate_for_entry, MeetingNoteOutcome};
@@ -63,6 +64,29 @@ pub fn start_meeting_bar_drag(app: AppHandle) -> Result<(), String> {
 pub fn open_meeting_bar_menu(app: AppHandle) -> Result<(), String> {
     crate::overlay::show_meeting_bar_menu(&app);
     Ok(())
+}
+
+/// Grow or shrink the meeting bar's window for the "still going?" prompt
+/// (S-24): the frontend shows the prompt once the session has recorded past
+/// `meeting_reminder_minutes`, and asks for the wider footprint here. The
+/// resize never focuses the window, so the app underneath keeps the
+/// keyboard.
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_bar_nudge(app: AppHandle, show: bool) -> Result<(), String> {
+    crate::overlay::set_meeting_bar_nudge(&app, show);
+    Ok(())
+}
+
+/// How long a meeting may record before the bar shows its "still going?"
+/// prompt, in minutes. `None` turns the prompt off (the setting's "Off"
+/// choice).
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_reminder_minutes(app: AppHandle, minutes: Option<u64>) {
+    let mut settings = get_settings(&app);
+    settings.meeting_reminder_minutes = minutes;
+    write_settings(&app, settings);
 }
 /// Generate a meeting note for a finished meeting's history entry: chunk its
 /// transcript, extract a structured draft with the configured local LLM,

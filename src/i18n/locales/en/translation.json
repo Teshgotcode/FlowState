@@ -424,7 +424,13 @@
       "stopped": "The meeting was saved to History.",
       "liveTranscript": "Live transcript",
       "liveEmpty": "Words appear here as the meeting records.",
-      "jumpToBottom": "Jump to bottom"
+      "jumpToBottom": "Jump to bottom",
+      "reminderTitle": "Meeting reminder",
+      "reminderDescription": "Show a discreet “still going?” prompt with a stop button beside the meeting bar once a session has recorded this long.",
+      "reminderOff": "Off",
+      "reminderMin30": "30 minutes",
+      "reminderHour1": "1 hour",
+      "reminderHours2": "2 hours"
     },
     "models": {
       "title": "Models",
@@ -1207,7 +1213,8 @@
       "start": "Start Meeting",
       "stop": "Stop",
       "saving": "Saving…",
-      "recording": "Recording"
+      "recording": "Recording",
+      "stillGoing": "Meeting still going?"
     },
     "command": "Command",
     "commandFallback": "Nothing selected — dictating normally",

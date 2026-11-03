@@ -424,7 +424,13 @@
       "stopped": "會議已儲存到歷史紀錄。",
       "liveTranscript": "即時轉寫",
       "liveEmpty": "會議進行時，文字會顯示在這裡。",
-      "jumpToBottom": "跳到底部"
+      "jumpToBottom": "跳到底部",
+      "reminderTitle": "會議提醒",
+      "reminderDescription": "當工作階段錄製達到這段時間後，在會議列旁顯示附停止按鈕的低調提示。",
+      "reminderOff": "關閉",
+      "reminderMin30": "30 分鐘",
+      "reminderHour1": "1 小時",
+      "reminderHours2": "2 小時"
     },
     "models": {
       "title": "模型",
@@ -1207,7 +1213,8 @@
       "start": "開始會議",
       "stop": "停止",
       "saving": "儲存中…",
-      "recording": "錄音中"
+      "recording": "錄音中",
+      "stillGoing": "會議還在進行中嗎？"
     },
     "command": "命令",
     "commandFallback": "未選取文字 — 一般聽寫",

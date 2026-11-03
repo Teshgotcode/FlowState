@@ -424,7 +424,13 @@
       "stopped": "Rapat telah disimpan ke Riwayat.",
       "liveTranscript": "Transkrip langsung",
       "liveEmpty": "Kata-kata muncul di sini selama rapat berlangsung.",
-      "jumpToBottom": "Lompat ke bawah"
+      "jumpToBottom": "Lompat ke bawah",
+      "reminderTitle": "Pengingat rapat",
+      "reminderDescription": "Tampilkan pesan halus 'masih berlangsung?' dengan tombol hentikan di samping bilah rapat setelah sesi merekam selama ini.",
+      "reminderOff": "Mati",
+      "reminderMin30": "30 menit",
+      "reminderHour1": "1 jam",
+      "reminderHours2": "2 jam"
     },
     "models": {
       "title": "Model",
@@ -1207,7 +1213,8 @@
       "start": "Mulai rapat",
       "stop": "Hentikan",
       "saving": "Menyimpan…",
-      "recording": "Merekam"
+      "recording": "Merekam",
+      "stillGoing": "Rapat masih berlangsung?"
     },
     "command": "Perintah",
     "commandFallback": "Tidak ada yang dipilih — dikte normal",

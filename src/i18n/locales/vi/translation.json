@@ -424,7 +424,13 @@
       "stopped": "Cuộc họp đã được lưu vào Lịch sử.",
       "liveTranscript": "Bản chép lời trực tiếp",
       "liveEmpty": "Các từ xuất hiện ở đây trong lúc cuộc họp diễn ra.",
-      "jumpToBottom": "Nhảy xuống dưới"
+      "jumpToBottom": "Nhảy xuống dưới",
+      "reminderTitle": "Lời nhắc cuộc họp",
+      "reminderDescription": "Hiển thị nhắc nhủ kín đáo 'vẫn đang diễn ra?' với nút dụng bên cạnh thanh cuộc họp sau khi phiên ghi âm kéo dài khoảng thời gian này.",
+      "reminderOff": "Tắt",
+      "reminderMin30": "30 phút",
+      "reminderHour1": "1 giờ",
+      "reminderHours2": "2 giờ"
     },
     "models": {
       "title": "Mô hình",
@@ -1207,7 +1213,8 @@
       "start": "Bắt đầu cuộc họp",
       "stop": "Dừng",
       "saving": "Đang lưu…",
-      "recording": "Đang ghi"
+      "recording": "Đang ghi",
+      "stillGoing": "Cuộc họp vẫn đang diễn ra?"
     },
     "command": "Lệnh",
     "commandFallback": "Không có lựa chọn — đọc chính tả bình thường",

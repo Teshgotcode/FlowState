@@ -424,7 +424,13 @@
       "stopped": "Møteøkten ble lagret i historikken.",
       "liveTranscript": "Sanntidstranskripsjon",
       "liveEmpty": "Ordene dukker opp her etter hvert som møtet pågår.",
-      "jumpToBottom": "Hopp til bunnen"
+      "jumpToBottom": "Hopp til bunnen",
+      "reminderTitle": "Møtevarsel",
+      "reminderDescription": "Vis en diskret «pågår fortsatt»-prompt med stoppknapp ved siden av møtebaren når økten har pågått så lenge.",
+      "reminderOff": "Av",
+      "reminderMin30": "30 minutter",
+      "reminderHour1": "1 time",
+      "reminderHours2": "2 timer"
     },
     "models": {
       "title": "Modeller",
@@ -1207,7 +1213,8 @@
       "start": "Start møteøkt",
       "stop": "Stopp",
       "saving": "Lagrer …",
-      "recording": "Tar opp"
+      "recording": "Tar opp",
+      "stillGoing": "Møtet varer fortsatt — stopp?"
     },
     "command": "Kommando",
     "commandFallback": "Ingen merking — vanlig diktering",

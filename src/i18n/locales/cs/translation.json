@@ -424,7 +424,13 @@
       "stopped": "Porada byla uložena do Historie.",
       "liveTranscript": "Živý přepis",
       "liveEmpty": "Slova se zde zobrazují, během schůzky.",
-      "jumpToBottom": "Přejít na konec"
+      "jumpToBottom": "Přejít na konec",
+      "reminderTitle": "Připomínka schůzky",
+      "reminderDescription": "Po takové době nahrávání zobrazí vedle lišty schůzky nenápadnou otázku „Stále probíhá?“ s tlačítkem Ukončit.",
+      "reminderOff": "Vypnuto",
+      "reminderMin30": "30 minut",
+      "reminderHour1": "1 hodina",
+      "reminderHours2": "2 hodiny"
     },
     "models": {
       "title": "Modely",
@@ -1207,7 +1213,8 @@
       "start": "Spustit poradu",
       "stop": "Zastavit",
       "saving": "Ukládá se…",
-      "recording": "Nahrává se"
+      "recording": "Nahrává se",
+      "stillGoing": "Porada stále probíhá?"
     },
     "command": "Příkaz",
     "commandFallback": "Nic není vybráno — běžné diktování",

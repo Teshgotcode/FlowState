@@ -424,7 +424,13 @@
       "stopped": "La reunió s'ha desat a l'Historial.",
       "liveTranscript": "Transcripció en directe",
       "liveEmpty": "Les paraules apareixen aquí mentre dura la reunió.",
-      "jumpToBottom": "Anar al final"
+      "jumpToBottom": "Anar al final",
+      "reminderTitle": "Recordatori de reunió",
+      "reminderDescription": "Mostra un avís discret «encara en marxa?» amb un botó d'aturada al costat de la barra de reunió quan una sessió porta aquest temps enregistrant.",
+      "reminderOff": "Desactivat",
+      "reminderMin30": "30 minuts",
+      "reminderHour1": "1 hora",
+      "reminderHours2": "2 hores"
     },
     "models": {
       "title": "Models",
@@ -1207,7 +1213,8 @@
       "start": "Inicia la reunió",
       "stop": "Atura",
       "saving": "S'està desant…",
-      "recording": "Enregistrant"
+      "recording": "Enregistrant",
+      "stillGoing": "La reunió encara està en marxa?"
     },
     "command": "Comanda",
     "commandFallback": "Res seleccionat — dictat normal",

@@ -424,7 +424,13 @@
       "stopped": "Toplantı Geçmiş'e kaydedildi.",
       "liveTranscript": "Canlı transkript",
       "liveEmpty": "Sözcükler toplantı sürerken burada görünür.",
-      "jumpToBottom": "En alta git"
+      "jumpToBottom": "En alta git",
+      "reminderTitle": "Toplantı hatırlatıcısı",
+      "reminderDescription": "Bir oturum bu süreye kadar kaydettiğinde toplantı çubuğunun yanında 'hâlâ sürüyor mu?' yazısını ve durdur düğmesini gösterir.",
+      "reminderOff": "Kapalı",
+      "reminderMin30": "30 dakika",
+      "reminderHour1": "1 saat",
+      "reminderHours2": "2 saat"
     },
     "models": {
       "title": "Modeller",
@@ -1207,7 +1213,8 @@
       "start": "Toplantıyı başlat",
       "stop": "Durdur",
       "saving": "Kaydediliyor…",
-      "recording": "Kaydediliyor"
+      "recording": "Kaydediliyor",
+      "stillGoing": "Toplantı hâlâ sürüyor mu?"
     },
     "command": "Komut",
     "commandFallback": "Seçim yok — normal dikte",

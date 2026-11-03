@@ -424,7 +424,13 @@
       "stopped": "La réunion a été enregistrée dans l'Historique.",
       "liveTranscript": "Transcription en direct",
       "liveEmpty": "Les mots apparaissent ici pendant la réunion.",
-      "jumpToBottom": "Aller en bas"
+      "jumpToBottom": "Aller en bas",
+      "reminderTitle": "Rappel de réunion",
+      "reminderDescription": "Affiche une invite discrète « toujours en cours ? » avec un bouton d'arrêt à côté de la barre de réunion une fois la session enregistrée depuis cette durée.",
+      "reminderOff": "Désactivé",
+      "reminderMin30": "30 minutes",
+      "reminderHour1": "1 heure",
+      "reminderHours2": "2 heures"
     },
     "models": {
       "title": "Modèles",
@@ -1207,7 +1213,8 @@
       "start": "Démarrer la réunion",
       "stop": "Arrêter",
       "saving": "Sauvegarde…",
-      "recording": "Enregistrement en cours"
+      "recording": "Enregistrement en cours",
+      "stillGoing": "La réunion est toujours en cours ?"
     },
     "command": "Commande",
     "commandFallback": "Rien de sélectionné — dictée normale",

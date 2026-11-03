@@ -424,7 +424,13 @@
       "stopped": "Spotkanie zostało zapisane w Historii.",
       "liveTranscript": "Transkrypcja na żywo",
       "liveEmpty": "Słowa pojawiają się tutaj w trakcie spotkania.",
-      "jumpToBottom": "Przejdź na koniec"
+      "jumpToBottom": "Przejdź na koniec",
+      "reminderTitle": "Przypomnienie o spotkaniu",
+      "reminderDescription": "Po takim czasie nagrywania pokazuje obok paska spotkania dyskretne pytanie „wciąż trwa?” z przyciskiem zatrzymania.",
+      "reminderOff": "Wyłączone",
+      "reminderMin30": "30 minut",
+      "reminderHour1": "1 godzina",
+      "reminderHours2": "2 godziny"
     },
     "models": {
       "title": "Modele",
@@ -1207,7 +1213,8 @@
       "start": "Rozpocznij spotkanie",
       "stop": "Zatrzymaj",
       "saving": "Zapisywanie…",
-      "recording": "Nagrywanie"
+      "recording": "Nagrywanie",
+      "stillGoing": "Spotkanie wciąż trwa?"
     },
     "command": "Polecenie",
     "commandFallback": "Brak zaznaczenia — zwykłe dyktowanie",
