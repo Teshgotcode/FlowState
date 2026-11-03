@@ -259,6 +259,33 @@ pub enum RecordingRetentionPeriod {
     Months3,
 }
 
+/// How long finished meetings are kept before they are deleted, separately
+/// from the dictation history's [`RecordingRetentionPeriod`]. A meeting's
+/// audio, transcript segments and note are one unit: the period deletes all
+/// of it together, and never a dictation.
+#[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
+#[serde(rename_all = "snake_case")]
+pub enum MeetingRetentionPeriod {
+    /// Keep meetings until they are deleted by hand.
+    Forever,
+    Days7,
+    Days30,
+    Days90,
+}
+
+impl MeetingRetentionPeriod {
+    /// Seconds a meeting is kept; `None` keeps it until it is deleted by
+    /// hand.
+    pub fn retention_secs(self) -> Option<i64> {
+        match self {
+            MeetingRetentionPeriod::Forever => None,
+            MeetingRetentionPeriod::Days7 => Some(7 * 24 * 60 * 60),
+            MeetingRetentionPeriod::Days30 => Some(30 * 24 * 60 * 60),
+            MeetingRetentionPeriod::Days90 => Some(90 * 24 * 60 * 60),
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "snake_case")]
 pub enum KeyboardImplementation {
@@ -527,6 +554,11 @@ pub struct AppSettings {
     pub history_limit: usize,
     #[serde(default = "default_recording_retention_period")]
     pub recording_retention_period: RecordingRetentionPeriod,
+    /// How long finished meetings are kept; separate from the dictation
+    /// history above, because a meeting's audio, segments and note are
+    /// deleted together as one unit.
+    #[serde(default = "default_meeting_retention_period")]
+    pub meeting_retention_period: MeetingRetentionPeriod,
     #[serde(default)]
     pub paste_method: PasteMethod,
     #[serde(default)]
@@ -778,6 +810,10 @@ fn default_history_limit() -> usize {
 
 fn default_recording_retention_period() -> RecordingRetentionPeriod {
     RecordingRetentionPeriod::PreserveLimit
+}
+
+fn default_meeting_retention_period() -> MeetingRetentionPeriod {
+    MeetingRetentionPeriod::Forever
 }
 
 fn default_audio_feedback_volume() -> f32 {
@@ -1239,6 +1275,7 @@ pub fn get_default_settings() -> AppSettings {
         word_correction_threshold: default_word_correction_threshold(),
         history_limit: default_history_limit(),
         recording_retention_period: default_recording_retention_period(),
+        meeting_retention_period: default_meeting_retention_period(),
         paste_method: PasteMethod::default(),
         clipboard_handling: ClipboardHandling::default(),
         auto_submit: default_auto_submit(),
@@ -1643,6 +1680,13 @@ pub fn get_history_limit(app: &AppHandle) -> usize {
 pub fn get_recording_retention_period(app: &AppHandle) -> RecordingRetentionPeriod {
     let settings = get_settings(app);
     settings.recording_retention_period
+}
+
+/// How long finished meetings are kept before their audio, segments and note
+/// are deleted together.
+pub fn get_meeting_retention_period(app: &AppHandle) -> MeetingRetentionPeriod {
+    let settings = get_settings(app);
+    settings.meeting_retention_period
 }
 
 #[cfg(test)]

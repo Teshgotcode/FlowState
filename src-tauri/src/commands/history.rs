@@ -157,3 +157,38 @@ pub async fn update_recording_retention_period(
 
     Ok(())
 }
+
+/// Set how long finished meetings are kept before their audio, transcript
+/// segments and note are deleted together. Dictations are governed by their
+/// own setting and are never touched. The cleanup runs right here, again at
+/// app start, and once a day while the app runs; deletion is permanent and
+/// everything stays local to this device.
+#[tauri::command]
+#[specta::specta]
+pub async fn update_meeting_retention_period(
+    app: AppHandle,
+    history_manager: State<'_, Arc<HistoryManager>>,
+    period: String,
+) -> Result<(), String> {
+    use crate::settings::MeetingRetentionPeriod;
+
+    let retention_period = match period.as_str() {
+        // The serialized spellings the frontend sends, plus the unprefixed
+        // forms, so either survives a typo or an older string.
+        "forever" => MeetingRetentionPeriod::Forever,
+        "days_7" | "days7" => MeetingRetentionPeriod::Days7,
+        "days_30" | "days30" => MeetingRetentionPeriod::Days30,
+        "days_90" | "days90" => MeetingRetentionPeriod::Days90,
+        _ => return Err(format!("Invalid meeting retention period: {}", period)),
+    };
+
+    let mut settings = crate::settings::get_settings(&app);
+    settings.meeting_retention_period = retention_period;
+    crate::settings::write_settings(&app, settings);
+
+    history_manager
+        .cleanup_old_meetings()
+        .map_err(|e| e.to_string())?;
+
+    Ok(())
+}

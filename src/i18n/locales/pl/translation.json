@@ -430,7 +430,15 @@
       "reminderOff": "Wyłączone",
       "reminderMin30": "30 minut",
       "reminderHour1": "1 godzina",
-      "reminderHours2": "2 godziny"
+      "reminderHours2": "2 godziny",
+      "retentionTitle": "Przechowywanie spotkań",
+      "retentionDescription": "Jak długo przechowywane są zakończone spotkania. Spotkania starsze niż wybrany okres są usuwane trwale — dźwięk, transkrypcja i notatki razem — przy starcie FlowState i raz dziennie podczas jego działania. Dyktanda nie są dotykane.",
+      "retentionForever": "Na zawsze",
+      "retentionDays7": "7 dni",
+      "retentionDays30": "30 dni",
+      "retentionDays90": "90 dni",
+      "retentionPlaceholder": "Wybierz okres przechowywania...",
+      "retentionWarning": "Usuwanie jest trwałe i nie można go cofnąć. Wszystko jest przechowywane tylko na tym urządzeniu — nic nigdzie nie jest wysyłane."
     },
     "models": {
       "title": "Modele",

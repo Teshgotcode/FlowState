@@ -430,7 +430,15 @@
       "reminderOff": "Desativado",
       "reminderMin30": "30 minutos",
       "reminderHour1": "1 hora",
-      "reminderHours2": "2 horas"
+      "reminderHours2": "2 horas",
+      "retentionTitle": "Retenção de reuniões",
+      "retentionDescription": "Por quanto tempo as reuniões concluídas são mantidas. Reuniões mais antigas que o período escolhido são excluídas permanentemente — áudio, transcrição e notas juntos — quando o FlowState inicia e uma vez por dia enquanto está em execução. Os ditados nunca são afetados.",
+      "retentionForever": "Para sempre",
+      "retentionDays7": "7 dias",
+      "retentionDays30": "30 dias",
+      "retentionDays90": "90 dias",
+      "retentionPlaceholder": "Selecionar período de retenção...",
+      "retentionWarning": "A exclusão é permanente e não pode ser desfeita. Tudo é armazenado apenas neste dispositivo — nada é nunca enviado para outro lugar."
     },
     "models": {
       "title": "Modelos",

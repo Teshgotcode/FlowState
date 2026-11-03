@@ -430,7 +430,15 @@
       "reminderOff": "Uit",
       "reminderMin30": "30 minuten",
       "reminderHour1": "1 uur",
-      "reminderHours2": "2 uur"
+      "reminderHours2": "2 uur",
+      "retentionTitle": "Bewaring van vergaderingen",
+      "retentionDescription": "Hoe lang afgeronde vergaderingen bewaard worden. Vergaderingen ouder dan de gekozen periode worden permanent verwijderd — audio, transcriptie en notities samen — wanneer FlowState start en één keer per dag terwijl hij draait. Dicteeropnames worden nooit aangeraakt.",
+      "retentionForever": "Voor altijd",
+      "retentionDays7": "7 dagen",
+      "retentionDays30": "30 dagen",
+      "retentionDays90": "90 dagen",
+      "retentionPlaceholder": "Bewaartermijn kiezen...",
+      "retentionWarning": "Verwijderen is permanent en kan niet ongedaan worden gemaakt. Alles wordt alleen op dit apparaat opgeslagen — er wordt nooit iets ergens naartoe gestuurd."
     },
     "models": {
       "title": "Modellen",

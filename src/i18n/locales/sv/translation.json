@@ -430,7 +430,15 @@
       "reminderOff": "Av",
       "reminderMin30": "30 minuter",
       "reminderHour1": "1 timme",
-      "reminderHours2": "2 timmar"
+      "reminderHours2": "2 timmar",
+      "retentionTitle": "Möteslagring",
+      "retentionDescription": "Hur länge avslutade möten sparas. Möten som är äldre än den valda perioden raderas permanent — ljud, utskrift och anteckningar tillsammans — när FlowState startar och en gång om dagen medan den körs. Dikteringar påverkas inte.",
+      "retentionForever": "För alltid",
+      "retentionDays7": "7 dagar",
+      "retentionDays30": "30 dagar",
+      "retentionDays90": "90 dagar",
+      "retentionPlaceholder": "Välj lagringstid...",
+      "retentionWarning": "Radering är permanent och kan inte ångras. Allt sparas bara på den här enheten — ingenting skickas någon annanstans."
     },
     "models": {
       "title": "Modeller",

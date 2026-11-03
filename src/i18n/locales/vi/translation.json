@@ -430,7 +430,15 @@
       "reminderOff": "Tắt",
       "reminderMin30": "30 phút",
       "reminderHour1": "1 giờ",
-      "reminderHours2": "2 giờ"
+      "reminderHours2": "2 giờ",
+      "retentionTitle": "Lưu trữ cuộc họp",
+      "retentionDescription": "Các cuộc họp đã kết thúc được giữ trong bao lâu. Cuộc họp cũ hơn khoảng thời gian đã chọn sẽ bị xóa vĩnh viễn — âm thanh, bản chép và ghi chú cùng nhau — khi FlowState khởi động và một lần mỗi ngày khi đang chạy. Bản đọc chính tả không bao giờ bị ảnh hưởng.",
+      "retentionForever": "Vĩnh viễn",
+      "retentionDays7": "7 ngày",
+      "retentionDays30": "30 ngày",
+      "retentionDays90": "90 ngày",
+      "retentionPlaceholder": "Chọn thời gian lưu trữ...",
+      "retentionWarning": "Việc xóa là vĩnh viễn và không thể hoàn tác. Mọi thứ chỉ được lưu trên thiết bị này — không bao giờ gửi đi đâu."
     },
     "models": {
       "title": "Mô hình",

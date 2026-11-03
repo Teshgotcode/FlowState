@@ -430,7 +430,15 @@
       "reminderOff": "Vypnuto",
       "reminderMin30": "30 minut",
       "reminderHour1": "1 hodina",
-      "reminderHours2": "2 hodiny"
+      "reminderHours2": "2 hodiny",
+      "retentionTitle": "Uchovávání schůzek",
+      "retentionDescription": "Jak dlouho jsou dokončené schůzky uchovávány. Schůzky starší než vybrané období jsou trvale smazány — zvuk, přepis i poznámky společně — při spuštění FlowState a jednou denně za běhu. Diktáty nejsou nikdy dotčeny.",
+      "retentionForever": "Navždy",
+      "retentionDays7": "7 dní",
+      "retentionDays30": "30 dní",
+      "retentionDays90": "90 dní",
+      "retentionPlaceholder": "Vyberte dobu uchovávání...",
+      "retentionWarning": "Smazání je trvalé a nelze je vrátit zpět. Vše se uchovává jen na tomto zařízení — nic se nikdy nikam neposílá."
     },
     "models": {
       "title": "Modely",

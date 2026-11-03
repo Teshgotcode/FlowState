@@ -430,7 +430,15 @@
       "reminderOff": "Fra",
       "reminderMin30": "30 minutter",
       "reminderHour1": "1 time",
-      "reminderHours2": "2 timer"
+      "reminderHours2": "2 timer",
+      "retentionTitle": "Mødeopbevaring",
+      "retentionDescription": "Hvor længe afsluttede møder opbevares. Møder, der er ældre end den valgte periode, slettes permanent — lyd, udskrift og noter sammen — når FlowState starter og én gang om dagen, mens den kører. Diktater påvirkes ikke.",
+      "retentionForever": "For altid",
+      "retentionDays7": "7 dage",
+      "retentionDays30": "30 dage",
+      "retentionDays90": "90 dage",
+      "retentionPlaceholder": "Vælg opbevaringstid...",
+      "retentionWarning": "Sletning er permanent og kan ikke fortrydes. Alt gemmes kun på denne enhed — ingenting sendes nogensinde nogen steder hen."
     },
     "models": {
       "title": "Modeller",

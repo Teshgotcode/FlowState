@@ -430,7 +430,15 @@
       "reminderOff": "Mati",
       "reminderMin30": "30 menit",
       "reminderHour1": "1 jam",
-      "reminderHours2": "2 jam"
+      "reminderHours2": "2 jam",
+      "retentionTitle": "Penyimpanan rapat",
+      "retentionDescription": "Berapa lama rapat yang telah selesai disimpan. Rapat yang lebih lama dari periode terpilih dihapus secara permanen — audio, transkrip, dan catatan bersama — saat FlowState mulai dan sekali sehari selama berjalan. Dikte tidak pernah terpengaruh.",
+      "retentionForever": "Selamanya",
+      "retentionDays7": "7 hari",
+      "retentionDays30": "30 hari",
+      "retentionDays90": "90 hari",
+      "retentionPlaceholder": "Pilih periode penyimpanan...",
+      "retentionWarning": "Penghapusan bersifat permanen dan tidak dapat dibatalkan. Semuanya hanya disimpan di perangkat ini — tidak ada yang pernah dikirim ke mana pun."
     },
     "models": {
       "title": "Model",

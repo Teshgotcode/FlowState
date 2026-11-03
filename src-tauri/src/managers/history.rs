@@ -7,6 +7,9 @@ use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::Arc;
+use std::thread;
+use std::time::Duration;
 use tauri::AppHandle;
 use tauri_specta::Event;
 
@@ -756,6 +759,89 @@ impl HistoryManager {
         }
     }
 
+    /// Delete meetings past their retention period: the audio, its
+    /// transcript segments and its note are one unit and go together, because
+    /// they all live in a single history entry. Dictations are never touched
+    /// here; they answer to the dictation history's own setting
+    /// ([`crate::settings::RecordingRetentionPeriod`]) and its count/time
+    /// cleanup above. Deletion is permanent: nothing is moved anywhere, and
+    /// everything stays local to this device.
+    pub fn cleanup_old_meetings(&self) -> Result<()> {
+        let retention = crate::settings::get_meeting_retention_period(&self.app_handle);
+        let Some(secs) = retention.retention_secs() else {
+            // "Forever": meetings stay until they are deleted by hand.
+            return Ok(());
+        };
+
+        // A meeting older than the cutoff, by when it started.
+        let cutoff = Utc::now().timestamp() - secs;
+        let conn = self.get_connection()?;
+        let entries = Self::meeting_entries_before_with_conn(&conn, cutoff)?;
+
+        if entries.is_empty() {
+            return Ok(());
+        }
+
+        // The row carries the segments and the note in its metadata, so the
+        // delete below takes all three; the WAV beside it is the audio.
+        self.delete_entries_and_files(&entries)?;
+
+        for (id, _) in &entries {
+            if let Err(e) = (HistoryUpdatePayload::Deleted { id: *id }).emit(&self.app_handle) {
+                error!("Failed to emit history-updated event: {}", e);
+            }
+        }
+
+        info!(
+            "Deleted {} meeting(s) past their retention period",
+            entries.len()
+        );
+
+        Ok(())
+    }
+
+    /// Run [`HistoryManager::cleanup_old_meetings`] once now — app start —
+    /// and then once a day while the app runs, so a session left open for
+    /// days still honors the meeting retention period.
+    pub fn spawn_meeting_retention_task(self: &Arc<Self>) {
+        let manager = Arc::clone(self);
+        thread::Builder::new()
+            .name("meeting-retention".to_string())
+            .spawn(move || loop {
+                if let Err(e) = manager.cleanup_old_meetings() {
+                    error!("Failed to clean up old meetings: {}", e);
+                }
+                thread::sleep(Duration::from_secs(24 * 60 * 60));
+            })
+            .expect("Failed to spawn the meeting retention task");
+    }
+
+    /// Every meeting that started before `cutoff`, as (id, file name).
+    /// Only meetings match — a dictation take never carries
+    /// `source = 'meeting'` — so the dictation history's own cleanup never
+    /// runs through here and vice versa. A plain connection, not `&self`,
+    /// so the retention test can drive it without an app handle.
+    fn meeting_entries_before_with_conn(
+        conn: &Connection,
+        cutoff: i64,
+    ) -> Result<Vec<(i64, String)>> {
+        let mut stmt = conn.prepare(
+            "SELECT id, file_name FROM transcription_history
+             WHERE source = 'meeting' AND timestamp < ?1",
+        )?;
+
+        let rows = stmt.query_map(params![cutoff], |row| {
+            Ok((row.get::<_, i64>("id")?, row.get::<_, String>("file_name")?))
+        })?;
+
+        let mut entries: Vec<(i64, String)> = Vec::new();
+        for row in rows {
+            entries.push(row?);
+        }
+
+        Ok(entries)
+    }
+
     fn delete_entries_and_files(&self, entries: &[(i64, String)]) -> Result<usize> {
         if entries.is_empty() {
             return Ok(0);
@@ -790,9 +876,12 @@ impl HistoryManager {
         let conn = self.get_connection()?;
 
         // Unsaved dictations, newest first. Transcribed files are only ever
-        // deleted explicitly, and don't count toward the limit.
+        // deleted explicitly, and don't count toward the limit; meetings
+        // keep to their own retention and never appear here.
         let mut stmt = conn.prepare(
-            "SELECT id, file_name FROM transcription_history WHERE saved = 0 AND source_name IS NULL ORDER BY timestamp DESC"
+            "SELECT id, file_name FROM transcription_history
+             WHERE saved = 0 AND source_name IS NULL AND source IS NULL
+             ORDER BY timestamp DESC",
         )?;
 
         let rows = stmt.query_map([], |row| {
@@ -832,9 +921,10 @@ impl HistoryManager {
         };
 
         // Unsaved dictations older than the cutoff; transcribed files are only
-        // ever deleted explicitly.
+        // ever deleted explicitly, and meetings answer to their own retention.
         let mut stmt = conn.prepare(
-            "SELECT id, file_name FROM transcription_history WHERE saved = 0 AND source_name IS NULL AND timestamp < ?1",
+            "SELECT id, file_name FROM transcription_history
+             WHERE saved = 0 AND source_name IS NULL AND source IS NULL AND timestamp < ?1",
         )?;
 
         let rows = stmt.query_map(params![cutoff_timestamp], |row| {
@@ -1249,6 +1339,111 @@ mod tests {
         assert_eq!(
             serde_json::from_str::<HistoryMetadata>(&stored).expect("read metadata"),
             metadata
+        );
+    }
+
+    #[test]
+    fn meeting_retention_takes_only_old_meetings() {
+        let conn = setup_conn();
+        let now = 1_700_000_000;
+        let cutoff = now - 7 * 24 * 60 * 60;
+
+        // A meeting past the period, carrying its segments and note in the
+        // row's metadata, beside three entries the knife must miss: a
+        // meeting inside the period, an old dictation take and an old
+        // dictation transcribed from a file.
+        conn.execute(
+            "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, source, metadata)
+             VALUES ('old-meeting.wav', ?1, 'm', 'Gammelt mote.',
+                     'meeting', '{\"duration_secs\":600,\"segments\":[],\"meeting_note\":{\"summary\":\"Sammendrag.\",\"decisions\":[],\"action_items\":[],\"open_questions\":[],\"model\":\"llama\",\"generated_at\":1}}')",
+            params![cutoff - 1],
+        )
+        .expect("insert old meeting");
+        conn.execute(
+            "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, source, metadata)
+             VALUES ('new-meeting.wav', ?1, 'm', 'Nytt mote.', 'meeting', '{}')",
+            params![now],
+        )
+        .expect("insert new meeting");
+        insert_entry(&conn, cutoff - 1, "Gammel diktering", None);
+        conn.execute(
+            "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, source_name)
+             VALUES ('old-file.wav', ?1, 'f', 'Fra en fil.', 'rapport.wav')",
+            params![cutoff - 1],
+        )
+        .expect("insert file dictation");
+
+        let entries = HistoryManager::meeting_entries_before_with_conn(&conn, cutoff)
+            .expect("find meetings past the period");
+        assert_eq!(entries.len(), 1, "only the old meeting is selected");
+        assert_eq!(entries[0].1, "old-meeting.wav");
+
+        // Deleting the selection — the same rows
+        // [`HistoryManager::delete_entries_and_files`] removes — leaves the
+        // recent meeting and both dictations, audio files included, alone.
+        for (id, _) in &entries {
+            conn.execute(
+                "DELETE FROM transcription_history WHERE id = ?1",
+                params![id],
+            )
+            .expect("delete old meeting");
+        }
+
+        let count: i64 = conn
+            .query_row("SELECT COUNT(*) FROM transcription_history", [], |row| {
+                row.get(0)
+            })
+            .expect("count remaining entries");
+        assert_eq!(count, 3, "dictations and recent meetings are untouched");
+
+        let old_meeting_left: i64 = conn
+            .query_row(
+                "SELECT COUNT(*) FROM transcription_history WHERE file_name = 'old-meeting.wav'",
+                [],
+                |row| row.get(0),
+            )
+            .expect("count old meetings");
+        assert_eq!(old_meeting_left, 0, "the old meeting is gone for good");
+    }
+
+    #[test]
+    fn dictation_retention_leaves_meetings_alone() {
+        let conn = setup_conn();
+
+        // Meetings never count toward the dictation limit, so this is the
+        // whole dictation history as far as the cleanup is concerned.
+        conn.execute(
+            "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, source)
+             VALUES ('meeting.wav', 100, 'm', 'Et mote.', 'meeting')",
+            [],
+        )
+        .expect("insert meeting");
+        conn.execute(
+            "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, source, metadata)
+             VALUES ('meeting-2.wav', 101, 'm', 'Et mote.', 'meeting', '{}')",
+            [],
+        )
+        .expect("insert meeting");
+
+        // The count-based dictation cleanup's selection, with a limit of 0:
+        // every dictation would go, and no meeting may match.
+        let mut stmt = conn
+            .prepare(
+                "SELECT id, file_name FROM transcription_history
+                 WHERE saved = 0 AND source_name IS NULL AND source IS NULL
+                 ORDER BY timestamp DESC",
+            )
+            .expect("prepare dictation cleanup query");
+        let matches: Vec<(i64, String)> = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, i64>("id")?, row.get::<_, String>("file_name")?))
+            })
+            .expect("query dictation cleanup")
+            .collect::<Result<_, _>>()
+            .expect("collect dictation cleanup rows");
+        assert!(
+            matches.is_empty(),
+            "meetings stay out of the dictation sweep"
         );
     }
 

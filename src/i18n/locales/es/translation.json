@@ -430,7 +430,15 @@
       "reminderOff": "Desactivado",
       "reminderMin30": "30 minutos",
       "reminderHour1": "1 hora",
-      "reminderHours2": "2 horas"
+      "reminderHours2": "2 horas",
+      "retentionTitle": "Retención de reuniones",
+      "retentionDescription": "Cuánto tiempo se conservan las reuniones finalizadas. Las reuniones anteriores al período elegido se eliminan de forma permanente — audio, transcripción y notas juntos — cuando FlowState se inicia y una vez al día mientras está en ejecución. Los dictados nunca se ven afectados.",
+      "retentionForever": "Para siempre",
+      "retentionDays7": "7 días",
+      "retentionDays30": "30 días",
+      "retentionDays90": "90 días",
+      "retentionPlaceholder": "Seleccionar período de retención...",
+      "retentionWarning": "La eliminación es permanente y no se puede deshacer. Todo se almacena solo en este dispositivo — nunca se envía nada a ningún lugar."
     },
     "models": {
       "title": "Modelos",
