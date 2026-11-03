@@ -37,6 +37,14 @@ async changeHoldThresholdMsSetting(ms: number) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async changeMousePttButtonSetting(button: MousePttButton | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_mouse_ptt_button_setting", { button }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changeAudioFeedbackSetting(enabled: boolean) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_audio_feedback_setting", { enabled }) };
@@ -1538,7 +1546,13 @@ shortcut_activation?: ShortcutActivation;
  * Hold-or-toggle only: a press held at least this long is push-to-talk,
  * anything shorter is a tap that locks recording on.
  */
-hold_threshold_ms?: number; audio_feedback?: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; show_whats_new_on_update?: boolean; 
+hold_threshold_ms?: number; 
+/**
+ * Optional mouse button used as an extra push-to-talk trigger. Registered
+ * through the handy-keys global input layer (the global-shortcut plugin
+ * cannot observe mouse buttons), so the click never reaches other apps.
+ */
+mouse_ptt_button?: MousePttButton | null; audio_feedback?: boolean; audio_feedback_volume?: number; sound_theme?: SoundTheme; start_hidden?: boolean; autostart_enabled?: boolean; update_checks_enabled?: boolean; show_whats_new_on_update?: boolean; 
 /**
  * The app version whose What's New the user has already seen. Fresh installs
  * default to the current version (nothing is "new" to them). Existing users
@@ -2060,6 +2074,26 @@ sha256: string | null } } |
  */
 "Local"
 export type ModelUnloadTimeout = "never" | "immediately" | "min_2" | "min_5" | "min_10" | "min_15" | "hour_1" | "sec_15"
+/**
+ * Mouse button that can act as an extra push-to-talk trigger alongside the
+ * keyboard transcribe shortcut. `None` (missing in older stores) disables it.
+ * 
+ * Left/right buttons are deliberately not offered: they are the primary click
+ * buttons, and blocking them system-wide would break normal pointing.
+ */
+export type MousePttButton = 
+/**
+ * Scroll-wheel click.
+ */
+"middle" | 
+/**
+ * Side button 4 (often "back").
+ */
+"back" | 
+/**
+ * Side button 5 (often "forward").
+ */
+"forward"
 export type OverlayPosition = "top" | "bottom" | "left" | "right"
 /**
  * Which recording overlay to display. `Minimal` and `Live` share one base

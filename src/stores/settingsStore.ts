@@ -8,6 +8,7 @@ import type {
   ChineseScript,
   TranscribeAcceleratorSetting,
   ShortcutActivation,
+  MousePttButton,
   VadBackend,
   LanguageDetectionMode,
   Snippet,
@@ -111,6 +112,10 @@ const settingUpdaters: {
     commands.changeShortcutActivationSetting(value as ShortcutActivation),
   hold_threshold_ms: (value) =>
     commands.changeHoldThresholdMsSetting(value as number),
+  mouse_ptt_button: (value) =>
+    commands.changeMousePttButtonSetting(
+      (value as MousePttButton | null) ?? null,
+    ),
   selected_microphone: (value) =>
     commands.setSelectedMicrophone(
       (value as string) === "Default" || value === null

@@ -1142,6 +1142,15 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
             command_mode: true,
         }) as Arc<dyn ShortcutAction>,
     );
+    // Mouse push-to-talk trigger: same plain-dictation pipeline as the
+    // keyboard transcribe binding, driven by the coordinator like any other.
+    map.insert(
+        crate::shortcut::MOUSE_PTT_BINDING_ID.to_string(),
+        Arc::new(TranscribeAction {
+            post_process: false,
+            command_mode: false,
+        }) as Arc<dyn ShortcutAction>,
+    );
     map.insert(
         "cancel".to_string(),
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,

@@ -394,6 +394,16 @@
           "push_to_talk": "Merekam selama Anda menahan pintasan",
           "toggle": "Ketuk pintasan untuk mulai merekam, lalu ketuk lagi untuk berhenti"
         }
+      },
+      "mousePtt": {
+        "title": "Tombol mouse push-to-talk",
+        "description": "Tahan tombol mouse untuk merekam dan lepaskan untuk mentranskripsi — sama seperti pintasan keyboard. Klik tidak diteruskan ke aplikasi lain.",
+        "options": {
+          "off": "Mati",
+          "middle": "Tombol tengah",
+          "back": "Tombol samping (mundur)",
+          "forward": "Tombol samping (maju)"
+        }
       }
     },
     "meeting": {

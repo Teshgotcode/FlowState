@@ -394,6 +394,16 @@
           "push_to_talk": "Ghi âm trong lúc bạn giữ phím tắt",
           "toggle": "Nhấn phím tắt để bắt đầu ghi âm, nhấn lại để dừng"
         }
+      },
+      "mousePtt": {
+        "title": "Chuột push-to-talk",
+        "description": "Giữ nút chuột để ghi âm, thả ra để chuyển thành văn bản — giống với phím tắt bàn phím. Cú nhấp chuột không được chuyển tới ứng dụng khác.",
+        "options": {
+          "off": "Tắt",
+          "middle": "Nút giữa",
+          "back": "Nút bên (lùi)",
+          "forward": "Nút bên (tiến)"
+        }
       }
     },
     "meeting": {

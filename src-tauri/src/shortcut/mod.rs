@@ -11,6 +11,8 @@
 
 mod handler;
 pub mod handy_keys;
+#[cfg(target_os = "macos")]
+mod mouse_suppress;
 pub mod tauri_impl;
 
 use log::{debug, error, info, warn};
@@ -23,7 +25,7 @@ use tauri::{AppHandle, Emitter, Manager};
 use crate::settings::APPLE_INTELLIGENCE_DEFAULT_MODEL_ID;
 use crate::settings::{
     self, get_settings, AutoSubmitKey, ChineseScript, ClipboardHandling, KeyboardImplementation,
-    LLMPrompt, LanguageDetectionMode, OverlayPosition, OverlayStyle, PasteMethod,
+    LLMPrompt, LanguageDetectionMode, MousePttButton, OverlayPosition, OverlayStyle, PasteMethod,
     ShortcutActivation, ShortcutBinding, Snippet, SoundTheme, Theme, TypingTool, VadBackend,
     APPLE_INTELLIGENCE_PROVIDER_ID,
 };
@@ -54,6 +56,72 @@ pub fn init_shortcuts(app: &AppHandle) {
                 tauri_impl::init_shortcuts(app);
             }
         }
+    }
+
+    // The mouse push-to-talk trigger rides the handy-keys input layer no
+    // matter which keyboard implementation is active.
+    refresh_mouse_ptt_binding(app);
+}
+
+/// Binding id for the optional mouse push-to-talk trigger. It is not stored in
+/// `bindings` — there is no user-recordable hotkey string — and it always
+/// registers through the handy-keys input layer, the only backend that can
+/// observe mouse buttons and swallow their clicks.
+pub const MOUSE_PTT_BINDING_ID: &str = "mouse_ptt";
+
+/// handy-keys hotkey string for each push-to-talk mouse button.
+fn mouse_ptt_hotkey_string(button: MousePttButton) -> &'static str {
+    match button {
+        MousePttButton::Middle => "mousemiddle",
+        MousePttButton::Back => "mouse4",
+        MousePttButton::Forward => "mouse5",
+    }
+}
+
+/// Apply the configured mouse push-to-talk button: drop any previously
+/// registered trigger, then register the new one. The binding routes through
+/// the coordinator exactly like the keyboard transcribe binding, so the
+/// activation mode (toggle / push-to-talk / hold-or-toggle) applies to it
+/// unchanged: hold to record, release to transcribe.
+pub fn refresh_mouse_ptt_binding(app: &AppHandle) {
+    let button = get_settings(app).mouse_ptt_button;
+
+    // Park click suppression first: every path below re-arms it only once the
+    // button actually drives a recording, so a click is never swallowed
+    // without push-to-talk behind it.
+    #[cfg(target_os = "macos")]
+    mouse_suppress::apply(None);
+
+    // Clear whatever was registered before. Without a running manager there
+    // is nothing to clear — and no reason to start one when disabled.
+    if app.try_state::<handy_keys::HandyKeysState>().is_some() {
+        if let Err(e) = handy_keys::unregister_raw(app, MOUSE_PTT_BINDING_ID) {
+            error!("Failed to clear mouse push-to-talk binding: {}", e);
+            return;
+        }
+    }
+
+    let Some(button) = button else {
+        return;
+    };
+
+    if let Err(e) = handy_keys::ensure_state(app) {
+        error!("Mouse push-to-talk unavailable: {}", e);
+        return;
+    }
+
+    if let Err(e) = handy_keys::register_raw(
+        app,
+        MOUSE_PTT_BINDING_ID,
+        mouse_ptt_hotkey_string(button),
+    ) {
+        error!("Failed to register mouse push-to-talk button: {}", e);
+    } else {
+        info!("Mouse push-to-talk button registered: {:?}", button);
+        // macOS only: handy-keys observes mouse buttons there but does not
+        // block them, so swallow the click in a tail event tap.
+        #[cfg(target_os = "macos")]
+        mouse_suppress::apply(Some(button));
     }
 }
 
@@ -593,6 +661,20 @@ pub fn change_hold_threshold_ms_setting(app: AppHandle, ms: u64) -> Result<(), S
     let mut settings = settings::get_settings(&app);
     settings.hold_threshold_ms = ms;
     settings::write_settings(&app, settings);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn change_mouse_ptt_button_setting(
+    app: AppHandle,
+    button: Option<MousePttButton>,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.mouse_ptt_button = button;
+    settings::write_settings(&app, settings);
+
+    refresh_mouse_ptt_binding(&app);
     Ok(())
 }
 

@@ -394,6 +394,16 @@
           "push_to_talk": "Enregistreu mentre manteniu premuda la drecera",
           "toggle": "Premeu la drecera per iniciar l'enregistrament i torneu-la a prémer per aturar-lo"
         }
+      },
+      "mousePtt": {
+        "title": "Ratolí com a push-to-talk",
+        "description": "Mantén un botó del ratolí per enregistrar i deixa'l anar per transcriure, igual que la drecera de teclat. El clic no s'envia a altres aplicacions.",
+        "options": {
+          "off": "Desactivat",
+          "middle": "Botó del mig",
+          "back": "Botó lateral (enrere)",
+          "forward": "Botó lateral (endavant)"
+        }
       }
     },
     "meeting": {

@@ -394,6 +394,16 @@
           "push_to_talk": "Grava enquanto você mantém o atalho pressionado",
           "toggle": "Toque no atalho para começar a gravar, toque novamente para parar"
         }
+      },
+      "mousePtt": {
+        "title": "Rato como push-to-talk",
+        "description": "Mantenha um botão do rato premido para gravar e largue para transcrever, como o atalho de teclado. O clique não é enviado para outras aplicações.",
+        "options": {
+          "off": "Desativado",
+          "middle": "Botão do meio",
+          "back": "Botão lateral (recuar)",
+          "forward": "Botão lateral (avançar)"
+        }
       }
     },
     "meeting": {

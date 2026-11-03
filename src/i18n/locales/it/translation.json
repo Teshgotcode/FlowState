@@ -394,6 +394,16 @@
           "push_to_talk": "Registra finché tieni premuta la scorciatoia",
           "toggle": "Tocca la scorciatoia per avviare la registrazione, tocca di nuovo per fermarla"
         }
+      },
+      "mousePtt": {
+        "title": "Mouse push-to-talk",
+        "description": "Tieni premuto un pulsante del mouse per registrare e rilascia per trascrivere, come la scorciatoia da tastiera. Il clic non viene inviato ad altre app.",
+        "options": {
+          "off": "Disattivato",
+          "middle": "Pulsante centrale",
+          "back": "Pulsante laterale (indietro)",
+          "forward": "Pulsante laterale (avanti)"
+        }
       }
     },
     "meeting": {

@@ -394,6 +394,16 @@
           "push_to_talk": "Enregistre tant que le raccourci est maintenu",
           "toggle": "Appuyez sur le raccourci pour démarrer l'enregistrement, appuyez à nouveau pour arrêter"
         }
+      },
+      "mousePtt": {
+        "title": "Souris push-to-talk",
+        "description": "Maintenez un bouton de la souris pour enregistrer, relâchez pour transcrire — comme le raccourci clavier. Le clic n'est pas transmis aux autres applications.",
+        "options": {
+          "off": "Désactivé",
+          "middle": "Bouton du milieu",
+          "back": "Bouton latéral (retour)",
+          "forward": "Bouton latéral (avant)"
+        }
       }
     },
     "meeting": {

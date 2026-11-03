@@ -394,6 +394,16 @@
           "push_to_talk": "Spelar in så länge du håller genvägen nedtryckt",
           "toggle": "Tryck på genvägen för att starta inspelningen, tryck igen för att stoppa"
         }
+      },
+      "mousePtt": {
+        "title": "Mus som push-to-talk",
+        "description": "Håll en musknapp intryckt för att spela in, släpp för att transkribera — som tangentbordsgenvägen. Klicket skickas inte vidare till andra appar.",
+        "options": {
+          "off": "Av",
+          "middle": "Mittenknapp",
+          "back": "Sidoknapp (bakåt)",
+          "forward": "Sidoknapp (framåt)"
+        }
       }
     },
     "meeting": {
