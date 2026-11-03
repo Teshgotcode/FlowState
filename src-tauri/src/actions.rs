@@ -241,10 +241,13 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         return None;
     }
 
-    let selected_prompt_id = match &settings.post_process_selected_prompt_id {
-        Some(id) => id.clone(),
+    // The active style: a per-app rule for the focused app wins, otherwise
+    // the globally selected prompt (falling back to Neutral when any rule
+    // exists). See `style.rs`.
+    let selected_prompt_id = match crate::style::resolve_style_id(settings) {
+        Some(id) => id,
         None => {
-            debug!("Post-processing skipped because no prompt is selected");
+            debug!("Post-processing skipped because no style/prompt is selected");
             return None;
         }
     };
@@ -475,7 +478,7 @@ pub(crate) async fn process_transcription_output(
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
-            if let Some(prompt_id) = &settings.post_process_selected_prompt_id {
+            if let Some(prompt_id) = &crate::style::resolve_style_id(&settings) {
                 if let Some(prompt) = settings
                     .post_process_prompts
                     .iter()

@@ -747,6 +747,18 @@
         "cancel": "Отказ",
         "selectToEdit": "Изберете подкана по-горе, за да видите и редактирате подробностите ѝ.",
         "createFirst": "Натиснете „Нова подкана“ по-горе, за да създадете първата си подкана за постобработка."
+      },
+      "styleRules": {
+        "groupTitle": "Per-App Styles",
+        "title": "App Rules",
+        "description": "Bind a style to an app: when that app is focused, its rule is used. As soon as any rule exists, apps without a rule fall back to the Neutral style.",
+        "empty": "No rules yet. Example: Slack = Short.",
+        "appPlaceholder": "App name or bundle id (e.g. Slack)",
+        "useCurrentApp": "Use Frontmost App",
+        "style": "Style",
+        "addRule": "Add Rule",
+        "remove": "Remove",
+        "currentAppUnavailable": "Could not detect the frontmost app."
       }
     },
     "history": {
@@ -1188,7 +1200,11 @@
       "recording": "Записва се"
     },
     "command": "Команда",
-    "commandFallback": "Няма избран текст — обикновена диктовка"
+    "commandFallback": "Няма избран текст — обикновена диктовка",
+    "style": {
+      "menuTitle": "Style",
+      "chipTitle": "Dictation style — right-click to switch"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} може да блокира 1 бърз клавиш",

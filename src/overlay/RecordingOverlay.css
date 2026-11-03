@@ -625,3 +625,67 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* Active style chip + local quick-switch menu (tone/style for dictation) */
+.sstyle-chip {
+  font-size: 10px;
+  line-height: 1;
+  color: var(--s-muted);
+  background: var(--s-hair);
+  border-radius: 4px;
+  padding: 3px 5px;
+  max-width: 90px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: none;
+  user-select: none;
+  cursor: default;
+}
+.sstyle-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+}
+.sstyle-menu {
+  position: fixed;
+  z-index: 41;
+  min-width: 170px;
+  max-width: 220px;
+  padding: 4px;
+  border-radius: 10px;
+  background: var(--s-surface, #1d1d1f);
+  border: 1px solid var(--s-hair, rgba(255, 255, 255, 0.14));
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.sstyle-menu-title {
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--s-muted);
+  padding: 4px 8px 3px;
+}
+.sstyle-item {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: var(--s-ink, #f5f5f7);
+  font-size: 12px;
+  text-align: left;
+  padding: 5px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sstyle-item:hover {
+  background: var(--s-accent-soft);
+}
+.sstyle-item.active {
+  color: var(--s-accent);
+  font-weight: 600;
+}

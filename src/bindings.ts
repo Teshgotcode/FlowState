@@ -348,6 +348,20 @@ async setPostProcessSelectedPrompt(id: string) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+async getFrontmostApp() : Promise<FrontmostAppInfo | null> {
+    return await TAURI_INVOKE("get_frontmost_app");
+},
+async getActiveStyle() : Promise<ActiveStyleInfo> {
+    return await TAURI_INVOKE("get_active_style");
+},
+async setAppStyleRule(appKey: string, styleId: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_app_style_rule", { appKey, styleId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async updateCustomWords(words: string[]) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_custom_words", { words }) };
@@ -1480,6 +1494,23 @@ transcriptionJob: "transcription-job"
 /** user-defined types **/
 
 /**
+ * Everything the overlay needs to show and switch the active style.
+ */
+export type ActiveStyleInfo = { styleId: string | null; styleName: string | null; 
+/**
+ * The per-app rule key (bundle id or app name) that matched, if any.
+ */
+matchedRuleKey: string | null; frontmost: FrontmostAppInfo | null; 
+/**
+ * Every configured prompt, so quick menus can list all styles.
+ */
+styles: LLMPrompt[]; 
+/**
+ * Whether post-processing will run at all — the overlay only shows the
+ * style chip when the style is actually going to be applied.
+ */
+postProcessEnabled: boolean }
+/**
  * The container-level `serde(default)` (backed by the `Default` impl below)
  * guarantees every field — including ones added in the future — falls back to
  * its `get_default_settings()` value when missing from a stored settings
@@ -1543,7 +1574,14 @@ learn_from_corrections?: boolean;
  * Spoken text templates ("say trigger, get expansion"), expanded after
  * transcription in [`post_process_transcription_text`].
  */
-snippets?: Snippet[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+snippets?: Snippet[]; model_unload_timeout?: ModelUnloadTimeout; word_correction_threshold?: number; history_limit?: number; recording_retention_period?: RecordingRetentionPeriod; paste_method?: PasteMethod; clipboard_handling?: ClipboardHandling; auto_submit?: boolean; auto_submit_key?: AutoSubmitKey; post_process_enabled?: boolean; post_process_provider_id?: string; post_process_providers?: PostProcessProvider[]; post_process_api_keys?: SecretMap; post_process_models?: Partial<{ [key in string]: string }>; post_process_prompts?: LLMPrompt[]; post_process_selected_prompt_id?: string | null; 
+/**
+ * Per-app tone/style rules: maps an app (bundle id or localized name,
+ * matched case-insensitively) to a post-processing prompt id. When any
+ * rule exists, the focused app's rule wins and every other app falls
+ * back to the Neutral preset (`style_neutral`).
+ */
+post_process_app_rules?: Partial<{ [key in string]: string }>; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1661,6 +1699,10 @@ trigger_or_word: string;
  */
 expansion: string | null; case_sensitive: boolean; updated_at: number }
 export type CustomSounds = { start: boolean; stop: boolean }
+/**
+ * The app that currently has keyboard focus, as the system reports it.
+ */
+export type FrontmostAppInfo = { bundleId: string | null; name: string | null }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean; 
 /**

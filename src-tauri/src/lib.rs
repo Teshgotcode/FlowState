@@ -26,6 +26,7 @@ mod secure_input;
 mod settings;
 mod shortcut;
 mod signal_handle;
+mod style;
 mod sync;
 mod system_languages;
 mod transcription_coordinator;
@@ -155,6 +156,9 @@ fn specta_builder() -> Builder<tauri::Wry> {
             shortcut::update_post_process_prompt,
             shortcut::delete_post_process_prompt,
             shortcut::set_post_process_selected_prompt,
+            style::get_frontmost_app,
+            style::get_active_style,
+            style::set_app_style_rule,
             shortcut::update_custom_words,
             shortcut::update_snippets,
             shortcut::suspend_all_bindings,

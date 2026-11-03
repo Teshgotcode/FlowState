@@ -19,6 +19,7 @@ import { BaseUrlField } from "../PostProcessingSettingsApi/BaseUrlField";
 import { ApiKeyField } from "../PostProcessingSettingsApi/ApiKeyField";
 import { ModelSelect } from "../PostProcessingSettingsApi/ModelSelect";
 import { usePostProcessProviderState } from "../PostProcessingSettingsApi/usePostProcessProviderState";
+import { StyleRules } from "./StyleRules";
 import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
 
@@ -481,6 +482,10 @@ export const PostProcessingSettings: React.FC = () => {
 
       <SettingsGroup title={t("settings.postProcessing.prompts.title")}>
         <PostProcessingSettingsPrompts />
+      </SettingsGroup>
+
+      <SettingsGroup title={t("settings.postProcessing.styleRules.groupTitle")}>
+        <StyleRules />
       </SettingsGroup>
     </div>
   );

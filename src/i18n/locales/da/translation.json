@@ -747,6 +747,18 @@
         "cancel": "Annuller",
         "selectToEdit": "Vælg en prompt ovenfor for at se og redigere dens detaljer.",
         "createFirst": "Klik på 'Opret ny prompt' ovenfor for at oprette din første efterbehandlingsprompt."
+      },
+      "styleRules": {
+        "groupTitle": "Per-App Styles",
+        "title": "App Rules",
+        "description": "Bind a style to an app: when that app is focused, its rule is used. As soon as any rule exists, apps without a rule fall back to the Neutral style.",
+        "empty": "No rules yet. Example: Slack = Short.",
+        "appPlaceholder": "App name or bundle id (e.g. Slack)",
+        "useCurrentApp": "Use Frontmost App",
+        "style": "Style",
+        "addRule": "Add Rule",
+        "remove": "Remove",
+        "currentAppUnavailable": "Could not detect the frontmost app."
       }
     },
     "history": {
@@ -1188,7 +1200,11 @@
       "recording": "Optager"
     },
     "command": "Kommando",
-    "commandFallback": "Ingen markering — almindelig diktering"
+    "commandFallback": "Ingen markering — almindelig diktering",
+    "style": {
+      "menuTitle": "Style",
+      "chipTitle": "Dictation style — right-click to switch"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokerer muligvis 1 genvej",
