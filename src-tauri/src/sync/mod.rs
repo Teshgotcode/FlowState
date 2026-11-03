@@ -1338,10 +1338,21 @@ mod tests {
             .is_file());
 
         // Tamper with one byte of a member: refused, staging untouched.
+        // The byte is picked inside the audio member's data so the flip
+        // always lands in sealed content, never in zip framing that no
+        // hash covers (a blind mid-file flip could hit a local header and
+        // slip through verification).
         let bytes = std::fs::read(&bundle_path).unwrap();
         let mut tampered = bytes.clone();
-        let mid = tampered.len() / 2;
-        tampered[mid] = tampered[mid].wrapping_add(1);
+        let audio_offset = {
+            let file = std::fs::File::open(&bundle_path).unwrap();
+            let mut archive = zip::ZipArchive::new(file).unwrap();
+            let mut entry = archive
+                .by_name("audio/0000-take.wav")
+                .expect("audio member should exist");
+            entry.data_start() as usize
+        };
+        tampered[audio_offset] = tampered[audio_offset].wrapping_add(1);
         let tampered_path = dir.join("tampered.zip");
         std::fs::write(&tampered_path, &tampered).unwrap();
         let staging2 = dir.join("staging2");
