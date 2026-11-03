@@ -424,7 +424,13 @@
       "stopped": "会议已保存到历史记录。",
       "liveTranscript": "实时转写",
       "liveEmpty": "会议进行时，文字会显示在这里。",
-      "jumpToBottom": "跳到底部"
+      "jumpToBottom": "跳到底部",
+      "reminderTitle": "会议提醒",
+      "reminderDescription": "当会话录制达到该时长后，在会议栏旁显示带有停止按钮的低调提示。",
+      "reminderOff": "关闭",
+      "reminderMin30": "30 分钟",
+      "reminderHour1": "1 小时",
+      "reminderHours2": "2 小时"
     },
     "models": {
       "title": "模型",
@@ -1207,7 +1213,8 @@
       "start": "开始会议",
       "stop": "停止",
       "saving": "保存中…",
-      "recording": "录音中"
+      "recording": "录音中",
+      "stillGoing": "会议还在进行中吗？"
     },
     "command": "命令",
     "commandFallback": "未选择文本 — 普通听写",

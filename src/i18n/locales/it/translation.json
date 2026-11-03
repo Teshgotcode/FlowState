@@ -424,7 +424,13 @@
       "stopped": "La riunione è stata salvata nella Cronologia.",
       "liveTranscript": "Trascrizione in tempo reale",
       "liveEmpty": "Le parole appaiono qui mentre la riunione è in corso.",
-      "jumpToBottom": "Vai in fondo"
+      "jumpToBottom": "Vai in fondo",
+      "reminderTitle": "Promemoria riunione",
+      "reminderDescription": "Mostra un avviso discreto «ancora in corso?» con un pulsante di arresto accanto alla barra della riunione dopo che una sessione registra da questo tempo.",
+      "reminderOff": "Disattivato",
+      "reminderMin30": "30 minuti",
+      "reminderHour1": "1 ora",
+      "reminderHours2": "2 ore"
     },
     "models": {
       "title": "Modelli",
@@ -1207,7 +1213,8 @@
       "start": "Avvia riunione",
       "stop": "Ferma",
       "saving": "Salvataggio…",
-      "recording": "Registrazione in corso"
+      "recording": "Registrazione in corso",
+      "stillGoing": "La riunione è ancora in corso?"
     },
     "command": "Comando",
     "commandFallback": "Nessuna selezione — dettatura normale",

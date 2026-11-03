@@ -424,7 +424,13 @@
       "stopped": "De vergadering is in de Geschiedenis opgeslagen.",
       "liveTranscript": "Live transcript",
       "liveEmpty": "Woorden verschijnen hier terwijl de vergadering loopt.",
-      "jumpToBottom": "Naar beneden springen"
+      "jumpToBottom": "Naar beneden springen",
+      "reminderTitle": "Vergaderherinnering",
+      "reminderDescription": "Toont na deze opnameduur een discreet 'nog bezig?'-bericht met stopknop naast de vergaderbalk.",
+      "reminderOff": "Uit",
+      "reminderMin30": "30 minuten",
+      "reminderHour1": "1 uur",
+      "reminderHours2": "2 uur"
     },
     "models": {
       "title": "Modellen",
@@ -1207,7 +1213,8 @@
       "start": "Vergadering starten",
       "stop": "Stoppen",
       "saving": "Opslaan …",
-      "recording": "Opnemen"
+      "recording": "Opnemen",
+      "stillGoing": "Duurt de vergadering nog voort?"
     },
     "command": "Commando",
     "commandFallback": "Niets geselecteerd — normaal dicteren",

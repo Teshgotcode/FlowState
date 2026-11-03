@@ -53,6 +53,12 @@ const BAR_DRAG_THRESHOLD_PX = 6;
 // the user is speaking; cold loads can take 40s+.
 const SLOW_MODEL_LOAD_MS = 2000;
 
+// ---- The long-meeting prompt (S-24) ----
+// How long the prompt stays up on its own: it dismisses itself so the bar
+// never carries a stale question (and never blocks the app underneath for
+// longer than a courtesy glance).
+const MEETING_NUDGE_AUTO_DISMISS_MS = 30_000;
+
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
@@ -118,6 +124,16 @@ const RecordingOverlay: React.FC = () => {
   // until the history entry is in place, then the idle disc again.
   const [meetingWrapping, setMeetingWrapping] = useState(false);
   const [meetingStartedAt, setMeetingStartedAt] = useState(0);
+  // After this many minutes of recording, the discreet "still going?" prompt
+  // appears beside the pill (0/off = never). Read from the settings; the
+  // backend default is 60.
+  const [reminderMinutes, setReminderMinutes] = useState(0);
+  // Whether the prompt is on screen right now, plus the session (by its start
+  // time) that has already had it: once per meeting, Wispr-style.
+  const [nudgeOpen, setNudgeOpen] = useState(false);
+  const nudgeDoneForRef = useRef(0);
+  const nudgeOpenRef = useRef(false);
+  const nudgeTimerRef = useRef<number | undefined>(undefined);
 
   const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
   // Live-text scroll-back: the text region "sticks" to the newest line while the
@@ -135,7 +151,72 @@ const RecordingOverlay: React.FC = () => {
     meetingRecording,
   );
 
+  // ---- The long-meeting prompt (S-24) ----
+  // After `reminderMinutes` of recording (60 by default), a discreet prompt
+  // appears beside the pill — "Meeting still going?" with a Stop button — so
+  // a forgotten recording is caught while it can still be saved cleanly. It
+  // asks the backend for the bar's wider footprint (the resize never focuses
+  // the window, so the app underneath keeps the keyboard), dismisses itself
+  // after 30 s, and shows at most once per session. It is never eligible
+  // while a dictation card owns the window.
+  const reminderSeconds = reminderMinutes * 60;
+  const nudgeEligible =
+    meetingRecording &&
+    !isVisible &&
+    reminderSeconds > 0 &&
+    meetingElapsed >= reminderSeconds &&
+    nudgeDoneForRef.current !== meetingStartedAt;
+
   useEffect(() => {
+    if (nudgeEligible && !nudgeOpen) {
+      setNudgeOpen(true);
+      nudgeOpenRef.current = true;
+      commands
+        .setMeetingBarNudge(true)
+        .catch((err) => console.warn("Failed to widen the meeting bar:", err));
+      // Auto-dismiss: the prompt never lingers on the bar.
+      clearTimeout(nudgeTimerRef.current);
+      nudgeTimerRef.current = window.setTimeout(() => {
+        nudgeDoneForRef.current = meetingStartedAt;
+        setNudgeOpen(false);
+        nudgeOpenRef.current = false;
+        commands
+          .setMeetingBarNudge(false)
+          .catch((err) =>
+            console.warn("Failed to shrink the meeting bar:", err),
+          );
+      }, MEETING_NUDGE_AUTO_DISMISS_MS);
+    } else if (!nudgeEligible && nudgeOpen) {
+      // The meeting ended, a dictation card took the window, or the reminder
+      // was turned off: never leave the wider footprint behind.
+      clearTimeout(nudgeTimerRef.current);
+      setNudgeOpen(false);
+      nudgeOpenRef.current = false;
+      commands
+        .setMeetingBarNudge(false)
+        .catch((err) => console.warn("Failed to shrink the meeting bar:", err));
+    }
+  }, [nudgeEligible, nudgeOpen, meetingStartedAt]);
+
+  useEffect(() => {
+    // Re-read the reminder threshold from the settings: the overlay window
+    // outlives the Settings window, so the threshold picked after it loaded
+    // must be able to reach the bar (on load, and whenever a session starts).
+    const refreshReminderMinutes = () => {
+      commands
+        .getAppSettings()
+        .then((result) => {
+          if (result.status !== "ok") return;
+          const minutes = result.data.meeting_reminder_minutes;
+          setReminderMinutes(
+            typeof minutes === "number" && minutes > 0 ? minutes : 0,
+          );
+        })
+        .catch((err) =>
+          console.warn("Failed to read the reminder setting:", err),
+        );
+    };
+
     const setupEventListeners = async () => {
       const unlistenShow = await listen("show-overlay", async (event) => {
         const overlayState = event.payload as string;
@@ -144,6 +225,16 @@ const RecordingOverlay: React.FC = () => {
         // dictation state arriving later re-shows the card as before.
         if (!isDictationState(overlayState)) {
           setIsVisible(false);
+          // A re-show of the recording pill re-applies the plain pill's
+          // footprint; if the "still going?" prompt is up, ask for its wider
+          // one again so it is never clipped.
+          if (nudgeOpenRef.current) {
+            commands
+              .setMeetingBarNudge(true)
+              .catch((err) =>
+                console.warn("Failed to widen the meeting bar:", err),
+              );
+          }
           return;
         }
         // Reset synchronously before settings I/O. A fast microphone can emit
@@ -229,6 +320,7 @@ const RecordingOverlay: React.FC = () => {
           if (status.state === "recording") {
             setMeetingStartedAt(status.started_at);
             setMeetingSession("recording");
+            refreshReminderMinutes();
           } else {
             // The stop's history entry is in place by the time Idle arrives;
             // the "Saving…" pill ends with it.
@@ -274,6 +366,12 @@ const RecordingOverlay: React.FC = () => {
             settings.data.meeting_bar_position ??
               settings.data.overlay_position ??
               "bottom",
+          );
+        }
+        if (settings.status === "ok") {
+          const minutes = settings.data.meeting_reminder_minutes;
+          setReminderMinutes(
+            typeof minutes === "number" && minutes > 0 ? minutes : 0,
           );
         }
         if (status.state === "recording") {
@@ -444,6 +542,19 @@ const RecordingOverlay: React.FC = () => {
       setMeetingWrapping(false);
     }
   };
+  // Stop straight from the long-meeting prompt: the same save as the pill's
+  // Stop, with the prompt's once-per-session bookkeeping done and the bar
+  // back to the plain pill footprint before the wrap pill takes it.
+  const stopMeetingFromNudge = () => {
+    nudgeDoneForRef.current = meetingStartedAt;
+    clearTimeout(nudgeTimerRef.current);
+    setNudgeOpen(false);
+    nudgeOpenRef.current = false;
+    commands
+      .setMeetingBarNudge(false)
+      .catch((err) => console.warn("Failed to shrink the meeting bar:", err));
+    void stopMeeting();
+  };
 
   // ---- View routing ----
   // A dictation view always wins the window while it shows; the meeting bar
@@ -469,26 +580,48 @@ const RecordingOverlay: React.FC = () => {
       );
     }
 
-    // Recording: red pulsing dot + running clock (mm:ss) + Stop.
+    // Recording: red pulsing dot + running clock (mm:ss) + Stop, with the
+    // long-meeting prompt beside the pill once the session has run past the
+    // reminder threshold. The row carries the drag gesture so the pill stays
+    // draggable while the prompt is up; the prompt's own Stop is a plain
+    // click (the drag handler ignores presses on `.mstop`).
     if (meetingSession === "recording") {
       return (
         <div dir={direction} className={`ov-stage ${barPosition}`}>
           <div
-            className="mcard"
-            role="status"
-            aria-label={t("overlay.meeting.recording")}
+            className="mrow"
             onPointerDown={handleBarPointerDown}
             onPointerMove={handleBarPointerMove}
             onPointerUp={handleBarPointerUp}
             onPointerCancel={handleBarPointerUp}
           >
-            <span className="mdot" aria-hidden="true" />
-            <span className="mtimer">
-              {formatDurationClock(meetingElapsed)}
-            </span>
-            <button type="button" className="mstop" onClick={stopMeeting}>
-              {t("overlay.meeting.stop")}
-            </button>
+            <div
+              className="mcard"
+              role="status"
+              aria-label={t("overlay.meeting.recording")}
+            >
+              <span className="mdot" aria-hidden="true" />
+              <span className="mtimer">
+                {formatDurationClock(meetingElapsed)}
+              </span>
+              <button type="button" className="mstop" onClick={stopMeeting}>
+                {t("overlay.meeting.stop")}
+              </button>
+            </div>
+            {nudgeOpen && (
+              <div className="mnu" role="status">
+                <span className="mnu-text">
+                  {t("overlay.meeting.stillGoing")}
+                </span>
+                <button
+                  type="button"
+                  className="mstop"
+                  onClick={stopMeetingFromNudge}
+                >
+                  {t("overlay.meeting.stop")}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       );

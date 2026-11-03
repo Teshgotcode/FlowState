@@ -424,7 +424,13 @@
       "stopped": "회의가 히스토리에 저장되었습니다.",
       "liveTranscript": "실시간 전사",
       "liveEmpty": "회의가 진행되는 동안 단어가 여기에 나타납니다.",
-      "jumpToBottom": "맨 아래로 이동"
+      "jumpToBottom": "맨 아래로 이동",
+      "reminderTitle": "회의 알림",
+      "reminderDescription": "세션이 이 시간만큼 녹음되면 회의 바 온에 '아직 진행 중인가요?' 알림과 중지 버튼을 표시합니다.",
+      "reminderOff": "끄",
+      "reminderMin30": "30분",
+      "reminderHour1": "1시간",
+      "reminderHours2": "2시간"
     },
     "models": {
       "title": "모델",
@@ -1207,7 +1213,8 @@
       "start": "회의 시작",
       "stop": "중지",
       "saving": "저장 중…",
-      "recording": "녹음 중"
+      "recording": "녹음 중",
+      "stillGoing": "회의가 아직 진행 중인가요?"
     },
     "command": "명령",
     "commandFallback": "선택 없음 — 일반 받아쓰기",

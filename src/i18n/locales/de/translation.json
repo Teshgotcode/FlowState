@@ -424,7 +424,13 @@
       "stopped": "Die Besprechung wurde im Verlauf gespeichert.",
       "liveTranscript": "Live-Transkript",
       "liveEmpty": "Hier erscheinen die Worte, während das Meeting läuft.",
-      "jumpToBottom": "Nach unten springen"
+      "jumpToBottom": "Nach unten springen",
+      "reminderTitle": "Meeting-Erinnerung",
+      "reminderDescription": "Zeigt nach dieser Aufnahmedauer dezent eine „Läuft noch?“-Frage mit Stopp-Knopf neben der Meeting-Leiste.",
+      "reminderOff": "Aus",
+      "reminderMin30": "30 Minuten",
+      "reminderHour1": "1 Stunde",
+      "reminderHours2": "2 Stunden"
     },
     "models": {
       "title": "Modelle",
@@ -1207,7 +1213,8 @@
       "start": "Besprechung starten",
       "stop": "Stoppen",
       "saving": "Wird gespeichert …",
-      "recording": "Aufnahme läuft"
+      "recording": "Aufnahme läuft",
+      "stillGoing": "Läuft das Meeting noch?"
     },
     "command": "Befehl",
     "commandFallback": "Nichts markiert — normale Diktatfunktion",

@@ -277,6 +277,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::cancel_meeting_ask,
             commands::meeting::start_meeting_bar_drag,
             commands::meeting::open_meeting_bar_menu,
+            commands::meeting::set_meeting_bar_nudge,
+            commands::meeting::set_meeting_reminder_minutes,
             commands::scratchpad::open_scratchpad,
             commands::scratchpad::get_scratchpad_note,
             commands::scratchpad::save_scratchpad_note,

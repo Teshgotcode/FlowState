@@ -424,7 +424,13 @@
       "stopped": "Mødet blev gemt i Historikken.",
       "liveTranscript": "Live-transskription",
       "liveEmpty": "Ordene vises her, efterhånden som mødet står på.",
-      "jumpToBottom": "Hop til bunden"
+      "jumpToBottom": "Hop til bunden",
+      "reminderTitle": "Mødepåmindelse",
+      "reminderDescription": "Vis en diskret »stadig i gang?«-påmindelse med en stop-knap ved siden af mødelinjen, når en session har optaget så længe.",
+      "reminderOff": "Fra",
+      "reminderMin30": "30 minutter",
+      "reminderHour1": "1 time",
+      "reminderHours2": "2 timer"
     },
     "models": {
       "title": "Modeller",
@@ -1207,7 +1213,8 @@
       "start": "Start møde",
       "stop": "Stop",
       "saving": "Gemmer …",
-      "recording": "Optager"
+      "recording": "Optager",
+      "stillGoing": "Mødet er stadig i gang?"
     },
     "command": "Kommando",
     "commandFallback": "Ingen markering — almindelig diktering",

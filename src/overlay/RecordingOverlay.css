@@ -238,6 +238,42 @@
   white-space: nowrap;
 }
 
+/* The row that carries the recording pill and — once a session has run past
+   the reminder threshold — the "still going?" prompt beside it. The 8px gap
+   is part of the nudge footprint (MEETING_NUDGE_WIDTH in overlay.rs): the
+   window stays an exact fit for what is visible, so no transparent margin
+   can swallow a click meant for the app underneath. */
+.mrow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The long-meeting prompt (S-24): a discreet question with a Stop button,
+   in the pill's own surface vocabulary. It dismisses itself after 30 s and
+   never blocks the app underneath — the window is exactly pill + prompt. */
+.mnu {
+  width: 218px;
+  height: var(--ov-base-h);
+  box-sizing: border-box;
+  border-radius: 20px;
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex: none;
+  animation: mpop 320ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.mnu-text {
+  font-size: 12px;
+  color: var(--s-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* ============================================================
    Unified overlay stage — one fixed, transparent container shared by the compact
    pill and the Live panel (both render the same `.scard` base). The card is

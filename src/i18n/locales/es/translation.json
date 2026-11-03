@@ -424,7 +424,13 @@
       "stopped": "La reunión se guardó en el Historial.",
       "liveTranscript": "Transcripción en directo",
       "liveEmpty": "Las palabras aparecen aquí mientras dura la reunión.",
-      "jumpToBottom": "Ir al final"
+      "jumpToBottom": "Ir al final",
+      "reminderTitle": "Recordatorio de reunión",
+      "reminderDescription": "Muestra un aviso discreto de «¿sigue en marcha?» con un botón de detención junto a la barra de reunión cuando una sesión lleva este tiempo grabando.",
+      "reminderOff": "Desactivado",
+      "reminderMin30": "30 minutos",
+      "reminderHour1": "1 hora",
+      "reminderHours2": "2 horas"
     },
     "models": {
       "title": "Modelos",
@@ -1207,7 +1213,8 @@
       "start": "Iniciar reunión",
       "stop": "Detener",
       "saving": "Guardando…",
-      "recording": "Grabando"
+      "recording": "Grabando",
+      "stillGoing": "¿Sigue la reunión en marcha?"
     },
     "command": "Comando",
     "commandFallback": "Nada seleccionado — dictado normal",

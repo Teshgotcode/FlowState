@@ -424,7 +424,13 @@
       "stopped": "बैठक इतिहास में सहेज ली गई।",
       "liveTranscript": "लाइव ट्रांसक्रिप्ट",
       "liveEmpty": "बैठक चलते समय शब्द यहाँ दिखते हैं।",
-      "jumpToBottom": "नीचे जाएँ"
+      "jumpToBottom": "नीचे जाएँ",
+      "reminderTitle": "मीटिंग रिमाइंडर",
+      "reminderDescription": "सेशन इतने समय से रिकॉर्ड होने पर मीटिंग बार के बड़े अनुप्रस्त पुच्छ और स्टॉप बटन दिखाएँ।",
+      "reminderOff": "बंद",
+      "reminderMin30": "30 मिनट",
+      "reminderHour1": "1 घंटा",
+      "reminderHours2": "2 घंटे"
     },
     "models": {
       "title": "मॉडल",
@@ -1207,7 +1213,8 @@
       "start": "बैठक शुरू करें",
       "stop": "रोकें",
       "saving": "सहेजा जा रहा है…",
-      "recording": "रिकॉर्ड हो रहा है"
+      "recording": "रिकॉर्ड हो रहा है",
+      "stillGoing": "मीटिंग अब भी जारी है?"
     },
     "command": "कमांड",
     "commandFallback": "कुछ चयनित नहीं — सामान्य डिक्टेशन",

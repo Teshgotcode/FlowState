@@ -424,7 +424,13 @@
       "stopped": "הפגישה נשמרה בהיסטוריה.",
       "liveTranscript": "תמליל חי",
       "liveEmpty": "המילים מופיעות כאן בזמן שהפגישה מוקלטת.",
-      "jumpToBottom": "קפיצה לתחתית"
+      "jumpToBottom": "קפיצה לתחתית",
+      "reminderTitle": "תזכורת פגישה",
+      "reminderDescription": "הצגת התראה עדינה «עדיין נמשכת?» עם כפתור עצירה לצד סרגל הפגישות, לאחר שההקלטה נמשכת זמן זה.",
+      "reminderOff": "כבוי",
+      "reminderMin30": "30 דקות",
+      "reminderHour1": "שעה אחת",
+      "reminderHours2": "שעתיים"
     },
     "models": {
       "title": "מודלים",
@@ -1207,7 +1213,8 @@
       "start": "התחל פגישה",
       "stop": "עצור",
       "saving": "שומר…",
-      "recording": "מקליט"
+      "recording": "מקליט",
+      "stillGoing": "הפגישה עדיין נמשכת?"
     },
     "command": "פקודה",
     "commandFallback": "לא נבחר טקסט — הכתבה רגילה",

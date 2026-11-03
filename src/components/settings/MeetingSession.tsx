@@ -6,6 +6,7 @@ import { SettingContainer } from "../ui/SettingContainer";
 import { SettingsGroup } from "../ui/SettingsGroup";
 import { useMeetingStore } from "../../stores/meetingStore";
 import { MeetingLiveTranscript } from "./MeetingLiveTranscript";
+import { MeetingReminderSetting } from "./MeetingReminder";
 import { useMeetingClock } from "../../hooks/useMeetingClock";
 import { formatDurationClock } from "../../lib/utils/format";
 
@@ -101,6 +102,8 @@ export const MeetingSession: React.FC = () => {
           </Button>
         </SettingContainer>
       )}
+
+      <MeetingReminderSetting />
 
       <Dialog
         open={confirmingCancel}

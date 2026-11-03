@@ -1422,6 +1422,29 @@ async openMeetingBarMenu() : Promise<Result<null, string>> {
 }
 },
 /**
+ * Grow or shrink the meeting bar's window for the "still going?" prompt
+ * (S-24): the frontend shows the prompt once the session has recorded past
+ * `meeting_reminder_minutes`, and asks for the wider footprint here. The
+ * resize never focuses the window, so the app underneath keeps the
+ * keyboard.
+ */
+async setMeetingBarNudge(show: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_meeting_bar_nudge", { show }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * How long a meeting may record before the bar shows its "still going?"
+ * prompt, in minutes. `None` turns the prompt off (the setting's "Off"
+ * choice).
+ */
+async setMeetingReminderMinutes(minutes: number | null) : Promise<void> {
+    await TAURI_INVOKE("set_meeting_reminder_minutes", { minutes });
+},
+/**
  * Open the Scratchpad: the small note window with the caret ready, shown
  * from the meeting bar's menu. The note persists locally between opens.
  */
@@ -1576,7 +1599,14 @@ spoken_languages?: string[]; overlay_position?: OverlayPosition;
  * overlay's edge (`overlay_position`); dragging the bar to an edge pins
  * it there, and the pinned choice persists across restarts.
  */
-meeting_bar_position?: OverlayPosition | null; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
+meeting_bar_position?: OverlayPosition | null; 
+/**
+ * How many minutes a meeting may record before the meeting bar shows the
+ * discreet "still going?" prompt with a Stop button (Wispr's meeting
+ * reminders, so a forgotten recording doesn't run for hours). `None`
+ * turns the prompt off.
+ */
+meeting_reminder_minutes?: number | null; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
 /**
  * Whether the dictionary learns from corrections the user makes — the
  * explicit "correct this" flow in history, and the diff against

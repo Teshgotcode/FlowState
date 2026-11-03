@@ -497,6 +497,12 @@ pub struct AppSettings {
     /// it there, and the pinned choice persists across restarts.
     #[serde(default)]
     pub meeting_bar_position: Option<OverlayPosition>,
+    /// How many minutes a meeting may record before the meeting bar shows the
+    /// discreet "still going?" prompt with a Stop button (Wispr's meeting
+    /// reminders, so a forgotten recording doesn't run for hours). `None`
+    /// turns the prompt off.
+    #[serde(default = "default_meeting_reminder_minutes")]
+    pub meeting_reminder_minutes: Option<u64>,
     #[serde(default = "default_debug_mode")]
     pub debug_mode: bool,
     #[serde(default = "default_log_level")]
@@ -689,6 +695,11 @@ fn default_overlay_position() -> OverlayPosition {
     // Position only matters when the overlay is shown; whether it shows at all is
     // `overlay_style` (Linux defaults that to None). So a single default suffices.
     OverlayPosition::Bottom
+}
+
+/// The meeting reminder prompt waits this long by default (Wispr parity).
+fn default_meeting_reminder_minutes() -> Option<u64> {
+    Some(60)
 }
 
 fn default_mcp_port() -> u16 {
@@ -1218,6 +1229,7 @@ pub fn get_default_settings() -> AppSettings {
         selected_language: "auto".to_string(),
         overlay_position: default_overlay_position(),
         meeting_bar_position: None,
+        meeting_reminder_minutes: default_meeting_reminder_minutes(),
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),

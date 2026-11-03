@@ -68,12 +68,23 @@ const MEETING_DISC_WIDTH: f64 = 40.0;
 const MEETING_DISC_HEIGHT: f64 = 40.0;
 const MEETING_PILL_WIDTH: f64 = 176.0;
 const MEETING_PILL_HEIGHT: f64 = 40.0;
+/// Width the recording pill's window grows by while the "still going?"
+/// prompt shows beside it (S-24): the prompt card plus the gap to the pill.
+/// The window stays an EXACT fit — no transparent margin to swallow clicks
+/// meant for the app underneath. Keep in sync with `.mnu` in
+/// RecordingOverlay.css.
+const MEETING_NUDGE_WIDTH: f64 = 226.0;
 
 /// The meeting bar's own `show-overlay` states. The dictation states
 /// ("recording" | "streaming" | "transcribing" | "processing") are unchanged;
 /// these are the only additions to the one shared overlay window.
 pub const MEETING_BAR_IDLE: &str = "meeting-idle";
 pub const MEETING_BAR_RECORDING: &str = "meeting-recording";
+/// The recording pill with the "still going?" prompt beside it: the same
+/// view as `MEETING_BAR_RECORDING`, one prompt-card wider. Frontend-driven —
+/// the webview knows the session's clock and asks for it via
+/// `set_meeting_bar_nudge` — so the backend only owns the footprint.
+pub const MEETING_BAR_NUDGE: &str = "meeting-recording-nudge";
 
 /// Overlay window size (logical) for a given UI state.
 fn overlay_dimensions(state: &str) -> (f64, f64) {
@@ -83,6 +94,12 @@ fn overlay_dimensions(state: &str) -> (f64, f64) {
         // The recording pill and the frontend's "Saving" pill share the
         // meeting bar's own exact footprint.
         MEETING_BAR_RECORDING => (MEETING_PILL_WIDTH, MEETING_PILL_HEIGHT),
+        // The "still going?" prompt widens the recording pill's window by its
+        // own card; every other axis is the pill's.
+        MEETING_BAR_NUDGE => (
+            MEETING_PILL_WIDTH + MEETING_NUDGE_WIDTH,
+            MEETING_PILL_HEIGHT,
+        ),
         _ => (OVERLAY_WIDTH, OVERLAY_HEIGHT),
     }
 }
@@ -1085,6 +1102,48 @@ fn dock_meeting_bar_on_main(app_handle: &AppHandle, state: &str) {
     let _ = window.emit("overlay-position-changed", ());
 }
 
+/// Grow or shrink the meeting bar's window for the "still going?" prompt
+/// (S-24): the webview owns the timing — it knows the session's clock — and
+/// asks for the wider footprint while the prompt is up. Resizes in place,
+/// never `show()`s or focuses: the window is already on screen and must not
+/// steal focus from the app the person is working in. No-op for any other
+/// view: a dictation card, the disc or a wrap owns the geometry right now,
+/// and re-applies its own footprint on its own transitions anyway.
+pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        let current = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+        if current != MEETING_BAR_RECORDING && current != MEETING_BAR_NUDGE {
+            return;
+        }
+        let target = if show {
+            MEETING_BAR_NUDGE
+        } else {
+            MEETING_BAR_RECORDING
+        };
+        *CURRENT_OVERLAY_STATE.lock().unwrap() = target.to_string();
+        let Some(window) = handle.get_webview_window("recording_overlay") else {
+            return;
+        };
+
+        // A layer-shell surface's geometry is the compositor's to commit.
+        #[cfg(target_os = "linux")]
+        if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
+            let position = overlay_position_for(&settings::get_settings(&handle), target);
+            let (width, height) = overlay_dimensions(target);
+            match window.gtk_window() {
+                Ok(gtk_window) => {
+                    configure_layer_shell_surface(&gtk_window, position, width, height)
+                }
+                Err(error) => log::error!("Failed to access GTK overlay window: {error}"),
+            }
+            return;
+        }
+
+        apply_overlay_geometry_on_main(&handle, &window, target);
+    });
+}
+
 /// The idle disc's right-click menu (Wispr's escape hatch). Native, not HTML:
 /// the disc's window is exactly the disc, so a menu could never render inside
 /// it. Pops at the cursor; the item is dispatched by the app-wide menu-event
@@ -1376,6 +1435,15 @@ mod tests {
         assert_eq!(
             overlay_dimensions("recording"),
             (OVERLAY_WIDTH, OVERLAY_HEIGHT)
+        );
+        // The "still going?" prompt adds exactly its card's width to the
+        // pill's footprint — the window is never wider than what is visible.
+        assert_eq!(
+            overlay_dimensions(MEETING_BAR_NUDGE),
+            (
+                MEETING_PILL_WIDTH + MEETING_NUDGE_WIDTH,
+                MEETING_PILL_HEIGHT
+            )
         );
     }
 
