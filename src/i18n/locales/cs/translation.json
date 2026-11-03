@@ -671,6 +671,10 @@
         "title": "Odstranit výplňová slova",
         "description": "Odstraňuje běžná slova vyjadřující váhání z přepisů. Vypnutím je zachováte."
       },
+      "voiceCommands": {
+        "title": "Mluvené příkazy pro znaky a emoji",
+        "description": "Diktujte interpunkci a emoji podle názvu — „čárka“, „nový řádek“, „smajlík“ — a vloží se jako znaky. Pouze norština a angličtina; slova, která jsou součástí věty, zůstanou beze změny."
+      },
       "chineseScript": {
         "title": "Čínské písmo",
         "description": "Přepisy v mandarínštině a kantonštině se píší zjednodušenými znaky nebo tradičními znaky, jak se píší na Tchaj-wanu či v Hongkongu. Ostatní jazyky zůstanou beze změny.",

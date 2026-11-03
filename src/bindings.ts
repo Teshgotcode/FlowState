@@ -447,6 +447,14 @@ async changeFillerWordRemovalEnabledSetting(enabled: boolean) : Promise<Result<n
     else return { status: "error", error: e  as any };
 }
 },
+async changeVoiceCommandsEnabledSetting(enabled: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_voice_commands_enabled_setting", { enabled }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changeChineseScriptSetting(script: ChineseScript) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_chinese_script_setting", { script }) };
@@ -1541,7 +1549,7 @@ snippets?: Snippet[]; model_unload_timeout?: ModelUnloadTimeout; word_correction
  * after the target app actually reads the transcript, instead of after a
  * fixed delay. See `paste_tx`. macOS and Windows only.
  */
-reliable_paste?: boolean; typing_tool?: TypingTool; external_script_path?: string | null; filler_word_removal_enabled?: boolean; custom_filler_words?: string[] | null; 
+reliable_paste?: boolean; typing_tool?: TypingTool; external_script_path?: string | null; filler_word_removal_enabled?: boolean; voice_commands_enabled?: boolean; custom_filler_words?: string[] | null; 
 /**
  * Fresh installs default from the OS locale; existing stores are migrated
  * in `apply_settings_migrations`.

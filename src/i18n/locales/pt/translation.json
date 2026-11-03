@@ -671,6 +671,10 @@
         "title": "Remover palavras de preenchimento",
         "description": "Remove hesitações comuns das transcrições. Desative para mantê-las."
       },
+      "voiceCommands": {
+        "title": "Comandos de pontuação e emoji",
+        "description": "Dite pontuação e emoji pelo nome — «vírgula», «nova linha», «sorriso» — e são inseridos como caracteres. Apenas norueguês e inglês; palavras que fazem parte de uma frase ficam inalteradas."
+      },
       "chineseScript": {
         "title": "Escrita chinesa",
         "description": "Escreve as transcrições em mandarim e cantonês com caracteres simplificados ou com caracteres tradicionais, como são escritos em Taiwan ou Hong Kong. Os outros idiomas não são alterados.",

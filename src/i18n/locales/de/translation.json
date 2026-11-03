@@ -671,6 +671,10 @@
         "title": "Füllwörter entfernen",
         "description": "Entfernt häufige Verzögerungslaute aus Transkriptionen. Deaktivieren Sie diese Option, um sie beizubehalten."
       },
+      "voiceCommands": {
+        "title": "Gesprochene Satzzeichen & Emojis",
+        "description": "Satzzeichen und Emojis beim Namen diktieren — „Komma“, „neue Zeile“, „Smiley“ — dann werden sie als Zeichen eingefügt. Nur Norwegisch und Englisch; Wörter, die Teil eines Satzes sind, bleiben unverändert."
+      },
       "chineseScript": {
         "title": "Chinesische Schrift",
         "description": "Schreibt Transkriptionen auf Mandarin und Kantonesisch in vereinfachten Schriftzeichen oder in traditionellen Schriftzeichen, wie sie in Taiwan oder Hongkong geschrieben werden. Andere Sprachen bleiben unverändert.",

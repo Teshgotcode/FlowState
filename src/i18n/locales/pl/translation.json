@@ -671,6 +671,10 @@
         "title": "Usuń wyrazy wypełniające",
         "description": "Usuwa typowe słowa wyrażające wahanie z transkrypcji. Wyłącz, aby je zachować."
       },
+      "voiceCommands": {
+        "title": "Polecenia znaków i emoji",
+        "description": "Wydyktuj znaki interpunkcyjne i emoji — „przecinek”, „nowa linia”, „uśmiech” — a zostaną wstawione jako znaki. Tylko norweski i angielski; słowa będące częścią zdania zostają bez zmian."
+      },
       "chineseScript": {
         "title": "Pismo chińskie",
         "description": "Zapisuje transkrypcje w języku mandaryńskim i kantońskim znakami uproszczonymi albo tradycyjnymi, w odmianie używanej na Tajwanie lub w Hongkongu. Inne języki pozostają bez zmian.",
