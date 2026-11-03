@@ -1,0 +1,45 @@
+{
+ "screen": "S02",
+ "blocks": [
+  {
+   "role": "header",
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "title",
+   "x": 40,
+   "y": 140,
+   "w": 600,
+   "h": 70,
+   "kind": "region"
+  },
+  {
+   "role": "perm-mic",
+   "x": 40,
+   "y": 260,
+   "w": 920,
+   "h": 180,
+   "kind": "region"
+  },
+  {
+   "role": "perm-accessibility",
+   "x": 40,
+   "y": 470,
+   "w": 920,
+   "h": 180,
+   "kind": "region"
+  },
+  {
+   "role": "footer-nav",
+   "x": 0,
+   "y": 873,
+   "w": 1000,
+   "h": 127,
+   "kind": "region"
+  }
+ ]
+}

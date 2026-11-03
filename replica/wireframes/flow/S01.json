@@ -1,0 +1,61 @@
+{
+ "screen": "S01",
+ "blocks": [
+  {
+   "role": "header",
+   "x": 0,
+   "y": 0,
+   "w": 1000,
+   "h": 80,
+   "kind": "region"
+  },
+  {
+   "role": "step-progress",
+   "x": 28,
+   "y": 20,
+   "w": 120,
+   "h": 40,
+   "kind": "own"
+  },
+  {
+   "role": "illustration",
+   "x": 540,
+   "y": 160,
+   "w": 400,
+   "h": 440,
+   "kind": "region"
+  },
+  {
+   "role": "headline",
+   "x": 64,
+   "y": 180,
+   "w": 420,
+   "h": 100,
+   "kind": "region"
+  },
+  {
+   "role": "subhead",
+   "x": 64,
+   "y": 300,
+   "w": 400,
+   "h": 90,
+   "kind": "region"
+  },
+  {
+   "role": "cta-primary",
+   "x": 56,
+   "y": 790,
+   "w": 230,
+   "h": 62,
+   "kind": "region"
+  },
+  {
+   "role": "footer-nav",
+   "x": 0,
+   "y": 873,
+   "w": 1000,
+   "h": 127,
+   "kind": "region"
+  }
+ ]
+}

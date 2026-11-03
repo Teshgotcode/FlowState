@@ -518,14 +518,14 @@ pub struct AppSettings {
     pub spoken_languages: Vec<String>,
     #[serde(default = "default_overlay_position")]
     pub overlay_position: OverlayPosition,
-    /// Which screen edge the floating meeting bar docks on — Wispr's
+    /// Which screen edge the floating meeting bar docks on — the reference's
     /// `statusDockEdge`. `None` (the default) keeps the bar on the dictation
     /// overlay's edge (`overlay_position`); dragging the bar to an edge pins
     /// it there, and the pinned choice persists across restarts.
     #[serde(default)]
     pub meeting_bar_position: Option<OverlayPosition>,
     /// How many minutes a meeting may record before the meeting bar shows the
-    /// discreet "still going?" prompt with a Stop button (Wispr's meeting
+    /// discreet "still going?" prompt with a Stop button (the reference's meeting
     /// reminders, so a forgotten recording doesn't run for hours). `None`
     /// turns the prompt off.
     #[serde(default = "default_meeting_reminder_minutes")]
@@ -729,7 +729,7 @@ fn default_overlay_position() -> OverlayPosition {
     OverlayPosition::Bottom
 }
 
-/// The meeting reminder prompt waits this long by default (Wispr parity).
+/// The meeting reminder prompt waits this long by default (reference parity).
 fn default_meeting_reminder_minutes() -> Option<u64> {
     Some(60)
 }

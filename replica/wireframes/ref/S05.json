@@ -1,0 +1,45 @@
+{
+ "screen": "S05",
+ "blocks": [
+  {
+   "role": "sidebar",
+   "x": 0,
+   "y": 0,
+   "w": 220,
+   "h": 1000,
+   "kind": "region"
+  },
+  {
+   "role": "title",
+   "x": 260,
+   "y": 60,
+   "w": 400,
+   "h": 50,
+   "kind": "region"
+  },
+  {
+   "role": "model-selector",
+   "x": 760,
+   "y": 50,
+   "w": 200,
+   "h": 60,
+   "kind": "region"
+  },
+  {
+   "role": "content",
+   "x": 260,
+   "y": 150,
+   "w": 700,
+   "h": 640,
+   "kind": "region"
+  },
+  {
+   "role": "status-bar",
+   "x": 260,
+   "y": 830,
+   "w": 700,
+   "h": 120,
+   "kind": "region"
+  }
+ ]
+}

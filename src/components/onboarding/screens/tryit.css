@@ -485,7 +485,8 @@
   border: 1px solid var(--try-panel-edge);
   border-radius: 16px;
   background: var(--try-panel-fill);
-  box-shadow: 0 14px 34px -12px rgb(0 0 0 / 0.3);
+  /* FlowState elevation: panel lift (navy-tinted, not flat black). */
+  box-shadow: var(--flow-shadow-panel);
   font-size: var(--text-small);
   line-height: 1.35;
   text-align: start;
