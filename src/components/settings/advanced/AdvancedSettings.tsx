@@ -4,6 +4,7 @@ import { ShowOverlay } from "../ShowOverlay";
 import { ModelUnloadTimeoutSetting } from "../ModelUnloadTimeout";
 import { CustomWords } from "../CustomWords";
 import { Snippets } from "../Snippets";
+import { ShareDictionary } from "../ShareDictionary";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { StartHidden } from "../StartHidden";
 import { AutostartToggle } from "../AutostartToggle";
@@ -58,6 +59,7 @@ export const AdvancedSettings: React.FC = () => {
         <VoiceCommands />
         <CustomWords descriptionMode="tooltip" grouped />
         <Snippets descriptionMode="tooltip" grouped />
+        <ShareDictionary descriptionMode="tooltip" grouped />
         <AppendTrailingSpace descriptionMode="tooltip" grouped={true} />
       </SettingsGroup>
 

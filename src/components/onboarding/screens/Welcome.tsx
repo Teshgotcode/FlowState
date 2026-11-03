@@ -18,6 +18,10 @@ import { modelMatchesLanguage } from "@handy-computer/models";
 import { getSupportedLanguage } from "@/i18n";
 import { languageList } from "@/lib/constants/languages";
 import { useSettings } from "@/hooks/useSettings";
+import {
+  installEsPackage,
+  isEsPackageInstalled,
+} from "@/lib/constants/esPackage";
 
 // The mascot waves on the first visit only.
 let waved = false;
@@ -30,7 +34,7 @@ interface WelcomeProps {
 /** Screen 1: greeting, spoken languages, and Chinese script. */
 export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
   const { t, i18n } = useTranslation();
-  const { updateSetting } = useSettings();
+  const { settings, updateSetting } = useSettings();
   const { languages, script, modelId, preview, set } = useOnboardingStore();
   const picker = useLanguagePicker({
     languages,
@@ -46,6 +50,7 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
     },
   });
   const [wave] = useState(() => !waved);
+  const [esInstalling, setEsInstalling] = useState(false);
   useEffect(() => {
     waved = true;
     const id = setTimeout(
@@ -70,6 +75,27 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
 
   // What the menus are in right now (a preview never writes the setting).
   const uiLanguage = getSupportedLanguage(ui) || "en";
+
+  /* ---------- the built-in ES package (one click, first run) ---------- */
+  const customWords = settings?.custom_words ?? [];
+  const snippets = settings?.snippets ?? [];
+  const esInstalled = isEsPackageInstalled(customWords, snippets);
+  // Offered where it makes sense: Norwegian UI or spoken Norwegian.
+  const showEsPackage =
+    uiLanguage === "no" || languages.includes("nb") || languages.includes("nn");
+  const installEs = async () => {
+    // One click: the ES package merges into the dictionary and snippets
+    // (nothing the user already has is overwritten). A preview never writes.
+    if (preview || esInstalling) return;
+    setEsInstalling(true);
+    try {
+      const merged = installEsPackage(customWords, snippets);
+      await updateSetting("custom_words", merged.words);
+      await updateSetting("snippets", merged.snippets);
+    } finally {
+      setEsInstalling(false);
+    }
+  };
   const changeUiLanguage = (code: string) => {
     i18n.changeLanguage(code);
     if (!preview) updateSetting("app_language", code);
@@ -160,6 +186,31 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
                   </button>
                 );
               })}
+            </div>
+          </div>
+        )}
+
+        {showEsPackage && (
+          <div className="w-full animate-rise pt-[12px] text-start">
+            <div className="flex items-center justify-between gap-[12px] rounded-control border-[1.5px] border-line-strong bg-background p-[10px]">
+              <div className="min-w-0">
+                <p className="m-0 text-small font-semibold text-text">
+                  {t("onboarding.welcome.es.title")}
+                </p>
+                <p className="m-0 text-small text-ink-3">
+                  {t("onboarding.welcome.es.description")}
+                </p>
+              </div>
+              <Button
+                variant={esInstalled ? "secondary" : "primary"}
+                size="sm"
+                disabled={esInstalled || esInstalling}
+                onClick={() => void installEs()}
+              >
+                {esInstalled
+                  ? t("onboarding.welcome.es.enabled")
+                  : t("onboarding.welcome.es.enable")}
+              </Button>
             </div>
           </div>
         )}

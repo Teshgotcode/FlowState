@@ -111,6 +111,12 @@
         "pickOne": "कम से कम एक भाषा चुनें",
         "weak_one": "{{languages}}: कोई मॉडल इसे अभी अच्छी तरह नहीं सुनता",
         "weak_other": "{{languages}}: कोई मॉडल इन्हें अभी अच्छी तरह नहीं सुनता"
+      },
+      "es": {
+        "title": "ES student? Add the ES package",
+        "description": "Entrepreneurship terms, sample lecturer and project names in one click — edit them later in Settings.",
+        "enable": "Add ES package",
+        "enabled": "Added"
       }
     },
     "download": {
@@ -708,6 +714,32 @@
           "traditionalTw": "पारंपरिक (ताइवान)",
           "traditionalHk": "पारंपरिक (हांगकांग)"
         }
+      },
+      "share": {
+        "title": "Share dictionary",
+        "description": "Export your dictionary, snippets and ES subject words as one JSON file to send to your class. Importing merges without overwriting your own entries.",
+        "nameLabel": "Name",
+        "namePlaceholder": "e.g. Class of 2025",
+        "import": "Import",
+        "export": "Export",
+        "exportFileName": "flowstate-dictionary-{{date}}",
+        "exportSaved": "Dictionary shared as \"{{name}}\"",
+        "exportFailed": "Could not export the dictionary",
+        "importAdded": "Added {{words}} words and {{snippets}} snippets",
+        "importSkipped": "Skipped {{words}} duplicate words and {{snippets}} existing snippets",
+        "importConflicts": "Kept your version of: {{triggers}}",
+        "importEmpty": "The file contains no dictionary",
+        "importReadFailed": "Could not read the file",
+        "invalidJson": "The file is not valid JSON",
+        "notBundle": "The file is not a shared dictionary",
+        "unsupportedVersion": "The file was made by a newer version of FlowState",
+        "esTitle": "ES package",
+        "esDescription": "Built-in package with entrepreneurship terms, sample lecturer and project names, and ES snippets. One click adds it to your dictionary; edit or remove entries afterwards.",
+        "esEnable": "Turn on",
+        "esOn": "On",
+        "esInstalled": "Installed",
+        "esNotInstalled": "Not installed",
+        "esApplied": "ES package added: {{words}} words, {{snippets}} snippets"
       }
     },
     "postProcessing": {

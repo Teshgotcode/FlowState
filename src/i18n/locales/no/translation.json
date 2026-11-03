@@ -111,6 +111,12 @@
         "pickOne": "Velg minst ett språk",
         "weak_one": "{{languages}}: ingen modell hører det godt nok ennå",
         "weak_other": "{{languages}}: ingen modell hører disse godt nok ennå"
+      },
+      "es": {
+        "title": "ES-student? Slå på ES-pakken",
+        "description": "Entreprenørskapstermer, eksempler på forelesere og prosjektnavn med ett klikk — du kan redigere dem i innstillingene.",
+        "enable": "Slå på ES-pakken",
+        "enabled": "Lagt til"
       }
     },
     "download": {
@@ -708,6 +714,32 @@
           "traditionalTw": "Tradisjonelt (Taiwan)",
           "traditionalHk": "Tradisjonelt (Hongkong)"
         }
+      },
+      "share": {
+        "title": "Del ordbok",
+        "description": "Eksporter ordboken, snippets og ES-fagordene som én JSON-fil du kan sende til kullet. Import slår sammen uten å overskrive dine egne oppføringer.",
+        "nameLabel": "Navn",
+        "namePlaceholder": "f.eks. Kullet 2025",
+        "import": "Importer",
+        "export": "Eksporter",
+        "exportFileName": "flowstate-ordbok-{{date}}",
+        "exportSaved": "Ordboken delt som «{{name}}»",
+        "exportFailed": "Kunne ikke eksportere ordboken",
+        "importAdded": "La til {{words}} ord og {{snippets}} snippets",
+        "importSkipped": "Hoppet over {{words}} duplikatord og {{snippets}} snippets som finnes fra før",
+        "importConflicts": "Beholdt din versjon av: {{triggers}}",
+        "importEmpty": "Filen inneholder ingen ordbok",
+        "importReadFailed": "Kunne ikke lese filen",
+        "invalidJson": "Filen er ikke gyldig JSON",
+        "notBundle": "Filen er ikke en delt ordbok",
+        "unsupportedVersion": "Filen ble laget av en nyere versjon av FlowState",
+        "esTitle": "ES-pakken",
+        "esDescription": "Innebygd pakke med entreprenørskapstermer, eksempler på forelesere og prosjektnavn, og ES-snippets. Ett klikk legger den inn i ordboken; du kan redigere eller fjerne oppføringer etterpå.",
+        "esEnable": "Slå på",
+        "esOn": "På",
+        "esInstalled": "Installert",
+        "esNotInstalled": "Ikke installert",
+        "esApplied": "ES-pakken lagt til: {{words}} ord, {{snippets}} snippets"
       }
     },
     "postProcessing": {

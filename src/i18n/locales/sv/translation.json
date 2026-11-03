@@ -111,6 +111,12 @@
         "pickOne": "Välj minst ett språk",
         "weak_one": "{{languages}}: ingen modell hör det bra ännu",
         "weak_other": "{{languages}}: ingen modell hör dem bra ännu"
+      },
+      "es": {
+        "title": "ES-student? Slå på ES-paketet",
+        "description": "Entreprenörskaptermer, exempel på föreläsare och projektnamn med ett klick — du kan redigera dem i inställningarna.",
+        "enable": "Slå på ES-paketet",
+        "enabled": "Tillagt"
       }
     },
     "download": {
@@ -708,6 +714,32 @@
           "traditionalTw": "Traditionell (Taiwan)",
           "traditionalHk": "Traditionell (Hongkong)"
         }
+      },
+      "share": {
+        "title": "Dela ordlista",
+        "description": "Exportera din ordlista, snippets och ES-fackord som en JSON-fil att skicka till klassen. Importen slår samman utan att skriva över dina egna poster.",
+        "nameLabel": "Namn",
+        "namePlaceholder": "t.ex. Kullen 2025",
+        "import": "Importera",
+        "export": "Exportera",
+        "exportFileName": "flowstate-ordlista-{{date}}",
+        "exportSaved": "Ordlistan delad som \"{{name}}\"",
+        "exportFailed": "Kunde inte exportera ordlistan",
+        "importAdded": "La till {{words}} ord och {{snippets}} snippets",
+        "importSkipped": "Hoppade över {{words}} dublettord och {{snippets}} snippets som redan finns",
+        "importConflicts": "Behöll din version av: {{triggers}}",
+        "importEmpty": "Filen innehåller ingen ordlista",
+        "importReadFailed": "Kunde inte läsa filen",
+        "invalidJson": "Filen är inte giltig JSON",
+        "notBundle": "Filen är inte en delad ordlista",
+        "unsupportedVersion": "Filen skapades av en nyare version av FlowState",
+        "esTitle": "ES-paketet",
+        "esDescription": "Inbyggt paket med entreprenörskaptermer, exempel på föreläsare och projektnamn, samt ES-snippets. Ett klick lägger till det i ordlistan; redigera eller ta bort poster efteråt.",
+        "esEnable": "Slå på",
+        "esOn": "På",
+        "esInstalled": "Installerat",
+        "esNotInstalled": "Inte installerat",
+        "esApplied": "ES-paketet tillagt: {{words}} ord, {{snippets}} snippets"
       }
     },
     "postProcessing": {
