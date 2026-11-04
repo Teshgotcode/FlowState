@@ -444,7 +444,10 @@
       "retentionDays30": "30 dagar",
       "retentionDays90": "90 dagar",
       "retentionPlaceholder": "Välj lagringstid...",
-      "retentionWarning": "Radering är permanent och kan inte ångras. Allt sparas bara på den här enheten — ingenting skickas någon annanstans."
+      "retentionWarning": "Radering är permanent och kan inte ångras. Allt sparas bara på den här enheten — ingenting skickas någon annanstans.",
+      "systemAudioTitle": "Systemljud",
+      "systemAudioDescription": "Möten spelar även in det maskinen själv spelar upp — motparten i ett Zoom- eller Teams-möte — som ett andra spår bredvid mikrofonen, och väver samman det i transkriptet efter tidsstämpel. Allt spelas in lokalt, utan någon behörighetsdialog, och ingenting lämnar den här datorn.",
+      "systemAudioUnsupported": "Systemljud kräver macOS 14.4 eller nyare. Den här Macen spelar in möten endast med mikrofonen."
     },
     "models": {
       "title": "Modeller",

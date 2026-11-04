@@ -444,7 +444,10 @@
       "retentionDays30": "30 dni",
       "retentionDays90": "90 dni",
       "retentionPlaceholder": "Wybierz okres przechowywania...",
-      "retentionWarning": "Usuwanie jest trwałe i nie można go cofnąć. Wszystko jest przechowywane tylko na tym urządzeniu — nic nigdzie nie jest wysyłane."
+      "retentionWarning": "Usuwanie jest trwałe i nie można go cofnąć. Wszystko jest przechowywane tylko na tym urządzeniu — nic nigdzie nie jest wysyłane.",
+      "systemAudioTitle": "Dźwięk systemowy",
+      "systemAudioDescription": "Spotkania nagrywają także to, co odtwarza sam komputer — zdalną stronę rozmowy Zoom lub Teams — jako drugą ścieżkę obok mikrofonu i wplatają to do transkrypcji według znaczników czasu. Wszystko jest rejestrowane lokalnie, bez okna uprawnień, i nic nie opuszcza tego urządzenia.",
+      "systemAudioUnsupported": "Dźwięk systemowy wymaga macOS 14.4 lub nowszego. Ten Mac nagrywa spotkania tylko z mikrofonu."
     },
     "models": {
       "title": "Modele",

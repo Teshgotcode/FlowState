@@ -1331,6 +1331,26 @@ async correctHistoryEntry(id: number, text: string) : Promise<Result<HistoryEntr
 }
 },
 /**
+ * Whether this machine can capture system audio at all: the CoreAudio
+ * process tap exists from macOS 14.4, and FlowState deploys to 10.15, so
+ * the answer is a runtime fact. A Mac (or any other OS) that cannot gets
+ * its system-audio setting hidden rather than broken — meetings there are
+ * mic-only, without an error.
+ */
+async systemAudioSupported() : Promise<boolean> {
+    return await TAURI_INVOKE("system_audio_supported");
+},
+/**
+ * Turn the meeting system-audio track on or off: what the machine itself
+ * plays (the far end of a Zoom or Teams call) captured beside the
+ * microphone and merged into the transcript by timestamp. Everything is
+ * captured locally through a CoreAudio tap that needs no permission
+ * dialog; nothing ever leaves the machine.
+ */
+async setRecordSystemAudio(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("set_record_system_audio", { enabled });
+},
+/**
  * Start a meeting session: a recording that runs until it is stopped, not
  * until a dictation hotkey comes up. Its audio is written to a working file
  * while it records, and a live decode keeps a running transcript.
@@ -1674,7 +1694,15 @@ meeting_bar_position?: OverlayPosition | null;
  * reminders, so a forgotten recording doesn't run for hours). `None`
  * turns the prompt off.
  */
-meeting_reminder_minutes?: number | null; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
+meeting_reminder_minutes?: number | null; 
+/**
+ * Whether meetings also capture system audio — what the machine itself
+ * plays, the far end of a Zoom or Teams call included — as a second
+ * track beside the microphone (S-5). Only macOS 14.4+ can tap it, and
+ * the runtime check in the meeting code keeps older Macs mic-only
+ * without an error; everywhere else the setting is simply inert.
+ */
+record_system_audio?: boolean; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
 /**
  * Whether the dictionary learns from corrections the user makes — the
  * explicit "correct this" flow in history, and the diff against
@@ -1873,7 +1901,14 @@ meeting_note?: MeetingNote | null;
  * number (S1 is index 0); `None` when nobody was named. Names live per
  * meeting: they survive restarts and re-transcriptions.
  */
-speaker_names?: (string | null)[] | null }
+speaker_names?: (string | null)[] | null; 
+/**
+ * The meeting's second track: the system audio (what the machine was
+ * playing — a call's far end) captured beside the microphone (S-5),
+ * when one was. Its transcript is merged into the segments by
+ * timestamp; the recording itself is kept like any other.
+ */
+system_audio?: SystemAudioTrack | null }
 /**
  * Where a history entry's audio came from, beyond a dictation take. Old
  * entries predate the field and read as `None`; a value this build doesn't
@@ -2400,6 +2435,20 @@ export type SyncRunResult = { status: SyncStatus;
  */
 conflicts: ConflictRecord[]; history_imported: number }
 export type SyncStatus = { enabled: boolean; folder: string | null; sync_history: boolean; device_name: string; last_sync_at: number | null; last_result: string | null; last_error: string | null; word_count: number; snippet_count: number; conflict_count: number }
+/**
+ * A meeting's captured system audio: where its recording lives and how many
+ * milliseconds after the meeting's start its capture began, so the track's
+ * own timestamps line up with the mic track's when the two merge.
+ */
+export type SystemAudioTrack = { 
+/**
+ * The recording's file name in the recordings directory.
+ */
+file_name: string; 
+/**
+ * Milliseconds from the meeting's start to this capture's start.
+ */
+offset_ms: number }
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes FlowState already ships.

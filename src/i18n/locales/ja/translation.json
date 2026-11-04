@@ -444,7 +444,10 @@
       "retentionDays30": "30日",
       "retentionDays90": "90日",
       "retentionPlaceholder": "保持期間を選択...",
-      "retentionWarning": "削除は元に戻せません。すべてこのデバイスにのみ保存され、どこにも送信されません。"
+      "retentionWarning": "削除は元に戻せません。すべてこのデバイスにのみ保存され、どこにも送信されません。",
+      "systemAudioTitle": "システムオーディオ",
+      "systemAudioDescription": "ミーティングでは、マシン自身が再生する音声（Zoom や Teams の通話相手の声）もマイクの横に2本目のトラックとして録音し、タイムスタンプ順に文字起こしへ統合します。すべて許可ダイアログなしでローカルに録音され、このデバイスの外へ出ることはありません。",
+      "systemAudioUnsupported": "システムオーディオには macOS 14.4 以降が必要です。この Mac はミーティングをマイクのみで録音します。"
     },
     "models": {
       "title": "モデル",

@@ -119,6 +119,8 @@ Du trenger [Bun](https://bun.sh), Rust (nyeste stable) og CMake.
 
 FlowState fantes ikke uten [Handy](https://github.com/cjpais/Handy) (MIT) av CJ Pais og fellesskapet rundt den, og ikke uten transcribe-cpp, ggml og Whisper. Handy er under feature freeze oppstrøms, så ES-tilpasningene lever her i fork-en. Oppstrøms fikser haler vi inn jevnlig.
 
+Møteopptak med systemlyd (maskinens egen lyd, f.eks. Zoom-møtets andre ende) følger oppsettet til [anarlog](https://github.com/milirsch/anarlog) (MIT): en CoreAudio-prosesstap i et privat aggregat, lest via [cidre](https://github.com/yury/cidre) (MIT). Ingen virtuell lyddriver, ingen sidecar-prosess, ingen tillatelsesdialog — se `NOTICE` og `research/2026-10-27-systemlyd-tcc.md`.
+
 ## Lisens
 
 MIT, samme som oppstrøms. Se `LICENSE`.

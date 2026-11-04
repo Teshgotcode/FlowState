@@ -444,7 +444,10 @@
       "retentionDays30": "30일",
       "retentionDays90": "90일",
       "retentionPlaceholder": "보관 기간 선택...",
-      "retentionWarning": "삭제는 영구적이며 되돌릴 수 없습니다. 모든 것은 이 기기에만 저장되며 어디에도 전송되지 않습니다."
+      "retentionWarning": "삭제는 영구적이며 되돌릴 수 없습니다. 모든 것은 이 기기에만 저장되며 어디에도 전송되지 않습니다.",
+      "systemAudioTitle": "시스템 오디오",
+      "systemAudioDescription": "회의에는 컴퓨터 자체가 재생하는 소리 — Zoom이나 Teams 통화의 상대방 목소리 — 도 마이크 옆 두 번째 트랙으로 녹음되어, 타임스탬프 순서로 전사본에 합쳐집니다. 모든 것은 권한 대화상자 없이 로컬에서 녹음되며, 이 기기를 떠나지 않습니다.",
+      "systemAudioUnsupported": "시스템 오디오에는 macOS 14.4 이상이 필요합니다. 이 Mac은 회의를 마이크로만 녹음합니다."
     },
     "models": {
       "title": "모델",

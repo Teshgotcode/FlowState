@@ -444,7 +444,10 @@
       "retentionDays30": "30 dní",
       "retentionDays90": "90 dní",
       "retentionPlaceholder": "Vyberte dobu uchovávání...",
-      "retentionWarning": "Smazání je trvalé a nelze je vrátit zpět. Vše se uchovává jen na tomto zařízení — nic se nikdy nikam neposílá."
+      "retentionWarning": "Smazání je trvalé a nelze je vrátit zpět. Vše se uchovává jen na tomto zařízení — nic se nikdy nikam neposílá.",
+      "systemAudioTitle": "Systémový zvuk",
+      "systemAudioDescription": "Schůzky nahrávají i to, co si počítač sám přehrává — vzdálenou stranu zoomovské či teamsové schůzky — jako druhou stopu vedle mikrofonu a podle časových razítek ji slučují do přepisu. Vše se nahrává lokálně, bez dialogu oprávnění, a nic neopustí tento počítač.",
+      "systemAudioUnsupported": "Systémový zvuk vyžaduje macOS 14.4 nebo novější. Tento Mac nahrává schůzky jen mikrofonem."
     },
     "models": {
       "title": "Modely",

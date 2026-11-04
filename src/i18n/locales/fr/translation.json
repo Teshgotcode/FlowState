@@ -444,7 +444,10 @@
       "retentionDays30": "30 jours",
       "retentionDays90": "90 jours",
       "retentionPlaceholder": "Choisir la durée de conservation...",
-      "retentionWarning": "La suppression est définitive et ne peut pas être annulée. Tout est stocké uniquement sur cet appareil — rien n'est jamais envoyé ailleurs."
+      "retentionWarning": "La suppression est définitive et ne peut pas être annulée. Tout est stocké uniquement sur cet appareil — rien n'est jamais envoyé ailleurs.",
+      "systemAudioTitle": "Audio système",
+      "systemAudioDescription": "Les réunions enregistrent aussi ce que la machine elle-même joue — la voix distante d'un appel Zoom ou Teams — en seconde piste à côté du microphone, puis le fusionne dans la transcription par horodatage. Tout est capturé localement, sans dialogue de permission, et rien ne quitte cet appareil.",
+      "systemAudioUnsupported": "L'audio système exige macOS 14.4 ou ultérieur. Ce Mac enregistre les réunions au microphone seulement."
     },
     "models": {
       "title": "Modèles",

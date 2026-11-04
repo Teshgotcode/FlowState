@@ -94,6 +94,8 @@ const settingUpdaters: {
     commands.updateMicrophoneMode(value as boolean),
   meeting_reminder_minutes: (value) =>
     commands.setMeetingReminderMinutes(value as number | null),
+  record_system_audio: (value) =>
+    commands.setRecordSystemAudio(value as boolean),
   audio_feedback: (value) =>
     commands.changeAudioFeedbackSetting(value as boolean),
   audio_feedback_volume: (value) =>

@@ -175,6 +175,23 @@ pub struct HistoryMetadata {
     /// meeting: they survive restarts and re-transcriptions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub speaker_names: Option<Vec<Option<String>>>,
+    /// The meeting's second track: the system audio (what the machine was
+    /// playing — a call's far end) captured beside the microphone (S-5),
+    /// when one was. Its transcript is merged into the segments by
+    /// timestamp; the recording itself is kept like any other.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub system_audio: Option<SystemAudioTrack>,
+}
+
+/// A meeting's captured system audio: where its recording lives and how many
+/// milliseconds after the meeting's start its capture began, so the track's
+/// own timestamps line up with the mic track's when the two merge.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
+pub struct SystemAudioTrack {
+    /// The recording's file name in the recordings directory.
+    pub file_name: String,
+    /// Milliseconds from the meeting's start to this capture's start.
+    pub offset_ms: i64,
 }
 
 impl HistoryMetadata {
@@ -184,6 +201,7 @@ impl HistoryMetadata {
             && self.segments.is_none()
             && self.meeting_note.is_none()
             && self.speaker_names.is_none()
+            && self.system_audio.is_none()
     }
 }
 
@@ -198,6 +216,7 @@ fn fresh_metadata(segments: &[TranscriptSegment]) -> Option<HistoryMetadata> {
     (!segments.is_empty()).then(|| HistoryMetadata {
         duration_secs: None,
         segments: Some(segments.to_vec()),
+        system_audio: None,
         meeting_note: None,
         speaker_names: None,
     })
@@ -520,6 +539,7 @@ impl HistoryManager {
         file_name: String,
         started_at: i64,
         duration_secs: u64,
+        system_audio: Option<SystemAudioTrack>,
     ) -> Result<HistoryEntry> {
         let entry = self.insert_entry(HistoryEntry {
             id: 0,
@@ -540,6 +560,7 @@ impl HistoryManager {
                 segments: None,
                 meeting_note: None,
                 speaker_names: None,
+                system_audio,
             }),
         })?;
 
@@ -695,6 +716,34 @@ impl HistoryManager {
         let mut metadata = self.read_metadata(id)?;
         metadata.speaker_names = names.iter().any(Option::is_some).then_some(names);
         let entry = self.write_metadata(id, metadata)?;
+        self.announce(&entry);
+        Ok(entry)
+    }
+
+    /// Replace a meeting's transcript with the merged one its two tracks
+    /// produce (mic and system audio, S-5): the text is rebuilt from the
+    /// merged segments so the entry reads as one conversation, and the
+    /// timestamps decide the order. The recording, the note and the speaker
+    /// names are not touched.
+    pub fn save_merged_transcript(
+        &self,
+        id: i64,
+        text: String,
+        segments: Vec<TranscriptSegment>,
+    ) -> Result<HistoryEntry> {
+        let mut metadata = self.read_metadata(id)?;
+        metadata.segments = (!segments.is_empty()).then_some(segments);
+        let entry = self.write_metadata(id, metadata)?;
+        let conn = self.get_connection()?;
+        conn.execute(
+            "UPDATE transcription_history SET transcription_text = ?1 WHERE id = ?2",
+            params![text, id],
+        )?;
+        let entry = conn.query_row(
+            &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+            params![id],
+            Self::map_history_entry,
+        )?;
         self.announce(&entry);
         Ok(entry)
     }
@@ -1428,6 +1477,7 @@ mod tests {
             }]),
             meeting_note: None,
             speaker_names: None,
+            system_audio: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
 
@@ -1559,6 +1609,7 @@ mod tests {
                 generated_at: 1_700_000_000,
             }),
             speaker_names: None,
+            system_audio: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
         assert_eq!(

@@ -530,6 +530,13 @@ pub struct AppSettings {
     /// turns the prompt off.
     #[serde(default = "default_meeting_reminder_minutes")]
     pub meeting_reminder_minutes: Option<u64>,
+    /// Whether meetings also capture system audio — what the machine itself
+    /// plays, the far end of a Zoom or Teams call included — as a second
+    /// track beside the microphone (S-5). Only macOS 14.4+ can tap it, and
+    /// the runtime check in the meeting code keeps older Macs mic-only
+    /// without an error; everywhere else the setting is simply inert.
+    #[serde(default = "default_record_system_audio")]
+    pub record_system_audio: bool,
     #[serde(default = "default_debug_mode")]
     pub debug_mode: bool,
     #[serde(default = "default_log_level")]
@@ -732,6 +739,13 @@ fn default_overlay_position() -> OverlayPosition {
 /// The meeting reminder prompt waits this long by default (reference parity).
 fn default_meeting_reminder_minutes() -> Option<u64> {
     Some(60)
+}
+
+/// System audio joins meetings by default: a meeting without it captures
+/// only half the conversation, and the tap needs no permission dialog
+/// (research/2026-10-27-systemlyd-tcc.md).
+fn default_record_system_audio() -> bool {
+    true
 }
 
 fn default_mcp_port() -> u16 {
@@ -1266,6 +1280,7 @@ pub fn get_default_settings() -> AppSettings {
         overlay_position: default_overlay_position(),
         meeting_bar_position: None,
         meeting_reminder_minutes: default_meeting_reminder_minutes(),
+        record_system_audio: default_record_system_audio(),
         debug_mode: false,
         log_level: default_log_level(),
         custom_words: Vec::new(),

@@ -444,7 +444,10 @@
       "retentionDays30": "30天",
       "retentionDays90": "90天",
       "retentionPlaceholder": "選擇保留期限...",
-      "retentionWarning": "刪除是永久的，無法復原。所有內容僅儲存在這台裝置上，絕不會傳送到任何地方。"
+      "retentionWarning": "刪除是永久的，無法復原。所有內容僅儲存在這台裝置上，絕不會傳送到任何地方。",
+      "systemAudioTitle": "系統音訊",
+      "systemAudioDescription": "會議也會錄下機器本身播放的聲音——Zoom 或 Teams 通話中對方的聲音——作為麥克風旁的第二條音軌，並依時間戳記合併進逐字稿。一切都在本機錄製，不需要任何權限對話框，永遠不會離開這部裝置。",
+      "systemAudioUnsupported": "系統音訊需要 macOS 14.4 或以上版本。這部 Mac 僅以麥克風錄製會議。"
     },
     "models": {
       "title": "模型",

@@ -444,7 +444,10 @@
       "retentionDays30": "30 gün",
       "retentionDays90": "90 gün",
       "retentionPlaceholder": "Saklama süresi seçin...",
-      "retentionWarning": "Silme kalıcıdır ve geri alınamaz. Her şey yalnızca bu cihazda saklanır — hiçbir şey hiçbir yere gönderilmez."
+      "retentionWarning": "Silme kalıcıdır ve geri alınamaz. Her şey yalnızca bu cihazda saklanır — hiçbir şey hiçbir yere gönderilmez.",
+      "systemAudioTitle": "Sistem sesi",
+      "systemAudioDescription": "Toplantılar ayrıca makinenin kendisinin çaldığını kaydeder — bir Zoom ya da Teams görüşmesinin karşı tarafını — mikrofonun yanında ikinci bir kanal olarak ve zaman damgasına göre döküme birleştirir. Her şey yerel olarak kaydedilir, izin penceresi olmadan, ve hiçbir şey bu cihazdan çıkmaz.",
+      "systemAudioUnsupported": "Sistem sesi macOS 14.4 veya daha yenisini gerektirir. Bu Mac toplantıları yalnızca mikrofonla kaydeder."
     },
     "models": {
       "title": "Modeller",

@@ -681,6 +681,7 @@ mod tests {
                 ),
                 meeting_note: None,
                 speaker_names: None,
+                system_audio: None,
             }),
         }
     }
