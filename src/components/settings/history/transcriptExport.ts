@@ -10,18 +10,48 @@ export const formatSegmentTimestamp = (ms: number): string => {
   return `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`;
 };
 
-/** One segment as the export line the task asks for: `[mm:ss] text`. */
-export const segmentLine = (segment: TranscriptSegment): string =>
-  `[${formatSegmentTimestamp(segment.t0_ms)}] ${segment.text.trim()}`;
+/** The speaker names a diarized meeting keeps, indexed by speaker number
+ * (S1 is index 0) — the entry's `metadata.speaker_names`, or `null` when
+ * nobody was named. */
+export type SpeakerNames = (string | null)[] | null | undefined;
+
+/** The label a segment's speaker shows in the window and the exports: the
+ * name the user gave the speaker, or the speaker's own number ("S2"). `null`
+ * when the segment carries no speaker. */
+export const segmentSpeakerLabel = (
+  segment: TranscriptSegment,
+  names: SpeakerNames,
+): string | null => {
+  const id = segment.speaker_id;
+  if (id == null) return null;
+  return names?.[id - 1]?.trim() || `S${id}`;
+};
+
+/** One segment as the export line the task asks for: `[mm:ss] text`, with
+ * the speaker's label in front of the text when the meeting was
+ * diarized. */
+export const segmentLine = (
+  segment: TranscriptSegment,
+  names?: SpeakerNames,
+): string => {
+  const label = segmentSpeakerLabel(segment, names);
+  const stamp = formatSegmentTimestamp(segment.t0_ms);
+  const text = segment.text.trim();
+  return label ? `[${stamp}] ${label}: ${text}` : `[${stamp}] ${text}`;
+};
 
 /** Every segment as a `[mm:ss] text` line, in order. */
-export const transcriptLines = (segments: TranscriptSegment[]): string[] =>
-  segments.map(segmentLine);
+export const transcriptLines = (
+  segments: TranscriptSegment[],
+  names?: SpeakerNames,
+): string[] => segments.map((segment) => segmentLine(segment, names));
 
 /** The whole transcript as plain lines — what "copy transcript" puts on the
  * clipboard and the body of the Markdown export. */
-export const transcriptText = (segments: TranscriptSegment[]): string =>
-  transcriptLines(segments).join("\n");
+export const transcriptText = (
+  segments: TranscriptSegment[],
+  names?: SpeakerNames,
+): string => transcriptLines(segments, names).join("\n");
 
 /** Labels and header facts for the Markdown export; the caller passes them
  * localized (i18next) so the document reads in the app's language. */
@@ -40,6 +70,7 @@ export interface TranscriptMarkdownOptions {
 export const buildTranscriptMarkdown = (
   segments: TranscriptSegment[],
   options: TranscriptMarkdownOptions,
+  names?: SpeakerNames,
 ): string => {
   const lines = [
     `# ${options.title}`,
@@ -51,7 +82,7 @@ export const buildTranscriptMarkdown = (
       `**${options.durationLabel}:** ${formatSegmentTimestamp(options.durationSeconds * 1000)}`,
     );
   }
-  lines.push("", ...transcriptLines(segments));
+  lines.push("", ...transcriptLines(segments, names));
   return `${lines.join("\n")}\n`;
 };
 
@@ -135,30 +166,38 @@ const cueEndMs = (segment: TranscriptSegment): number =>
  * `00:00:12,340 --> 00:00:14,000` timing line and text wrapped to ≤42
  * characters per row, separated by blank lines. VLC and QuickTime open it
  * as a subtitle track with the segments' own timings. */
-export const buildSrt = (segments: TranscriptSegment[]): string =>
+export const buildSrt = (
+  segments: TranscriptSegment[],
+  names?: SpeakerNames,
+): string =>
   segments
-    .map((segment, index) =>
-      [
+    .map((segment, index) => {
+      const label = segmentSpeakerLabel(segment, names);
+      return [
         String(index + 1),
         `${formatSrtTimecode(segment.t0_ms)} --> ${formatSrtTimecode(cueEndMs(segment))}`,
-        ...wrapSubtitleText(segment.text),
+        ...wrapSubtitleText(label ? `${label}: ${segment.text}` : segment.text),
         "",
-      ].join("\n"),
-    )
+      ].join("\n");
+    })
     .join("\n");
 
 /** The whole transcript as a WebVTT (.vtt) file: the `WEBVTT` header, then
  * cues like SRT but with dot-millisecond times and no numbering — the format
  * browsers load natively for `<track>`. */
-export const buildVtt = (segments: TranscriptSegment[]): string =>
+export const buildVtt = (
+  segments: TranscriptSegment[],
+  names?: SpeakerNames,
+): string =>
   `WEBVTT\n\n${segments
-    .map((segment) =>
-      [
+    .map((segment) => {
+      const label = segmentSpeakerLabel(segment, names);
+      return [
         `${formatVttTimecode(segment.t0_ms)} --> ${formatVttTimecode(cueEndMs(segment))}`,
-        ...wrapSubtitleText(segment.text),
+        ...wrapSubtitleText(label ? `${label}: ${segment.text}` : segment.text),
         "",
-      ].join("\n"),
-    )
+      ].join("\n");
+    })
     .join("\n")}`;
 
 /** The entry's title as a filesystem-safe file-name stem: characters

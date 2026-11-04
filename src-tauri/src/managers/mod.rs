@@ -1,4 +1,5 @@
 pub mod audio;
+pub mod diarize;
 pub mod gguf_meta;
 pub mod history;
 pub mod meeting;

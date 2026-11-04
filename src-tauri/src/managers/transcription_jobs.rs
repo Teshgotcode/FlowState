@@ -303,10 +303,21 @@ impl TranscriptionJobManager {
             cancelled,
             percent: Cell::new(0),
         };
+        // S-29: a finished meeting's audio is diarized after the recording —
+        // one batch pass of "who spoke when" — and its speaker turns are
+        // merged into the transcript's timed segments. A meeting on a machine
+        // without the model (or a run that failed) is a skip, not an error:
+        // the transcript stands exactly as it was, without speakers.
+        let speaker_turns =
+            if entry.source == Some(crate::managers::history::HistorySource::Meeting) {
+                crate::managers::diarize::diarize_meeting(&self.app, &samples)
+            } else {
+                None
+            };
         let Some(Transcription {
             text,
             language,
-            segments,
+            mut segments,
         }) = tm.transcribe_in_chunks(samples, &control)?
         else {
             return Ok(());
@@ -323,6 +334,10 @@ impl TranscriptionJobManager {
             &text,
             entry.post_process_requested,
         ));
+        // The speakers the diarization found ride along on the segments.
+        if let Some(turns) = speaker_turns {
+            crate::managers::diarize::apply_speakers(&mut segments, &turns);
+        }
         // Post-processing can take a while; a cancel during it still wins.
         if cancelled.load(Ordering::Acquire) {
             return Ok(());

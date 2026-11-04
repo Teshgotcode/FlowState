@@ -170,12 +170,20 @@ pub struct HistoryMetadata {
     /// is never changed by it.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub meeting_note: Option<MeetingNote>,
+    /// The names the user gave the meeting's speakers, indexed by speaker
+    /// number (S1 is index 0); `None` when nobody was named. Names live per
+    /// meeting: they survive restarts and re-transcriptions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speaker_names: Option<Vec<Option<String>>>,
 }
 
 impl HistoryMetadata {
     /// Whether it holds any fact worth storing.
     fn is_empty(&self) -> bool {
-        self.duration_secs.is_none() && self.segments.is_none() && self.meeting_note.is_none()
+        self.duration_secs.is_none()
+            && self.segments.is_none()
+            && self.meeting_note.is_none()
+            && self.speaker_names.is_none()
     }
 }
 
@@ -191,6 +199,7 @@ fn fresh_metadata(segments: &[TranscriptSegment]) -> Option<HistoryMetadata> {
         duration_secs: None,
         segments: Some(segments.to_vec()),
         meeting_note: None,
+        speaker_names: None,
     })
 }
 
@@ -530,6 +539,7 @@ impl HistoryManager {
                 duration_secs: Some(duration_secs),
                 segments: None,
                 meeting_note: None,
+                speaker_names: None,
             }),
         })?;
 
@@ -669,6 +679,89 @@ impl HistoryManager {
     /// what the user edited it into, leaving the audio, metadata and any
     /// post-processed copy alone. The updated entry is announced like any
     /// other change, so the history window reflects it.
+    /// Name a meeting's speakers: the names are stored on the entry's
+    /// metadata, indexed by speaker number (S1 is index 0). Whitespace-only
+    /// names read back as `None`, so a cleared name disappears rather than
+    /// persisting as "". Names survive re-transcriptions — a retry replaces
+    /// the segments but keeps what the user wrote.
+    pub fn save_speaker_names(&self, id: i64, names: Vec<Option<String>>) -> Result<HistoryEntry> {
+        let names: Vec<Option<String>> = names
+            .into_iter()
+            .map(|name| {
+                let trimmed = name.unwrap_or_default().trim().to_string();
+                (!trimmed.is_empty()).then_some(trimmed)
+            })
+            .collect();
+        let mut metadata = self.read_metadata(id)?;
+        metadata.speaker_names = names.iter().any(Option::is_some).then_some(names);
+        let entry = self.write_metadata(id, metadata)?;
+        self.announce(&entry);
+        Ok(entry)
+    }
+
+    /// Replace the segments a diarization pass produced (the text is the
+    /// model's own and stays as it is): the speaker numbers it merged in
+    /// ride along on the segments themselves.
+    pub fn save_diarized_segments(
+        &self,
+        id: i64,
+        segments: Vec<TranscriptSegment>,
+    ) -> Result<HistoryEntry> {
+        let mut metadata = self.read_metadata(id)?;
+        metadata.segments = (!segments.is_empty()).then_some(segments);
+        let entry = self.write_metadata(id, metadata)?;
+        self.announce(&entry);
+        Ok(entry)
+    }
+
+    /// Tell the windows an entry changed, so the history list and the open
+    /// transcript window follow along without polling.
+    fn announce(&self, entry: &HistoryEntry) {
+        if let Err(e) = (HistoryUpdatePayload::Updated {
+            entry: entry.clone(),
+        })
+        .emit(&self.app_handle)
+        {
+            error!("Failed to emit history-updated event: {}", e);
+        }
+    }
+
+    /// The metadata an entry keeps today, or a fresh one when it has none.
+    fn read_metadata(&self, id: i64) -> Result<HistoryMetadata> {
+        let conn = self.get_connection()?;
+        let existing = conn
+            .query_row(
+                &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+                params![id],
+                Self::map_history_entry,
+            )
+            .optional()?;
+        Ok(existing
+            .and_then(|entry| entry.metadata)
+            .unwrap_or_default())
+    }
+
+    /// Write an entry's metadata back, keeping every other column as it is.
+    fn write_metadata(&self, id: i64, metadata: HistoryMetadata) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let metadata_json = (!metadata.is_empty())
+            .then(|| serde_json::to_string(&metadata))
+            .and_then(Result::ok);
+        let updated = conn.execute(
+            "UPDATE transcription_history SET metadata = ?1 WHERE id = ?2",
+            params![metadata_json, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        conn.query_row(
+            &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+            params![id],
+            Self::map_history_entry,
+        )
+        .map_err(Into::into)
+    }
+
     pub fn update_transcription_text(&self, id: i64, text: &str) -> Result<HistoryEntry> {
         let conn = self.get_connection()?;
         let updated = conn.execute(
@@ -1331,8 +1424,10 @@ mod tests {
                 t0_ms: 0,
                 t1_ms: 1500,
                 text: "Hei der.".to_string(),
+                speaker_id: None,
             }]),
             meeting_note: None,
+            speaker_names: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
 
@@ -1463,6 +1558,7 @@ mod tests {
                 model: "llama3.1".to_string(),
                 generated_at: 1_700_000_000,
             }),
+            speaker_names: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
         assert_eq!(

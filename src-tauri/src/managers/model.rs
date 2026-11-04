@@ -875,6 +875,9 @@ pub struct ModelManager {
     /// One language detector transfer at a time, however many downloads
     /// want it.
     detector_download: tokio::sync::Mutex<()>,
+    /// One diarization model transfer at a time, however many downloads
+    /// want it.
+    diarize_download: tokio::sync::Mutex<()>,
 }
 
 impl ModelManager {
@@ -1079,6 +1082,7 @@ impl ModelManager {
             cancel_flags: Arc::new(Mutex::new(HashMap::new())),
             is_rescanning: Arc::new(AtomicBool::new(false)),
             detector_download: tokio::sync::Mutex::new(()),
+            diarize_download: tokio::sync::Mutex::new(()),
         };
 
         // Migrate any bundled models to user directory
@@ -1960,6 +1964,59 @@ impl ModelManager {
     /// Fetch the language detector unless it's on disk. One transfer at a
     /// time: a second caller waits, then finds the file there. `Ok(false)` if
     /// cancelled.
+    /// Download the diarization model on its own, outside the transcription
+    /// picker: it never transcribes, so it has no registry entry. Progress,
+    /// completion, cancellation and failure use the model download events
+    /// under the model's catalog id.
+    pub async fn download_diarization_model(&self) -> Result<()> {
+        let id = crate::catalog::DIARIZE_MODEL
+            .as_ref()
+            .map(|m| m.id.clone())
+            .ok_or_else(|| anyhow::anyhow!("The catalog names no diarization model"))?;
+        let cancel_token = CancellationToken::new();
+        self.cancel_flags
+            .lock()
+            .unwrap()
+            .insert(id.clone(), cancel_token.clone());
+        let fetched = self
+            .fetch_diarization_model(ProgressTarget::own(&id), &cancel_token)
+            .await;
+        self.cancel_flags.lock().unwrap().remove(&id);
+        if fetched? {
+            let _ = self.app_handle.emit("model-download-complete", id);
+        }
+        Ok(())
+    }
+
+    /// Fetch the diarization model unless it is on disk. One transfer at a
+    /// time: a second caller waits, then finds the file there. `Ok(false)`
+    /// if cancelled.
+    async fn fetch_diarization_model(
+        &self,
+        progress: ProgressTarget,
+        cancel_token: &CancellationToken,
+    ) -> Result<bool> {
+        let model = crate::catalog::DIARIZE_MODEL
+            .as_ref()
+            .ok_or_else(|| anyhow::anyhow!("The catalog names no diarization model"))?;
+        let _single = tokio::select! {
+            guard = self.diarize_download.lock() => guard,
+            _ = cancel_token.cancelled() => return Ok(false),
+        };
+        if self.diarize_model_path().is_some() {
+            return Ok(true);
+        }
+        let transfer = FileTransfer {
+            label: "the diarization model",
+            repo_id: &model.repo_id,
+            revision: &model.revision,
+            filename: &model.filename,
+            mirrors: crate::catalog::diarize_model_mirrors(),
+            progress,
+        };
+        self.fetch_hf_file(&transfer, cancel_token).await
+    }
+
     async fn fetch_language_detector(
         &self,
         progress: ProgressTarget,
@@ -2573,6 +2630,17 @@ impl ModelManager {
         let detector = crate::catalog::LANGUAGE_DETECTOR.as_ref()?;
         hf_cached_path(&detector.repo_id, &detector.revision, &detector.filename).or_else(|| {
             let local = self.models_dir.join(&detector.filename);
+            local.is_file().then_some(local)
+        })
+    }
+
+    /// Where the diarization model's file is, when it is on disk (HF cache
+    /// or models dir). `None` means meetings transcribe without speakers —
+    /// never an error.
+    pub fn diarize_model_path(&self) -> Option<PathBuf> {
+        let model = crate::catalog::DIARIZE_MODEL.as_ref()?;
+        hf_cached_path(&model.repo_id, &model.revision, &model.filename).or_else(|| {
+            let local = self.models_dir.join(&model.filename);
             local.is_file().then_some(local)
         })
     }
