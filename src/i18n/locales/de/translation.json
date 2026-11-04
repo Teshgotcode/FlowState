@@ -444,7 +444,10 @@
       "retentionDays30": "30 Tage",
       "retentionDays90": "90 Tage",
       "retentionPlaceholder": "Aufbewahrungsdauer wählen...",
-      "retentionWarning": "Die Löschung ist dauerhaft und kann nicht rückgängig gemacht werden. Alles wird nur auf diesem Gerät gespeichert — nichts wird je irgendwohin gesendet."
+      "retentionWarning": "Die Löschung ist dauerhaft und kann nicht rückgängig gemacht werden. Alles wird nur auf diesem Gerät gespeichert — nichts wird je irgendwohin gesendet.",
+      "systemAudioTitle": "Systemaudio",
+      "systemAudioDescription": "Meetings nehmen auch das auf, was der Rechner selbst abspielt — die Gegenseite eines Zoom- oder Teams-Gesprächs — als zweite Spur neben dem Mikrofon und führen es nach Zeitstempel im Transkript zusammen. Alles wird lokal aufgenommen, ohne Berechtigungsdialog, und nichts verlässt dieses Gerät.",
+      "systemAudioUnsupported": "Systemaudio erfordert macOS 14.4 oder neuer. Dieser Mac zeichnet Meetings nur mit dem Mikrofon auf."
     },
     "models": {
       "title": "Modelle",

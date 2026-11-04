@@ -28,6 +28,7 @@ mod shortcut;
 mod signal_handle;
 mod style;
 mod sync;
+mod system_audio;
 mod system_languages;
 mod transcription_coordinator;
 mod tray;
@@ -270,6 +271,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::word_suggestions::accept_word_suggestion,
             commands::word_suggestions::ignore_word_suggestion,
             commands::word_suggestions::correct_history_entry,
+            commands::meeting::system_audio_supported,
+            commands::meeting::set_record_system_audio,
             commands::meeting::start_meeting,
             commands::meeting::stop_meeting,
             commands::meeting::cancel_meeting,

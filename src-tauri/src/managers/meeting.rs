@@ -19,7 +19,7 @@ use crate::managers::model::ModelManager;
 use crate::managers::transcription::policy::{live_decode, LiveDecode, ModelTraits};
 use crate::managers::transcription::TranscriptionManager;
 use crate::managers::transcription_jobs::TranscriptionJobManager;
-use crate::settings::get_settings;
+use crate::settings::{get_settings, AppSettings};
 use anyhow::{anyhow, Result};
 use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
@@ -44,13 +44,10 @@ const WORKING_SUFFIX: &str = "partial";
 /// a kill leaves a playable WAV of the meeting so far.
 const FLUSH_SAMPLES: usize = constants::WHISPER_SAMPLE_RATE as usize;
 
-/// The WAV every recording is stored as: 16 kHz mono 16-bit.
-const WAV_SPEC: hound::WavSpec = hound::WavSpec {
-    channels: 1,
-    sample_rate: constants::WHISPER_SAMPLE_RATE,
-    bits_per_sample: 16,
-    sample_format: hound::SampleFormat::Int,
-};
+/// The mic track is the 16 kHz mono 16-bit WAV every recording is kept as;
+/// the system track is written at whatever rate the machine plays at, so
+/// the spec is built per track.
+const WAV_BITS_PER_SAMPLE: u16 = 16;
 
 /// The meeting session's stage, for the frontend.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
@@ -258,8 +255,14 @@ struct WorkingFile {
 }
 
 impl WorkingFile {
-    fn create(path: &Path) -> Result<Self> {
-        let writer = hound::WavWriter::create(path, WAV_SPEC)?;
+    fn create(path: &Path, sample_rate: u32) -> Result<Self> {
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate,
+            bits_per_sample: WAV_BITS_PER_SAMPLE,
+            sample_format: hound::SampleFormat::Int,
+        };
+        let writer = hound::WavWriter::create(path, spec)?;
         Ok(Self {
             writer: Some(writer),
             path: path.to_path_buf(),
@@ -357,6 +360,207 @@ impl WorkingFile {
     }
 }
 
+/* ---------- the system-audio track (S-5) ------------------------------------ */
+
+/// What the system track's worker thread reports when the meeting ends it:
+/// the finished recording's file name and how far into the meeting its
+/// capture began (the mic had usually already been running for a moment),
+/// or why there is nothing to add.
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum SystemOutcome {
+    Captured {
+        file_name: String,
+        offset_ms: i64,
+    },
+    /// The tap ran but the machine played nothing.
+    NoAudio,
+    /// The tap could not run at all; the meeting is mic-only.
+    Failed(String),
+}
+
+/// The system-audio capture a meeting runs beside its microphone track.
+/// The worker thread owns the CoreAudio objects, so stopping is a flag, a
+/// join and one final report — never a CoreAudio call from the meeting's
+/// own thread.
+struct SystemTrack {
+    stop: Arc<AtomicU32>,
+    join: Option<thread::JoinHandle<()>>,
+    outcome: std::sync::mpsc::Receiver<SystemOutcome>,
+}
+
+impl SystemTrack {
+    /// End the capture and collect its report. The worker always sends one
+    /// outcome before it exits; a panicked worker is a failure like any
+    /// other, logged and swallowed — the meeting's mic track decides what
+    /// the entry keeps.
+    fn stop(mut self) -> SystemOutcome {
+        self.stop.store(1, Ordering::Release);
+        if let Some(join) = self.join.take() {
+            if join.join().is_err() {
+                return SystemOutcome::Failed("the system audio thread panicked".into());
+            }
+        }
+        self.outcome
+            .recv()
+            .unwrap_or(SystemOutcome::Failed("the system audio thread reported nothing".into()))
+    }
+}
+
+/// Best-effort file removal; the caller is already handling the loss.
+fn remove_recording_quietly(path: &Path) {
+    if let Err(e) = std::fs::remove_file(path) {
+        if e.kind() != std::io::ErrorKind::NotFound {
+            error!("Failed to remove {}: {e}", path.display());
+        }
+    }
+}
+
+/// End a meeting's system track and turn its report into the pointer the
+/// history entry keeps. `None` (nothing captured, nothing to merge) is a
+/// normal outcome on any machine, not an error.
+fn drain_system_track(
+    hm: &HistoryManager,
+    track: Option<SystemTrack>,
+) -> Option<crate::managers::history::SystemAudioTrack> {
+    let track = track?;
+    match track.stop() {
+        SystemOutcome::Captured {
+            file_name,
+            offset_ms,
+        } => {
+            debug!(
+                "System audio track captured {} ({} ms after the mic)",
+                file_name, offset_ms
+            );
+            Some(crate::managers::history::SystemAudioTrack {
+                file_name,
+                offset_ms,
+            })
+        }
+        SystemOutcome::NoAudio => {
+            debug!("The machine played nothing the tap could capture");
+            None
+        }
+        SystemOutcome::Failed(why) => {
+            warn!("System audio was not captured; the meeting is mic-only: {why}");
+            None
+        }
+    }
+}
+
+/// Begin the meeting's system-audio track: only when this Mac can tap at all
+/// — the CoreAudio process tap exists from macOS 14.4, and the check runs at
+/// runtime because the app still deploys to 10.15 — and the setting asks
+/// for it. `None` on any other platform, and the meeting records mic-only
+/// with no error and no trace.
+fn start_system_track(
+    app: &AppHandle,
+    settings: &AppSettings,
+    mic_started: Instant,
+    working_path: PathBuf,
+) -> Option<SystemTrack> {
+    if !crate::system_audio::supported() {
+        debug!("System audio needs macOS 14.4 or newer; this Mac is older");
+        return None;
+    }
+    if !settings.record_system_audio {
+        debug!("System audio is off in settings; the meeting records mic-only");
+        return None;
+    }
+    let _ = app; // the decision is made; the worker needs no app handle
+    let stop = Arc::new(AtomicU32::new(0));
+    let (tx, rx) = std::sync::mpsc::channel();
+    let join = thread::Builder::new()
+        .name("flowstate-meeting-system".into())
+        .spawn({
+            let stop = Arc::clone(&stop);
+            move || system_track_worker(working_path, mic_started, stop, tx)
+        })
+        .ok()?;
+    Some(SystemTrack {
+        stop,
+        join: Some(join),
+        outcome: rx,
+    })
+}
+
+/// The system track's whole life, on its own thread: prepare the tap (the
+/// permission-free step the TCC spike measured), write its frames to the
+/// system working file, and on the stop flag tear the tap down and report.
+/// Its own thread because the tap's setup is CoreAudio's to pace — a
+/// machine with an unusual audio device must never stall the meeting.
+fn system_track_worker(
+    working_path: PathBuf,
+    mic_started: Instant,
+    stop: Arc<AtomicU32>,
+    out: std::sync::mpsc::Sender<SystemOutcome>,
+) {
+    #[cfg(target_os = "macos")]
+    {
+        use crate::system_audio::{FramesSink, SystemTap};
+
+        // Labeled block: every failure path reports one outcome and jumps
+        // to the send, so the channel contract is easy to see.
+        let outcome = 'capture: {
+            let tap = match SystemTap::prepare() {
+                Ok(tap) => tap,
+                Err(e) => break 'capture SystemOutcome::Failed(e.to_string()),
+            };
+            let working = match WorkingFile::create(&working_path, tap.sample_rate()) {
+                Ok(working) => Arc::new(Mutex::new(working)),
+                Err(e) => break 'capture SystemOutcome::Failed(format!(
+                    "the system working file could not be created: {e}"
+                )),
+            };
+            let sink: FramesSink = {
+                let working = Arc::clone(&working);
+                Arc::new(move |frames: &[f32]| {
+                    working.lock().unwrap().write_frame(frames);
+                })
+            };
+            let recorder = match tap.start(sink) {
+                Ok(recorder) => recorder,
+                Err(e) => {
+                    if let Err(e) = working.lock().unwrap().discard() {
+                        error!("Failed to clean up the system working file: {e}");
+                    }
+                    break 'capture SystemOutcome::Failed(e.to_string());
+                }
+            };
+            let offset_ms = mic_started.elapsed().as_millis() as i64;
+            info!(
+                "System audio track recording ({} Hz), {offset_ms} ms after the mic",
+                recorder.sample_rate()
+            );
+            while stop.load(Ordering::Acquire) == 0 {
+                thread::park_timeout(std::time::Duration::from_millis(50));
+            }
+            recorder.stop();
+            let mut working = working.lock().unwrap();
+            if working.frames() == 0 {
+                if let Err(e) = working.discard() {
+                    error!("Failed to remove the empty system working file: {e}");
+                }
+                break 'capture SystemOutcome::NoAudio;
+            }
+            match working.finish() {
+                Ok(file_name) => SystemOutcome::Captured {
+                    file_name,
+                    offset_ms,
+                },
+                Err(e) => SystemOutcome::Failed(e.to_string()),
+            }
+        };
+        let _ = out.send(outcome);
+    }
+    #[cfg(not(target_os = "macos"))]
+    {
+        // No CoreAudio to tap; supported() already said so and the worker
+        // never runs. Kept only so the meeting code is platform-clean.
+        let _ = (working_path, mic_started, stop, out);
+    }
+}
+
 /* ---------- the manager ----------------------------------------------------- */
 
 struct MeetingSession {
@@ -364,6 +568,9 @@ struct MeetingSession {
     /// The working file the recording's frames go to, present exactly while
     /// the session records.
     working: Option<Arc<Mutex<WorkingFile>>>,
+    /// The system-audio capture running beside it (S-5), when the Mac can
+    /// tap and the setting asks for it. `None` means mic-only.
+    system: Option<SystemTrack>,
 }
 
 /// Owns the meeting session for the whole app: the lifecycle commands
@@ -390,6 +597,7 @@ impl MeetingManager {
             session: Mutex::new(MeetingSession {
                 state: MeetingState::default(),
                 working: None,
+                system: None,
             }),
         })
     }
@@ -447,23 +655,23 @@ impl MeetingManager {
         }
 
         let hm = app.state::<Arc<HistoryManager>>();
-        let file_name = format!(
-            "flowstate-meeting-{}.wav",
-            chrono::Utc::now().timestamp_millis()
-        );
+        let started = Instant::now();
+        let started_unix = chrono::Utc::now().timestamp();
+        let stamp = chrono::Utc::now().timestamp_millis();
+        let file_name = format!("flowstate-meeting-{stamp}.wav");
         let working_path = hm
             .recordings_dir()
             .join(format!("{file_name}.{WORKING_SUFFIX}"));
 
         let mut session = self.session.lock().unwrap();
         session.state.start(
-            Instant::now(),
-            chrono::Utc::now().timestamp(),
+            started,
+            started_unix,
             working_path.clone(),
             rm.is_recording(),
         )?;
 
-        let working = match WorkingFile::create(&working_path) {
+        let working = match WorkingFile::create(&working_path, constants::WHISPER_SAMPLE_RATE) {
             Ok(working) => Arc::new(Mutex::new(working)),
             Err(e) => {
                 session.state.abort();
@@ -506,6 +714,19 @@ impl MeetingManager {
         }
 
         session.working = Some(working);
+        // S-5: system audio joins as a second track — what the machine
+        // itself plays (the far end of a Zoom or Teams call), tapped on the
+        // process-tap route the TCC spike measured as permission-free.
+        // Its own thread, started after the microphone: a slow or refused
+        // tap never delays or fails the meeting, and a Mac that cannot tap
+        // (macOS < 14.4, checked at runtime) simply records mic-only.
+        session.system = start_system_track(
+            app,
+            &settings,
+            started,
+            hm.recordings_dir()
+                .join(format!("flowstate-meeting-{stamp}-system.wav.{WORKING_SUFFIX}")),
+        );
         let status = session.state.status(Instant::now());
         drop(session);
 
@@ -536,6 +757,7 @@ impl MeetingManager {
             .working
             .take()
             .expect("a recording session has its working file");
+        let system_track = session.system.take();
 
         // Stop the capture first: no more frames flow, so the file can be
         // finalized. The samples the sink accumulated are dropped — the
@@ -551,16 +773,28 @@ impl MeetingManager {
         self.clear_live_transcript();
 
         let mut working = working.lock().unwrap();
+        // The system track ends with the meeting; whatever it captured rides
+        // along on the entry so the transcription can merge the two.
+        let system_info = drain_system_track(&hm, system_track);
         let entry_id = if working.frames() == 0 {
             debug!("The meeting captured no audio; discarding the working file");
             if let Err(e) = working.discard() {
                 error!("Failed to clean up the empty meeting working file: {e}");
             }
+            // No mic track means no entry, so the system track's finished
+            // file must not be orphaned either.
+            if let Some(system) = &system_info {
+                remove_recording_quietly(&hm.recordings_dir().join(&system.file_name));
+            }
             None
         } else {
             let file_name = working.finish()?;
-            let entry =
-                hm.save_meeting_entry(file_name, decision.started_at_unix, decision.duration_secs)?;
+            let entry = hm.save_meeting_entry(
+                file_name,
+                decision.started_at_unix,
+                decision.duration_secs,
+                system_info,
+            )?;
             jobs.queue_saved_recording(entry.id);
             Some(entry.id)
         };
@@ -589,6 +823,7 @@ impl MeetingManager {
         let app = &self.app;
         let rm = app.state::<Arc<AudioRecordingManager>>();
         let tm = app.state::<Arc<TranscriptionManager>>();
+        let hm = app.state::<Arc<HistoryManager>>();
 
         let mut session = self.session.lock().unwrap();
         let working_path = session.state.cancel()?;
@@ -596,6 +831,7 @@ impl MeetingManager {
             .working
             .take()
             .expect("a recording session has its working file");
+        let system_track = session.system.take();
 
         rm.cancel_recording();
         rm.set_frame_tap(None);
@@ -764,7 +1000,7 @@ mod tests {
     #[test]
     fn working_file_is_written_underways_and_finishes_as_a_recording() {
         let (path, file_name) = temp_working_file("finish");
-        let mut working = WorkingFile::create(&path).expect("the working file is created");
+        let mut working = WorkingFile::create(&path, 16_000).expect("the working file is created");
 
         // Forty 32 ms frames of speech-level audio.
         let frame: Vec<f32> = vec![0.25; 512];
@@ -791,7 +1027,7 @@ mod tests {
     #[test]
     fn a_discarded_working_file_leaves_nothing_behind() {
         let (path, _file_name) = temp_working_file("cancel");
-        let mut working = WorkingFile::create(&path).expect("the working file is created");
+        let mut working = WorkingFile::create(&path, 16_000).expect("the working file is created");
         working.write_frame(&[0.5; 512]);
         working.discard().expect("the working file is discarded");
         assert!(!path.exists());

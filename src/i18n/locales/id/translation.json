@@ -444,7 +444,10 @@
       "retentionDays30": "30 hari",
       "retentionDays90": "90 hari",
       "retentionPlaceholder": "Pilih periode penyimpanan...",
-      "retentionWarning": "Penghapusan bersifat permanen dan tidak dapat dibatalkan. Semuanya hanya disimpan di perangkat ini — tidak ada yang pernah dikirim ke mana pun."
+      "retentionWarning": "Penghapusan bersifat permanen dan tidak dapat dibatalkan. Semuanya hanya disimpan di perangkat ini — tidak ada yang pernah dikirim ke mana pun.",
+      "systemAudioTitle": "Audio sistem",
+      "systemAudioDescription": "Rapat juga merekam apa yang diputar mesin itu sendiri — pihak jauh panggilan Zoom atau Teams — sebagai trek kedua di samping mikrofon, lalu menggabungkannya ke transkrip menurut stempel waktu. Semuanya direkam secara lokal, tanpa dialog izin, dan tidak ada yang keluar dari perangkat ini.",
+      "systemAudioUnsupported": "Audio sistem memerlukan macOS 14.4 atau lebih baru. Mac ini merekam rapat hanya dengan mikrofon."
     },
     "models": {
       "title": "Model",

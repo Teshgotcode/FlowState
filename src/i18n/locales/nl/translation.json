@@ -444,7 +444,10 @@
       "retentionDays30": "30 dagen",
       "retentionDays90": "90 dagen",
       "retentionPlaceholder": "Bewaartermijn kiezen...",
-      "retentionWarning": "Verwijderen is permanent en kan niet ongedaan worden gemaakt. Alles wordt alleen op dit apparaat opgeslagen — er wordt nooit iets ergens naartoe gestuurd."
+      "retentionWarning": "Verwijderen is permanent en kan niet ongedaan worden gemaakt. Alles wordt alleen op dit apparaat opgeslagen — er wordt nooit iets ergens naartoe gestuurd.",
+      "systemAudioTitle": "Systeemgeluid",
+      "systemAudioDescription": "Vergaderingen nemen ook op wat de machine zelf afspeelt — de andere kant van een Zoom- of Teams-vergadering — als tweede spoor naast de microfoon, en voegt het op tijdstempel samen in de transcriptie. Alles wordt lokaal opgenomen, zonder toestemmingvenster, en niets verlaat dit apparaat.",
+      "systemAudioUnsupported": "Systeemgeluid vereist macOS 14.4 of nieuwer. Deze Mac neemt vergaderingen alleen met de microfoon op."
     },
     "models": {
       "title": "Modellen",

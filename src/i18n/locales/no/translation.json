@@ -444,7 +444,10 @@
       "retentionDays30": "30 dager",
       "retentionDays90": "90 dager",
       "retentionPlaceholder": "Velg oppbevaringstid...",
-      "retentionWarning": "Sletting er permanent og kan ikke angres. Alt lagres kun på denne enheten — ingenting sendes noen gang noe sted."
+      "retentionWarning": "Sletting er permanent og kan ikke angres. Alt lagres kun på denne enheten — ingenting sendes noen gang noe sted.",
+      "systemAudioTitle": "Systemlyd",
+      "systemAudioDescription": "Møter tar også opp det maskinen selv spiller av — fjerndelen av et Zoom- eller Teams-møte — som et andre spor ved siden av mikrofonen, og fletter det inn i transkriptet etter tidsstempel. Alt tas opp lokalt, uten noen tillatelsesdialog, og ingenting forlater denne maskinen.",
+      "systemAudioUnsupported": "Systemlyd krever macOS 14.4 eller nyere. Denne Mac-en tar opp møter kun med mikrofonen."
     },
     "models": {
       "title": "Modeller",

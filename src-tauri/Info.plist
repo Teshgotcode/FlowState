@@ -4,5 +4,13 @@
 <dict>
   <key>NSMicrophoneUsageDescription</key>
   <string>Request microphone access to transcribe audio locally</string>
+  <!-- S-5: meetings also capture system audio (what the machine itself is
+       playing — the far end of a Zoom or Teams call) through the CoreAudio
+       process tap. The tap is a HAL feature that needs no TCC grant, so no
+       standard usage key gates it; this key documents the capture for anyone
+       auditing the bundle, and says what the in-app explanation says: the
+       audio is transcribed on this Mac and never leaves it. -->
+  <key>NSSystemAudioRecordingUsageDescription</key>
+  <string>FlowState records system audio during meetings so the transcript includes what the machine is playing (for example the far end of a Zoom or Teams call), beside the microphone track. The audio is processed entirely on this device and is never sent anywhere.</string>
 </dict>
 </plist>

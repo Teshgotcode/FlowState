@@ -444,7 +444,10 @@
       "retentionDays30": "30 days",
       "retentionDays90": "90 days",
       "retentionPlaceholder": "Select retention period...",
-      "retentionWarning": "Deletion is permanent and cannot be undone. Everything is stored only on this device — nothing is ever sent anywhere."
+      "retentionWarning": "Deletion is permanent and cannot be undone. Everything is stored only on this device — nothing is ever sent anywhere.",
+      "systemAudioTitle": "System audio",
+      "systemAudioDescription": "Meetings also record what the machine itself is playing — the far end of a Zoom or Teams call — as a second track beside the microphone, and merge it into the transcript by timestamp. It is captured locally, with no permission dialog, and nothing ever leaves this device.",
+      "systemAudioUnsupported": "System audio needs macOS 14.4 or newer. This Mac records meetings with the microphone only."
     },
     "models": {
       "title": "Models",

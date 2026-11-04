@@ -19,6 +19,27 @@ user's request from third-party repositories. Each model is governed by the
 license declared in its catalog entry (src-tauri/src/catalog/catalog.json),
 not by the MIT License above.
 
+Third-party Rust crates
+------------------------
+The macOS build links a few Rust crates beyond the Tauri stack; the one that
+needs naming here is the one whose purpose is easy to mistake for a driver:
+
+cidre
+Used for:  CoreAudio bindings for the S-5 system-audio track: the process
+           tap (CATapDescription, AudioHardwareCreateProcessTap) and the
+           private aggregate device a meeting reads it through. Nothing is
+           installed system-wide and no virtual driver is created — the
+           aggregate dies with the recording.
+License:   MIT (as declared in the crate's manifest; see
+           https://crates.io/crates/cidre)
+Upstream:  https://github.com/yury/cidre.git
+
+The process-tap route itself — tap plus aggregate, per meeting, with the
+app's own process excluded from the tap — follows the design of anarlog
+(MIT, https://github.com/milirsch/anarlog), whose audio-device crate was
+the reference for how to read a CoreAudio tap from Rust. No anarlog code
+is included here; only the approach.
+
 NVIDIA Corporation
 -------------------
 Model:     diar_streaming_sortformer_4spk-v2.1

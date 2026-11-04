@@ -444,7 +444,10 @@
       "retentionDays30": "30 ngày",
       "retentionDays90": "90 ngày",
       "retentionPlaceholder": "Chọn thời gian lưu trữ...",
-      "retentionWarning": "Việc xóa là vĩnh viễn và không thể hoàn tác. Mọi thứ chỉ được lưu trên thiết bị này — không bao giờ gửi đi đâu."
+      "retentionWarning": "Việc xóa là vĩnh viễn và không thể hoàn tác. Mọi thứ chỉ được lưu trên thiết bị này — không bao giờ gửi đi đâu.",
+      "systemAudioTitle": "Âm thanh hệ thống",
+      "systemAudioDescription": "Cuộc họp còn ghi lại những gì máy tự phát — đầu bên kia của cuộc gọi Zoom hay Teams — thành rãnh thứ hai cạnh micro, rồi trộn vào bản ghi chép theo mốc thời gian. Tất cả được ghi cục bộ, không có hộp thoại cấp quyền, và không gì rời khỏi máy này.",
+      "systemAudioUnsupported": "Âm thanh hệ thống cần macOS 14.4 trở lên. Máy Mac này chỉ ghi cuộc họp bằng micro."
     },
     "models": {
       "title": "Mô hình",

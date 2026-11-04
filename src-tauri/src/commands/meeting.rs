@@ -89,6 +89,30 @@ pub fn set_meeting_reminder_minutes(app: AppHandle, minutes: Option<u64>) {
     settings.meeting_reminder_minutes = minutes;
     write_settings(&app, settings);
 }
+/// Whether this machine can capture system audio at all: the CoreAudio
+/// process tap exists from macOS 14.4, and FlowState deploys to 10.15, so
+/// the answer is a runtime fact. A Mac (or any other OS) that cannot gets
+/// its system-audio setting hidden rather than broken — meetings there are
+/// mic-only, without an error.
+#[tauri::command]
+#[specta::specta]
+pub fn system_audio_supported() -> bool {
+    crate::system_audio::supported()
+}
+
+/// Turn the meeting system-audio track on or off: what the machine itself
+/// plays (the far end of a Zoom or Teams call) captured beside the
+/// microphone and merged into the transcript by timestamp. Everything is
+/// captured locally through a CoreAudio tap that needs no permission
+/// dialog; nothing ever leaves the machine.
+#[tauri::command]
+#[specta::specta]
+pub fn set_record_system_audio(app: AppHandle, enabled: bool) {
+    let mut settings = get_settings(&app);
+    settings.record_system_audio = enabled;
+    write_settings(&app, settings);
+}
+
 /// Name a finished meeting's speakers: the names are stored on the entry's
 /// metadata, indexed by speaker number (S1 is index 0), shown in the
 /// transcript window and carried into its exports. Names live per meeting —

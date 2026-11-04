@@ -7,6 +7,7 @@ import { SettingsGroup } from "../ui/SettingsGroup";
 import { useMeetingStore } from "../../stores/meetingStore";
 import { MeetingLiveTranscript } from "./MeetingLiveTranscript";
 import { MeetingReminderSetting } from "./MeetingReminder";
+import { SystemAudioSetting } from "./SystemAudio";
 import { MeetingRetentionSelector } from "./MeetingRetention";
 import { useMeetingClock } from "../../hooks/useMeetingClock";
 import { formatDurationClock } from "../../lib/utils/format";
@@ -105,6 +106,7 @@ export const MeetingSession: React.FC = () => {
       )}
 
       <MeetingReminderSetting />
+      <SystemAudioSetting />
       <MeetingRetentionSelector />
 
       <Dialog

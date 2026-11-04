@@ -350,6 +350,92 @@ impl TranscriptionJobManager {
             language,
             segments,
         )?;
+
+        // S-5: a meeting that also captured system audio — what the machine
+        // itself was playing, the far end of a call included — has its second
+        // track transcribed on its own and merged into the segments by
+        // timestamp, so the transcript reads as one conversation. A meeting
+        // that captured none (the setting off, macOS < 14.4, a refused tap)
+        // has nothing here, which is not an error: the mic track stands
+        // exactly as it was.
+        if entry.source == Some(crate::managers::history::HistorySource::Meeting) {
+            if let Some(system) = entry.metadata.as_ref().and_then(|m| m.system_audio.clone()) {
+                if let Err(e) =
+                    self.transcribe_system_track(&hm, &tm, entry.id, &system, cancelled)
+                {
+                    warn!(
+                        "Entry {}'s system audio track was not transcribed: {}",
+                        entry.id, e
+                    );
+                }
+            }
+        }
+        Ok(())
+    }
+
+    /// Transcribe a meeting's system-audio track and merge it into the
+    /// entry's segments. The track's own timestamps are shifted by the offset
+    /// stored with it (how late its capture began after the mic's), the mic's
+    /// segments keep their speakers, and the two are sorted into one line by
+    /// start time; the entry's text is rebuilt from the merged segments.
+    fn transcribe_system_track(
+        &self,
+        hm: &Arc<HistoryManager>,
+        tm: &Arc<TranscriptionManager>,
+        entry_id: i64,
+        system: &crate::managers::history::SystemAudioTrack,
+        cancelled: &AtomicBool,
+    ) -> Result<()> {
+        let path = hm.get_audio_file_path(&system.file_name);
+        // decode_audio_file brings the track to the 16 kHz mono every
+        // transcription reads, whatever rate the machine plays at.
+        let samples = crate::audio_toolkit::audio::decode_audio_file(&path)?;
+        if samples.is_empty() {
+            return Err(anyhow!("the system track has no audio"));
+        }
+        let control = Control {
+            manager: self,
+            entry_id,
+            cancelled,
+            percent: Cell::new(0),
+        };
+        let Some(Transcription {
+            text,
+            segments: mut system_segments,
+            ..
+        }) = tm.transcribe_in_chunks(samples, &control)?
+        else {
+            return Ok(());
+        };
+        // A machine that stayed silent is a skip, not an error.
+        if text.is_empty() {
+            return Ok(());
+        }
+        if cancelled.load(Ordering::Acquire) {
+            return Ok(());
+        }
+        // Line the system track's timeline up with the mic's.
+        for segment in &mut system_segments {
+            segment.t0_ms += system.offset_ms;
+            segment.t1_ms += system.offset_ms;
+        }
+        let entry = tauri::async_runtime::block_on(hm.get_entry_by_id(entry_id))?
+            .ok_or_else(|| anyhow!("History entry {} not found", entry_id))?;
+        let mut merged = entry
+            .metadata
+            .as_ref()
+            .and_then(|m| m.segments.clone())
+            .unwrap_or_default();
+        merged.extend(system_segments);
+        // Stable, so at equal timestamps the mic's segment (with its
+        // diarized speakers) reads before the system's.
+        merged.sort_by_key(|segment| segment.t0_ms);
+        let text = merged
+            .iter()
+            .map(|segment| segment.text.as_str())
+            .collect::<Vec<_>>()
+            .join(" ");
+        hm.save_merged_transcript(entry_id, text, merged)?;
         Ok(())
     }
 }

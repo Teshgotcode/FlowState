@@ -444,7 +444,10 @@
       "retentionDays30": "30 días",
       "retentionDays90": "90 días",
       "retentionPlaceholder": "Seleccionar período de retención...",
-      "retentionWarning": "La eliminación es permanente y no se puede deshacer. Todo se almacena solo en este dispositivo — nunca se envía nada a ningún lugar."
+      "retentionWarning": "La eliminación es permanente y no se puede deshacer. Todo se almacena solo en este dispositivo — nunca se envía nada a ningún lugar.",
+      "systemAudioTitle": "Audio del sistema",
+      "systemAudioDescription": "Las reuniones también graban lo que la propia máquina reproduce — la voz remota de una reunión de Zoom o Teams — como segunda pista junto al micrófono, y lo fusiona en la transcripción por marca de tiempo. Se captura localmente, sin diálogo de permisos, y nada sale de este dispositivo.",
+      "systemAudioUnsupported": "El audio del sistema requiere macOS 14.4 o posterior. Este Mac graba las reuniones solo con el micrófono."
     },
     "models": {
       "title": "Modelos",
