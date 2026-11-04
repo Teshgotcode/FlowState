@@ -1,7 +1,8 @@
-use crate::settings::{get_settings, write_settings};
+use crate::managers::history::{HistoryEntry, HistoryManager};
 use crate::managers::meeting::{MeetingManager, MeetingStatus, StoppedMeeting};
 use crate::managers::meeting_ask::{ask_about_entry, cancel_ask, MeetingAskOutcome};
 use crate::managers::meeting_note::{cancel_run, generate_for_entry, MeetingNoteOutcome};
+use crate::settings::{get_settings, write_settings};
 use std::sync::Arc;
 use tauri::{AppHandle, Manager};
 
@@ -88,6 +89,36 @@ pub fn set_meeting_reminder_minutes(app: AppHandle, minutes: Option<u64>) {
     settings.meeting_reminder_minutes = minutes;
     write_settings(&app, settings);
 }
+/// Name a finished meeting's speakers: the names are stored on the entry's
+/// metadata, indexed by speaker number (S1 is index 0), shown in the
+/// transcript window and carried into its exports. Names live per meeting —
+/// one meeting's "S2 is Kari" never touches another's — and survive
+/// restarts and re-transcriptions.
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_speaker_names(
+    app: AppHandle,
+    entry_id: i64,
+    names: Vec<Option<String>>,
+) -> Result<HistoryEntry, String> {
+    let hm = app.state::<Arc<HistoryManager>>();
+    hm.save_speaker_names(entry_id, names)
+        .map_err(|e| e.to_string())
+}
+
+/// Diarize a finished meeting's history entry now: run the speaker model
+/// over its recording and merge the speakers into its stored segments. The
+/// model must already be on the machine — the window downloads it first —
+/// and only the speakers are written: the entry's text, title and the names
+/// already given are never touched. A meeting the pass cannot attribute
+/// (no recording left, no segments) is an error the window can show; a
+/// machine without the model never blocks the transcript itself.
+#[tauri::command]
+#[specta::specta]
+pub async fn diarize_meeting_entry(app: AppHandle, entry_id: i64) -> Result<HistoryEntry, String> {
+    crate::managers::diarize::diarize_entry(&app, entry_id).await
+}
+
 /// Generate a meeting note for a finished meeting's history entry: chunk its
 /// transcript, extract a structured draft with the configured local LLM,
 /// merge the parts and keep the note beside the transcript, above it in the

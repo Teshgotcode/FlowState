@@ -776,6 +776,27 @@ async downloadLanguageDetector() : Promise<Result<null, string>> {
 }
 },
 /**
+ * Download the diarization model on its own, like the language detector: it
+ * never transcribes, so it has no registry entry. Progress, completion,
+ * cancellation and failure use the model download events under the model's
+ * catalog id.
+ */
+async downloadDiarizationModel() : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("download_diarization_model") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Whether the diarization model ("who spoke when") is on disk. Without it a
+ * meeting still transcribes — its transcript simply carries no speakers.
+ */
+async isDiarizationModelDownloaded() : Promise<boolean> {
+    return await TAURI_INVOKE("is_diarization_model_downloaded");
+},
+/**
  * Whether the language detector is on disk.
  */
 async isLanguageDetectorDownloaded() : Promise<boolean> {
@@ -1460,6 +1481,38 @@ async setMeetingReminderMinutes(minutes: number | null) : Promise<void> {
     await TAURI_INVOKE("set_meeting_reminder_minutes", { minutes });
 },
 /**
+ * Name a finished meeting's speakers: the names are stored on the entry's
+ * metadata, indexed by speaker number (S1 is index 0), shown in the
+ * transcript window and carried into its exports. Names live per meeting —
+ * one meeting's "S2 is Kari" never touches another's — and survive
+ * restarts and re-transcriptions.
+ */
+async setMeetingSpeakerNames(entryId: number, names: (string | null)[]) : Promise<Result<HistoryEntry, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_meeting_speaker_names", { entryId, names }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Diarize a finished meeting's history entry now: run the speaker model
+ * over its recording and merge the speakers into its stored segments. The
+ * model must already be on the machine — the window downloads it first —
+ * and only the speakers are written: the entry's text, title and the names
+ * already given are never touched. A meeting the pass cannot attribute
+ * (no recording left, no segments) is an error the window can show; a
+ * machine without the model never blocks the transcript itself.
+ */
+async diarizeMeetingEntry(entryId: number) : Promise<Result<HistoryEntry, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("diarize_meeting_entry", { entryId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Open the Scratchpad: the small note window with the caret ready, shown
  * from the meeting bar's menu. The note persists locally between opens.
  */
@@ -1814,7 +1867,13 @@ segments?: TranscriptSegment[] | null;
  * user asked for one. Kept beside the transcript; the transcript itself
  * is never changed by it.
  */
-meeting_note?: MeetingNote | null }
+meeting_note?: MeetingNote | null; 
+/**
+ * The names the user gave the meeting's speakers, indexed by speaker
+ * number (S1 is index 0); `None` when nobody was named. Names live per
+ * meeting: they survive restarts and re-transcriptions.
+ */
+speaker_names?: (string | null)[] | null }
 /**
  * Where a history entry's audio came from, beyond a dictation take. Old
  * entries predate the field and read as `None`; a value this build doesn't
@@ -2366,7 +2425,13 @@ t1_ms: number;
 /**
  * What the model heard in it.
  */
-text: string }
+text: string; 
+/**
+ * The speaker diarization gave this segment: 1 is the first voice heard
+ * (shown as "S1"). `None` when the meeting was not diarized — no model
+ * on the machine, a failed run, or a plain dictation.
+ */
+speaker_id?: number | null }
 /**
  * Emitted when a dictation finishes (not on cancel); onboarding uses it to measure speed.
  */

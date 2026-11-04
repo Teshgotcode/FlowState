@@ -427,6 +427,47 @@ pub fn language_detector_mirrors() -> Vec<MirrorFile> {
     })
 }
 
+/// The speaker-diarization model the catalog names (`role: "diarize"`): the
+/// file a finished meeting's "who spoke when" pass runs (S-29). Not an `asr`
+/// model, so it never appears in the transcription picker — it is fetched on
+/// its own, like the language detector. A meeting on a machine without it
+/// simply transcribes without speakers.
+pub struct DiarizeModelFile {
+    /// The catalog id, for download events and cancel keys.
+    pub id: String,
+    pub repo_id: String,
+    pub revision: String,
+    pub filename: String,
+    pub size_bytes: u64,
+    pub sha256: String,
+}
+
+pub static DIARIZE_MODEL: Lazy<Option<DiarizeModelFile>> = Lazy::new(|| {
+    let model = ROOT.models.iter().find(|m| m.role == "diarize")?;
+    let file = model.default_file()?;
+    Some(DiarizeModelFile {
+        id: model.id.clone(),
+        repo_id: model.repository.clone(),
+        revision: model.revision.clone(),
+        filename: file.filename.clone(),
+        size_bytes: file.size,
+        sha256: file.sha256.clone(),
+    })
+});
+
+/// Ordered mirror URLs for the diarization model's file.
+pub fn diarize_model_mirrors() -> Vec<MirrorFile> {
+    DIARIZE_MODEL.as_ref().map_or_else(Vec::new, |d| {
+        mirror_files(
+            &d.repo_id,
+            &d.revision,
+            &d.filename,
+            &d.sha256,
+            d.size_bytes,
+        )
+    })
+}
+
 fn mirror_files(
     repository: &str,
     revision: &str,

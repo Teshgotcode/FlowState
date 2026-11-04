@@ -20,8 +20,30 @@ import {
   formatSegmentTimestamp,
   suggestedExportFileName,
   transcriptText,
+  type SpeakerNames,
   type TranscriptExportFormat,
 } from "./transcriptExport";
+
+/** The colors the transcript's speaker chips cycle through, one per speaker
+ * number: S1 teal, S2 violet, S3 pink, S4 orange — the sortformer stops at
+ * four. Fixed by number, so the same voice keeps its color everywhere. */
+const SPEAKER_COLORS = ["#0d9488", "#7c3aed", "#db2777", "#ea580c"];
+
+const speakerColor = (id: number): string =>
+  SPEAKER_COLORS[(id - 1) % SPEAKER_COLORS.length];
+
+/** The names a diarized meeting keeps until they are saved, indexed by
+ * speaker number (S1 is index 0); gaps stay `null` so a later speaker can be
+ * named without naming the ones before it. */
+const withName = (
+  names: (string | null)[],
+  id: number,
+  value: string,
+): (string | null)[] => {
+  const next = names.slice();
+  next[id - 1] = value;
+  return next;
+};
 
 interface TranscriptDialogProps {
   entry: HistoryEntry;
@@ -83,6 +105,11 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
   const [pendingJump, setPendingJump] = useState<number | null>(null);
   const [highlightT0, setHighlightT0] = useState<number | null>(null);
   const highlightTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // S-29: the names this window edits, kept locally until a blur saves them
+  // on the entry; the diarization's own "find speakers" pass runs while its
+  // button is pressed, model download included.
+  const [names, setNames] = useState<(string | null)[]>([]);
+  const [findingSpeakers, setFindingSpeakers] = useState(false);
 
   const segments = useMemo(
     () => entry.metadata?.segments ?? [],
@@ -92,6 +119,73 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
   const isMeeting = entry.source === "meeting";
   const formattedDate = formatDateTime(String(entry.timestamp), i18n.language);
   const hasSegments = segments.length > 0;
+  // The speakers the diarization found: the sorted set of speaker numbers
+  // on the segments. Empty when the meeting was never diarized — no model on
+  // the machine — and the transcript then reads exactly as it did.
+  const speakerIds = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          segments
+            .map((segment) => segment.speaker_id)
+            .filter((id): id is number => id != null),
+        ),
+      ).sort((a, b) => a - b),
+    [segments],
+  );
+  const hasSpeakers = speakerIds.length > 0;
+  const speakerCount = hasSpeakers ? speakerIds[speakerIds.length - 1] : 0;
+  const storedNames: SpeakerNames = entry.metadata?.speaker_names;
+
+  // Re-read the stored names whenever the entry brings new ones back (a
+  // save, or another window naming the same meeting).
+  useEffect(() => {
+    setNames((storedNames ?? []).slice());
+  }, [storedNames]);
+
+  /** The label one segment's speaker shows: the name the user gave, or the
+   * speaker's own number ("S2"). */
+  const speakerLabel = (id: number): string =>
+    names[id - 1]?.trim() || `S${id}`;
+
+  const saveNames = async () => {
+    if (!speakerCount) return;
+    const payload = Array.from({ length: speakerCount }, (_, index) =>
+      names[index] ? names[index] : null,
+    );
+    const result = await commands.setMeetingSpeakerNames(entry.id, payload);
+    if (result.status !== "ok") {
+      toast.error(t("settings.history.speakersSaveFailed"));
+    }
+  };
+
+  /** Find the meeting's speakers now: run the diarization model over its
+   * recording (downloading the model first when this machine lacks it) and
+   * merge the speakers into the stored segments. The updated entry arrives
+   * through the history update the command announces; the transcript was
+   * never blocked while it ran. */
+  const findSpeakers = async () => {
+    if (findingSpeakers) return;
+    setFindingSpeakers(true);
+    try {
+      if (!(await commands.isDiarizationModelDownloaded())) {
+        const download = await commands.downloadDiarizationModel();
+        if (download.status !== "ok") {
+          toast.error(t("settings.history.speakersDownloadFailed"));
+          return;
+        }
+      }
+      const result = await commands.diarizeMeetingEntry(entry.id);
+      if (result.status !== "ok") {
+        toast.error(result.error);
+      }
+    } catch (error) {
+      console.error("Failed to find the meeting's speakers:", error);
+      toast.error(t("settings.history.speakersFindFailed"));
+    } finally {
+      setFindingSpeakers(false);
+    }
+  };
   const selectedFormat =
     EXPORT_FORMATS.find((option) => option.id === format) ?? EXPORT_FORMATS[0];
 
@@ -146,7 +240,9 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
   );
 
   const handleCopy = async () => {
-    const copiedOk = await copyToClipboard(transcriptText(segments));
+    const copiedOk = await copyToClipboard(
+      transcriptText(segments, storedNames),
+    );
     if (!copiedOk) {
       toast.error(t("settings.history.copyError"));
       return;
@@ -174,16 +270,20 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
       // keeps its header with the title and date.
       const contents =
         format === "srt"
-          ? buildSrt(segments)
+          ? buildSrt(segments, storedNames)
           : format === "vtt"
-            ? buildVtt(segments)
-            : buildTranscriptMarkdown(segments, {
-                title: entry.title || formattedDate,
-                date: formattedDate,
-                dateLabel: t("settings.history.date"),
-                durationLabel: t("settings.history.duration"),
-                durationSeconds,
-              });
+            ? buildVtt(segments, storedNames)
+            : buildTranscriptMarkdown(
+                segments,
+                {
+                  title: entry.title || formattedDate,
+                  date: formattedDate,
+                  dateLabel: t("settings.history.date"),
+                  durationLabel: t("settings.history.duration"),
+                  durationSeconds,
+                },
+                storedNames,
+              );
 
       const result = await commands.exportTextFile(path, contents);
       if (result.status === "ok") {
@@ -289,6 +389,66 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
         <MeetingNoteSection entry={entry} onJumpToSegment={jumpToSegment} />
       )}
 
+      {isMeeting && (hasSpeakers || hasSegments) && (
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+          {hasSpeakers ? (
+            <>
+              <span className="text-xs font-semibold text-ink-3">
+                {t("settings.history.speakers")}
+              </span>
+              {speakerIds.map((id) => {
+                const placeholder = t(
+                  "settings.history.speakerNamePlaceholder",
+                  {
+                    id: `S${id}`,
+                  },
+                );
+                return (
+                  <div
+                    key={id}
+                    className="flex items-center gap-1.5 rounded-lg border border-line px-1.5 py-0.5"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="h-2.5 w-2.5 shrink-0 rounded-full"
+                      style={{ backgroundColor: speakerColor(id) }}
+                    />
+                    <Input
+                      variant="compact"
+                      value={names[id - 1] ?? ""}
+                      onChange={(event) =>
+                        setNames(withName(names, id, event.target.value))
+                      }
+                      onBlur={saveNames}
+                      placeholder={placeholder}
+                      aria-label={placeholder}
+                      className="w-32 border-0 bg-transparent focus-visible:ring-0"
+                    />
+                  </div>
+                );
+              })}
+            </>
+          ) : (
+            <>
+              <span className="text-xs text-ink-3">
+                {t("settings.history.speakersNone")}
+              </span>
+              <Button
+                variant="secondary"
+                size="sm"
+                onClick={findSpeakers}
+                disabled={findingSpeakers}
+                className="h-6 px-2 text-xs"
+              >
+                {findingSpeakers
+                  ? t("settings.history.speakersFinding")
+                  : t("settings.history.speakersFind")}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+
       <div className="relative">
         <Search
           className="pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2 text-ink-3"
@@ -339,6 +499,17 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
                 <span className="w-12 shrink-0 pt-0.5 text-xs font-semibold tabular-nums text-ink-3 select-none">
                   {formatSegmentTimestamp(segment.t0_ms)}
                 </span>
+                {segment.speaker_id != null && (
+                  <span
+                    className="mt-0.5 h-fit shrink-0 rounded-md px-1.5 py-0.5 text-[10px] font-bold"
+                    style={{
+                      backgroundColor: `${speakerColor(segment.speaker_id)}22`,
+                      color: speakerColor(segment.speaker_id),
+                    }}
+                  >
+                    {speakerLabel(segment.speaker_id)}
+                  </span>
+                )}
                 <p className="min-w-0 text-sm break-words whitespace-pre-wrap text-text select-text">
                   {segment.text}
                 </p>

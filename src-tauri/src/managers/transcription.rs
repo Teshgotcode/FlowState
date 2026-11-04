@@ -1228,6 +1228,11 @@ pub struct TranscriptSegment {
     pub t1_ms: i64,
     /// What the model heard in it.
     pub text: String,
+    /// The speaker diarization gave this segment: 1 is the first voice heard
+    /// (shown as "S1"). `None` when the meeting was not diarized — no model
+    /// on the machine, a failed run, or a plain dictation.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub speaker_id: Option<u8>,
 }
 
 /// One finished piece of a live transcript, ready for a window that shows the
@@ -1463,6 +1468,7 @@ pub(super) fn timed_segments(segments: &[transcribe_cpp::Segment]) -> Vec<Transc
             t0_ms: segment.t0_ms,
             t1_ms: segment.t1_ms,
             text: segment.text.clone(),
+            speaker_id: None,
         })
         .collect()
 }
@@ -2638,6 +2644,7 @@ mod tests {
             t0_ms,
             t1_ms,
             text: text.to_string(),
+            speaker_id: None,
         }
     }
 

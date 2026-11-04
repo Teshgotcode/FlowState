@@ -231,4 +231,64 @@ assert.equal(baseName("/Users/es/Notes/transcript.md"), "transcript.md");
 assert.equal(baseName("C:\\Users\\es\\notes.md"), "notes.md");
 assert.equal(baseName("transcript.md"), "transcript.md");
 
+// Speakers (S-29): a diarized meeting's segments carry a speaker number, and
+// the exports put the speaker's label — the name the user gave the speaker,
+// or the speaker's own number — in front of the text. Segments without a
+// speaker (a dictation, or a meeting on a machine without the model) read
+// exactly as they did before.
+
+const speakerSegment = (
+  t0Ms: number,
+  text: string,
+  speakerId: number,
+): TranscriptSegment => ({
+  t0_ms: t0Ms,
+  t1_ms: t0Ms + 1000,
+  text,
+  speaker_id: speakerId,
+});
+
+const meeting = [
+  speakerSegment(0, "Hei, Kari her.", 1),
+  speakerSegment(5000, "Hei! Ola her.", 2),
+  segment(12_000, "Uten taler."),
+];
+const names = ["Kari", null];
+
+assert.equal(segmentLine(meeting[0], names), "[00:00] Kari: Hei, Kari her.");
+assert.equal(segmentLine(meeting[1], names), "[00:05] S2: Hei! Ola her.");
+assert.equal(segmentLine(meeting[2], names), "[00:12] Uten taler.");
+// Without names the speaker's own number is the label.
+assert.equal(segmentLine(meeting[0]), "[00:00] S1: Hei, Kari her.");
+
+assert.equal(
+  transcriptText(meeting, names),
+  [
+    "[00:00] Kari: Hei, Kari her.",
+    "[00:05] S2: Hei! Ola her.",
+    "[00:12] Uten taler.",
+  ].join("\n"),
+);
+
+const speakerMarkdown = buildTranscriptMarkdown(
+  meeting,
+  {
+    title: "Møte",
+    date: "3. november 2025, 14:05",
+    dateLabel: "Dato",
+    durationLabel: "Varighet",
+  },
+  names,
+);
+assert.ok(speakerMarkdown.includes("[00:00] Kari: Hei, Kari her."));
+assert.ok(speakerMarkdown.includes("[00:05] S2: Hei! Ola her."));
+
+const speakerSrt = buildSrt(meeting, names);
+assert.ok(speakerSrt.includes("Kari: Hei, Kari her."));
+assert.ok(speakerSrt.includes("S2: Hei! Ola her."));
+
+const speakerVtt = buildVtt(meeting, names);
+assert.ok(speakerVtt.includes("Kari: Hei, Kari her."));
+assert.ok(speakerVtt.includes("S2: Hei! Ola her."));
+
 console.log("transcriptExport: all assertions passed");

@@ -675,10 +675,12 @@ mod tests {
                             t0_ms: *t0,
                             t1_ms: *t1,
                             text: text.to_string(),
+                            speaker_id: None,
                         })
                         .collect(),
                 ),
                 meeting_note: None,
+                speaker_names: None,
             }),
         }
     }

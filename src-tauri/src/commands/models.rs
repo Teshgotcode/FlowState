@@ -91,6 +91,42 @@ pub async fn download_language_detector(
     result
 }
 
+/// Whether the diarization model ("who spoke when") is on disk. Without it a
+/// meeting still transcribes — its transcript simply carries no speakers.
+#[tauri::command]
+#[specta::specta]
+pub fn is_diarization_model_downloaded(model_manager: State<'_, Arc<ModelManager>>) -> bool {
+    model_manager.diarize_model_path().is_some()
+}
+
+/// Download the diarization model on its own, like the language detector: it
+/// never transcribes, so it has no registry entry. Progress, completion,
+/// cancellation and failure use the model download events under the model's
+/// catalog id.
+#[tauri::command]
+#[specta::specta]
+pub async fn download_diarization_model(
+    app_handle: AppHandle,
+    model_manager: State<'_, Arc<ModelManager>>,
+) -> Result<(), String> {
+    let result = model_manager
+        .download_diarization_model()
+        .await
+        .map_err(|e| e.to_string());
+    if let Err(ref error) = result {
+        error!("Diarization model download failed: {}", error);
+        let id = crate::catalog::DIARIZE_MODEL
+            .as_ref()
+            .map(|m| m.id.clone())
+            .unwrap_or_else(|| "diarization".to_string());
+        let _ = app_handle.emit(
+            "model-download-failed",
+            serde_json::json!({ "model_id": id, "error": error }),
+        );
+    }
+    result
+}
+
 #[tauri::command]
 #[specta::specta]
 pub fn get_retired_models(model_manager: State<'_, Arc<ModelManager>>) -> Vec<RetiredModel> {
