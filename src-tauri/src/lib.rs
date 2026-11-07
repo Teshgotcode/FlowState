@@ -477,6 +477,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                 handle.clone(),
                 crate::meeting_detect::own_capture_active,
                 move || {
+                    // The prompt lives in the main window: surface it, without
+                    // taking the keyboard away from whatever is being recorded.
+                    show_main_window(&prompt_handle);
                     let _ = prompt_handle.emit("meeting-detected", ());
                 },
             );
