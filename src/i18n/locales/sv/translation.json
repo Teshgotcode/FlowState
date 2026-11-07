@@ -136,7 +136,13 @@
         "title": "ES-student? Slå på ES-paketet",
         "description": "Entreprenörskaptermer, exempel på föreläsare och projektnamn med ett klick - du kan redigera dem i inställningarna.",
         "enable": "Slå på ES-paketet",
-        "enabled": "Tillagt"
+        "enabled": "Tillagt",
+        "learnMore": "What is in the package?",
+        "learnLess": "Hide",
+        "detailTerms": "Entrepreneurship terms: share capital, break-even, business model and about sixty more.",
+        "detailNames": "Sample lecturer and project names, spelled right the first time.",
+        "detailSnippets": "Shortcuts that expand common abbreviations as you type.",
+        "detailWhere": "Everything goes into your dictionary and snippets, locally on this machine. You can edit or remove it in Settings."
       }
     },
     "download": {

@@ -332,6 +332,15 @@ void (async () => {
   const container = document.getElementById("root")!;
   // ?intro=1 renders the onboarding intro alone, so the first screen can be
   // screenshotted without walking the flow.
+  if (new URLSearchParams(window.location.search).has("welcome")) {
+    const { Welcome } = await import("../components/onboarding/screens/Welcome");
+    ReactDOM.createRoot(container).render(
+      <React.StrictMode>
+        <Welcome progress={{ index: 1, count: 7 }} onContinue={() => {}} />
+      </React.StrictMode>,
+    );
+    return;
+  }
   if (new URLSearchParams(window.location.search).has("intro")) {
     const { Intro } = await import("../components/onboarding/screens/Intro");
     ReactDOM.createRoot(container).render(

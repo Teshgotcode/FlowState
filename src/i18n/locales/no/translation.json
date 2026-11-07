@@ -136,7 +136,13 @@
         "title": "ES-student? Slå på ES-pakken",
         "description": "Entreprenørskapstermer, eksempler på forelesere og prosjektnavn med ett klikk - du kan redigere dem i innstillingene.",
         "enable": "Slå på ES-pakken",
-        "enabled": "Lagt til"
+        "enabled": "Lagt til",
+        "learnMore": "Hva ligger i pakken?",
+        "learnLess": "Skjul",
+        "detailTerms": "Fagord fra entreprenørskap: aksjekapital, break-even, forretningsmodell og rundt seksti flere.",
+        "detailNames": "Eksempel-navn på forelesere og prosjekter, så de skrives riktig første gang.",
+        "detailSnippets": "Snarveier som utvider vanlige forkortelser når du skriver.",
+        "detailWhere": "Alt legges i ordboken din og i snippets, lokalt på denne maskinen. Du kan endre eller fjerne det i Innstillinger."
       }
     },
     "download": {

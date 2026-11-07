@@ -2,13 +2,13 @@ import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "../../ui/Button";
 import { Radio } from "../../ui/Radio";
-import { Mascot } from "../../shared/Mascot";
 import {
   LanguageOptions,
   LanguageSearchField,
   useLanguagePicker,
 } from "../../shared/LanguagePicker";
 import FlowStateLogo from "../../icons/FlowStateLogo";
+import FlowStateMark from "../../icons/FlowStateMark";
 import { OnboardingShell, ScreenHeader } from "../OnboardingShell";
 import { AppLanguageMenu } from "../AppLanguageMenu";
 import { useOnboardingStore } from "../onboardingStore";
@@ -22,9 +22,6 @@ import {
   installEsPackage,
   isEsPackageInstalled,
 } from "@/lib/constants/esPackage";
-
-// The mascot waves on the first visit only.
-let waved = false;
 
 interface WelcomeProps {
   progress: { index: number; count: number };
@@ -49,10 +46,9 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
       });
     },
   });
-  const [wave] = useState(() => !waved);
   const [esInstalling, setEsInstalling] = useState(false);
+  const [esOpen, setEsOpen] = useState(false);
   useEffect(() => {
-    waved = true;
     const id = setTimeout(
       () => picker.inputRef.current?.focus({ preventScroll: true }),
       50,
@@ -119,9 +115,14 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
       }
     >
       <div className="flex h-full min-h-0 flex-col items-center px-gutter pt-[6px] pb-[4px] text-center">
-        <div className="mb-[10px] inline-flex items-end gap-[8px] leading-none">
-          <Mascot size={54} animation={wave ? "wave" : null} />
-          <FlowStateLogo width={112} className="mb-[4px] block" />
+        <div className="mb-[10px] inline-flex items-end gap-[10px] leading-none">
+          <FlowStateMark
+            width={40}
+            height={40}
+            eyesOnMount
+            className="mb-[3px] text-text"
+          />
+          <FlowStateLogo width={104} className="mb-[4px] block" />
         </div>
         <ScreenHeader
           title={t("onboarding.welcome.title")}
@@ -192,25 +193,50 @@ export const Welcome: React.FC<WelcomeProps> = ({ progress, onContinue }) => {
 
         {showEsPackage && (
           <div className="w-full animate-rise pt-[12px] text-start">
-            <div className="flex items-center justify-between gap-[12px] rounded-control border-[1.5px] border-line-strong bg-background p-[10px]">
-              <div className="min-w-0">
-                <p className="m-0 text-small font-semibold text-text">
-                  {t("onboarding.welcome.es.title")}
-                </p>
-                <p className="m-0 text-small text-ink-3">
-                  {t("onboarding.welcome.es.description")}
-                </p>
+            <div className="rounded-control border-[1.5px] border-line-strong bg-background p-[10px]">
+              <div className="flex items-center justify-between gap-[12px]">
+                <div className="min-w-0">
+                  <p className="m-0 text-small font-semibold text-text">
+                    {t("onboarding.welcome.es.title")}
+                  </p>
+                  <p className="m-0 text-small text-ink-3">
+                    {t("onboarding.welcome.es.description")}
+                  </p>
+                  <button
+                    type="button"
+                    aria-expanded={esOpen}
+                    onClick={() => setEsOpen(!esOpen)}
+                    className="mt-[2px] cursor-pointer p-0 text-small font-semibold text-plum underline underline-offset-2"
+                  >
+                    {t(
+                      esOpen
+                        ? "onboarding.welcome.es.learnLess"
+                        : "onboarding.welcome.es.learnMore",
+                    )}
+                  </button>
+                </div>
+                <Button
+                  variant={esInstalled ? "secondary" : "primary"}
+                  size="sm"
+                  className="shrink-0 whitespace-nowrap"
+                  disabled={esInstalled || esInstalling}
+                  onClick={() => void installEs()}
+                >
+                  {esInstalled
+                    ? t("onboarding.welcome.es.enabled")
+                    : t("onboarding.welcome.es.enable")}
+                </Button>
               </div>
-              <Button
-                variant={esInstalled ? "secondary" : "primary"}
-                size="sm"
-                disabled={esInstalled || esInstalling}
-                onClick={() => void installEs()}
-              >
-                {esInstalled
-                  ? t("onboarding.welcome.es.enabled")
-                  : t("onboarding.welcome.es.enable")}
-              </Button>
+              {esOpen && (
+                <ul className="mt-[8px] mb-0 flex list-disc flex-col gap-[4px] border-t border-line ps-[18px] pt-[8px] text-small text-ink-2">
+                  <li>{t("onboarding.welcome.es.detailTerms")}</li>
+                  <li>{t("onboarding.welcome.es.detailNames")}</li>
+                  <li>{t("onboarding.welcome.es.detailSnippets")}</li>
+                  <li className="text-ink-3">
+                    {t("onboarding.welcome.es.detailWhere")}
+                  </li>
+                </ul>
+              )}
             </div>
           </div>
         )}
