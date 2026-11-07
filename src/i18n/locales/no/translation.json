@@ -244,6 +244,17 @@
     "linux": {
       "tryIt": "Virker det ikke? <guide>Linux-oppsettsguiden</guide>",
       "done": "Virker det ikke i andre apper? <guide>Linux-oppsettsguiden</guide>"
+    },
+    "intro": {
+      "title": "Velkommen til FlowState",
+      "subtitle": "Diktering som aldri forlater Mac-en din. Ingen konto, ingen sky, ingen overraskelser.",
+      "localTitle": "Alt skjer på denne maskinen",
+      "localBody": "Lyden blir tekst lokalt. Ingenting sendes til en server, og ingenting lagres hos oss.",
+      "anywhereTitle": "Fungerer der du skriver",
+      "anywhereBody": "Hold snarveien, snakk, slipp. Teksten havner der markøren står, i hvilken som helst app.",
+      "languageTitle": "Norsk og engelsk fra start",
+      "languageBody": "Begge språkene er innebygd. Du kan legge til flere senere.",
+      "cta": "Kom i gang"
     }
   },
   "modelTable": {

@@ -11,6 +11,7 @@ import {
 import { usePermissions } from "./usePermissions";
 import type { ChineseScriptChoice } from "@/lib/utils/languageSuggestions";
 import { isChinese } from "@/lib/utils/languageSuggestions";
+import { Intro } from "./screens/Intro";
 import { Welcome } from "./screens/Welcome";
 import { Permissions } from "./screens/Permissions";
 import { Model } from "./screens/Model";
@@ -186,6 +187,14 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
   };
 
   switch (step) {
+    case "intro":
+      return (
+        <Intro
+          progress={progress}
+          preview={preview}
+          onContinue={next}
+        />
+      );
     case "welcome":
       return (
         <Welcome

@@ -1,12 +1,16 @@
 import React, { useEffect, useRef, useState } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 import { useSettings } from "../../hooks/useSettings";
+import { useTranslation } from "react-i18next";
 import { findReleaseNoteToShow } from "./releaseNotes";
+import { getSupportedLanguage } from "@/i18n";
 import type { ReleaseNote } from "./releaseNotes";
 import { WhatsNewModal } from "./WhatsNewModal";
 
 export const WhatsNewGate: React.FC = () => {
   const { settings, isLoading, updateSetting } = useSettings();
+  const { i18n } = useTranslation();
+  const locale = getSupportedLanguage(i18n.language) || "en";
   const [note, setNote] = useState<ReleaseNote | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const dismissedVersionRef = useRef<string | null>(null);
@@ -26,6 +30,7 @@ export const WhatsNewGate: React.FC = () => {
         if (cancelled) return;
 
         const releaseNote = findReleaseNoteToShow({
+          locale,
           currentVersion,
           lastSeenVersion: settings.whats_new_last_seen_version ?? "",
         });
@@ -52,6 +57,7 @@ export const WhatsNewGate: React.FC = () => {
       cancelled = true;
     };
   }, [
+    locale,
     isLoading,
     settings,
     settings?.show_whats_new_on_update,

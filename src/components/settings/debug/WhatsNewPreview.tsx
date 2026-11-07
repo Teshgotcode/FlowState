@@ -6,6 +6,7 @@ import { SettingContainer } from "../../ui/SettingContainer";
 import { WhatsNewModal } from "../../whats-new/WhatsNewModal";
 import { findLatestReleaseNote } from "../../whats-new/releaseNotes";
 import type { ReleaseNote } from "../../whats-new/releaseNotes";
+import { getSupportedLanguage } from "@/i18n";
 
 interface WhatsNewPreviewProps {
   descriptionMode?: "inline" | "tooltip";
@@ -16,7 +17,7 @@ export const WhatsNewPreview: React.FC<WhatsNewPreviewProps> = ({
   descriptionMode = "tooltip",
   grouped = false,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [note, setNote] = useState<ReleaseNote | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -24,7 +25,9 @@ export const WhatsNewPreview: React.FC<WhatsNewPreviewProps> = ({
     setIsLoading(true);
 
     try {
-      const releaseNote = findLatestReleaseNote();
+      const releaseNote = findLatestReleaseNote(
+        getSupportedLanguage(i18n.language) || "en",
+      );
 
       if (!releaseNote) {
         toast.info(t("settings.debug.whatsNewPreview.noNotes"));

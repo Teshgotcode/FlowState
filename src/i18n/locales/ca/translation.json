@@ -244,6 +244,17 @@
     "linux": {
       "tryIt": "No funciona? <guide>Guia de configuració per a Linux</guide>",
       "done": "No funciona a altres aplicacions? <guide>Guia de configuració per a Linux</guide>"
+    },
+    "intro": {
+      "title": "Welcome to FlowState",
+      "subtitle": "Dictation that never leaves your Mac. No account, no cloud, no surprises.",
+      "localTitle": "Everything happens on this machine",
+      "localBody": "Your voice becomes text locally. Nothing is sent to a server, and nothing is stored by us.",
+      "anywhereTitle": "Works where you type",
+      "anywhereBody": "Hold the shortcut, speak, let go. The text lands at your cursor, in any app.",
+      "languageTitle": "Norwegian and English from the start",
+      "languageBody": "Both languages are built in. You can add more later.",
+      "cta": "Get started"
     }
   },
   "modelTable": {

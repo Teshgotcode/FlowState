@@ -329,8 +329,19 @@ Object.defineProperty(window, "__TAURI_OS_PLUGIN_INTERNALS__", {
 void (async () => {
   const { default: i18n } = await import("../i18n");
   await i18n.changeLanguage("no");
-  const { default: App } = await import("../App");
   const container = document.getElementById("root")!;
+  // ?intro=1 renders the onboarding intro alone, so the first screen can be
+  // screenshotted without walking the flow.
+  if (new URLSearchParams(window.location.search).has("intro")) {
+    const { Intro } = await import("../components/onboarding/screens/Intro");
+    ReactDOM.createRoot(container).render(
+      <React.StrictMode>
+        <Intro progress={{ index: 0, count: 6 }} onContinue={() => {}} preview />
+      </React.StrictMode>,
+    );
+    return;
+  }
+  const { default: App } = await import("../App");
   ReactDOM.createRoot(container).render(
     <React.StrictMode>
       <App />
