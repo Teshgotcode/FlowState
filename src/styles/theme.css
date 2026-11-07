@@ -5,46 +5,23 @@
  * demo-*, wordmark and mascot are illustration, not UI.
  */
 
-
-/* FlowState typography — our own pair, not a system default and not
-   the reference app's typefaces. Display: Bricolage Grotesque
-   (titles, wordmark-adjacent headings); UI: Instrument Sans (body,
-   controls). Both are SIL OFL, bundled
-   locally as variable woff2 (no network at runtime). Only latin and
-   latin-ext ship as files; every other script falls through the stack to the
-   system fonts, same as before. */
+/* FlowState typography — Figtree for UI, EB Garamond for display.
+   Both SIL OFL, bundled locally as variable TTF (no network at runtime).
+   Same pair the reference app uses, so text metrics match 1:1. */
 
 @font-face {
-  font-family: "FlowState Display";
-  src: url("../assets/fonts/flowstate-display-latin.woff2") format("woff2");
+  font-family: "Figtree";
+  src: url("../assets/fonts/figtree-var.ttf") format("truetype-variations");
+  font-weight: 300 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: "EB Garamond";
+  src: url("../assets/fonts/ebgaramond-var.ttf") format("truetype-variations");
   font-weight: 400 800;
   font-style: normal;
   font-display: swap;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: "FlowState Display";
-  src: url("../assets/fonts/flowstate-display-latin-ext.woff2") format("woff2");
-  font-weight: 400 800;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
-}
-@font-face {
-  font-family: "FlowState UI";
-  src: url("../assets/fonts/flowstate-ui-latin.woff2") format("woff2");
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
-}
-@font-face {
-  font-family: "FlowState UI";
-  src: url("../assets/fonts/flowstate-ui-latin-ext.woff2") format("woff2");
-  font-weight: 400 700;
-  font-style: normal;
-  font-display: swap;
-  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
 
 :root {
@@ -52,11 +29,10 @@
      --flow-font-ui/display are the stacks every window shares; the two
      bundled families load only for latin scripts. */
   --flow-font-ui:
-    "FlowState UI", system-ui, -apple-system, "Segoe UI Variable Text",
-    "Segoe UI", Roboto, "Noto Sans", sans-serif;
+    "Figtree", system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI",
+    Roboto, "Noto Sans", sans-serif;
   --flow-font-display:
-    "FlowState Display", "FlowState UI", ui-rounded, "SF Pro Rounded",
-    system-ui, -apple-system, "Segoe UI Variable Display", "Segoe UI", sans-serif;
+    "EB Garamond", "Iowan Old Style", "Times New Roman", serif;
 
   /* FlowState rounding scale — rounder than the reference's 8-12px, and
      one step per job rather than per component. */
@@ -65,41 +41,60 @@
   --flow-radius-control: 10px;
   --flow-radius-chip: 7px;
 
-  /* FlowState elevation scale — navy-tinted, soft-edged (never a hard black
+  /* FlowState elevation scale — ink-tinted, soft-edged (never a hard black
      drop shadow). One shadow per layer: card sits, panel lifts, pop floats. */
   --flow-shadow-card:
-    0 1px 2px color-mix(in srgb, var(--flow-navy) 10%, transparent),
-    0 4px 14px -8px color-mix(in srgb, var(--flow-navy) 22%, transparent);
+    0 1px 2px color-mix(in srgb, var(--flow-ink) 8%, transparent),
+    0 4px 14px -8px color-mix(in srgb, var(--flow-ink) 20%, transparent);
   --flow-shadow-panel:
-    0 1px 2px color-mix(in srgb, var(--flow-navy) 10%, transparent),
-    0 12px 32px -12px color-mix(in srgb, var(--flow-navy) 26%, transparent);
+    0 1px 2px color-mix(in srgb, var(--flow-ink) 8%, transparent),
+    0 12px 32px -12px color-mix(in srgb, var(--flow-ink) 24%, transparent);
   --flow-shadow-pop:
-    0 2px 4px color-mix(in srgb, var(--flow-navy) 12%, transparent),
-    0 24px 48px -16px color-mix(in srgb, var(--flow-navy) 34%, transparent);
+    0 2px 4px color-mix(in srgb, var(--flow-ink) 10%, transparent),
+    0 24px 48px -16px color-mix(in srgb, var(--flow-ink) 32%, transparent);
 
   /* Brand palette — the only FlowState hex values (see the brand brief).
-     Derived tints use color-mix() from these, never a fifth brand hue. */
-  --flow-navy: #0d1a63; /* deep background (dark canvas), light-mode text */
-  --flow-blue: #1a2ca3; /* secondary surface, hover, gradient mid */
-  --flow-action: #2845d6; /* primary action: buttons, toggles, focus rings */
-  --flow-accent: #f68048; /* accent: recording state, active highlight */
+     Derived tints use color-mix() from these, never a fifth brand hue.
+     Pine and jade: the app reads like cool paper and deep forest, warm only
+     where it needs attention (recording, streaks). */
+  --flow-ink: #0e1a17; /* deep background (dark canvas), light-mode text */
+  --flow-deep: #17352d; /* secondary surface, hover, gradient mid */
+  --flow-jade: #0f6b5a; /* primary action: buttons, toggles, focus rings */
+  --flow-ember: #c2410c; /* accent: recording state, active highlight */
+  /* Two tints the home screen needs and nothing else owns: a warm paper for
+     the page wash, and marigold for numbers worth celebrating. */
+  --flow-paper: #f4f1e8;
+  --flow-marigold: #b7791f;
 
   /* Semantic light/dark pairs. The active tokens below and the `data-theme`
      overrides in App.css reference these, so a value lives in exactly one
      place; hexes that are brand colors resolve through the palette above. */
-  --light-color-text: var(--flow-navy);
-  --light-color-background: #fafbff;
-  --light-color-logo-primary: var(--flow-action);
-  --light-color-logo-stroke: var(--flow-navy);
-  --light-color-background-ui: var(--flow-action);
+  --light-color-text: var(--flow-ink);
+  --light-color-background: var(--flow-paper);
+  /* Cards and inputs sit on the paper, not in it: one step lighter in light
+     mode, one step lighter than the canvas in dark. */
+  --light-color-surface: #fffdf8;
+  --light-color-surface-soft: #efece2;
+  --dark-color-surface: #121b18;
+  --dark-color-surface-soft: #18241f;
+  /* Text drawn on the pastel fill (see lib/utils/accent.ts). Pastel fills carry
+     dark text, so this is the canvas tone rather than white. */
+  --light-color-on-accent: var(--flow-ink);
+  --dark-color-on-accent: #0a1210;
+  /* Grey steps derive from mid-gray, so it is tinted per accent and per mode. */
+  --light-color-mid-gray: #71807a;
+  --dark-color-mid-gray: #71807a;
+  --light-color-logo-primary: var(--flow-jade);
+  --light-color-logo-stroke: var(--flow-ink);
+  --light-color-background-ui: var(--flow-jade);
 
-  --dark-color-text: #eef1ff;
-  --dark-color-background: var(--flow-navy);
-  --dark-color-logo-primary: var(--flow-accent);
-  --dark-color-logo-stroke: #eef1ff;
-  /* Lightened action so the fill clears 3:1 against the navy canvas (3.33:1)
-     while white text on it stays AA (4.68:1). */
-  --dark-color-background-ui: color-mix(in srgb, var(--flow-action) 80%, white);
+  --dark-color-text: #e9efea;
+  --dark-color-background: #0a1210;
+  --dark-color-logo-primary: #3fbfa2;
+  --dark-color-logo-stroke: #e9efea;
+  /* Deep enough that white label text stays AA on the fill (5.2:1) while the
+     fill itself clears 3:1 against the near-black canvas. */
+  --dark-color-background-ui: #177a66;
 
   /* Semantic status colors. Each has a -wash tint below; both keep AA
      (>= 4.5:1) against their theme's background. */
@@ -140,22 +135,22 @@
     ),
     radial-gradient(
       90% 80% at 5% -5%,
-      color-mix(in srgb, #c7b9ef 55%, #fbfbfb) 0%,
+      color-mix(in srgb, #a9cfc3 55%, #fbfbfb) 0%,
       transparent 62%
     ),
-    color-mix(in srgb, #e9e1f3 60%, #fbfbfb);
+    color-mix(in srgb, #dfe9e2 60%, #fbfbfb);
   --dark-demo-wallpaper:
     radial-gradient(
       110% 80% at 90% 105%,
-      color-mix(in srgb, var(--dark-color-logo-primary) 26%, #1b1719) 0%,
+      color-mix(in srgb, var(--dark-color-logo-primary) 26%, #121a17) 0%,
       transparent 60%
     ),
     radial-gradient(
       90% 80% at 5% -5%,
-      color-mix(in srgb, #7c68c0 38%, #1b1719) 0%,
+      color-mix(in srgb, #3f7f6d 38%, #121a17) 0%,
       transparent 62%
     ),
-    #1f1a1e;
+    #131b18;
 
   /* The wordmark. Dark mode outlines it in white. */
   --light-color-wordmark: var(--light-color-logo-primary);
@@ -210,17 +205,20 @@
 
   /* Tokens that do not change between light and dark. text-stroke uses the
      palette's cool paper tone so stroked text reads on navy/action fills in
-     either theme; mid-gray is shifted cool (not warm-neutral) to sit with
-     the navy/blue palette. The grey steps below (ink-2, ink-3, line-strong,
+     either theme; mid-gray is shifted mossy (not warm-neutral) to sit with
+     the pine/jade palette. The grey steps below (ink-2, ink-3, line-strong,
      line, wash) all derive from mid-gray. */
   --color-text-stroke: #eef1ff;
-  --color-mid-gray: #7b8299;
+  --color-mid-gray: var(--light-color-mid-gray);
 
   /* Active palette — defaults to light, follows the OS via the media query
      below, or is forced by `data-theme` (see the overrides below). */
   --color-text: var(--light-color-text);
   --color-background: var(--light-color-background);
+  --color-surface: var(--light-color-surface);
+  --color-surface-soft: var(--light-color-surface-soft);
   --color-background-ui: var(--light-color-background-ui);
+  --color-on-accent: var(--light-color-on-accent);
   --color-logo-primary: var(--light-color-logo-primary);
   --color-logo-stroke: var(--light-color-logo-stroke);
   --color-warning: var(--light-color-warning);
@@ -248,7 +246,7 @@
     var(--color-mid-gray) 80%,
     transparent
   );
-  --color-line: color-mix(in srgb, var(--color-mid-gray) 20%, transparent);
+  --color-line: color-mix(in srgb, var(--color-mid-gray) 28%, transparent);
   --color-wash: color-mix(in srgb, var(--color-mid-gray) 10%, transparent);
   /* Edge of a picked card or option. */
   --color-plum-pick: color-mix(in srgb, var(--color-plum) 60%, transparent);
@@ -260,7 +258,11 @@
   :root {
     --color-text: var(--dark-color-text);
     --color-background: var(--dark-color-background);
+    --color-surface: var(--dark-color-surface);
+    --color-surface-soft: var(--dark-color-surface-soft);
     --color-background-ui: var(--dark-color-background-ui);
+    --color-on-accent: var(--dark-color-on-accent);
+    --color-mid-gray: var(--dark-color-mid-gray);
     --color-logo-primary: var(--dark-color-logo-primary);
     --color-logo-stroke: var(--dark-color-logo-stroke);
     --color-warning: var(--dark-color-warning);
@@ -295,7 +297,11 @@
 :root[data-theme="light"] {
   --color-text: var(--light-color-text);
   --color-background: var(--light-color-background);
+  --color-surface: var(--light-color-surface);
+  --color-surface-soft: var(--light-color-surface-soft);
   --color-background-ui: var(--light-color-background-ui);
+  --color-on-accent: var(--light-color-on-accent);
+  --color-mid-gray: var(--light-color-mid-gray);
   --color-logo-primary: var(--light-color-logo-primary);
   --color-logo-stroke: var(--light-color-logo-stroke);
   --color-warning: var(--light-color-warning);
@@ -319,7 +325,11 @@
 :root[data-theme="dark"] {
   --color-text: var(--dark-color-text);
   --color-background: var(--dark-color-background);
+  --color-surface: var(--dark-color-surface);
+  --color-surface-soft: var(--dark-color-surface-soft);
   --color-background-ui: var(--dark-color-background-ui);
+  --color-on-accent: var(--dark-color-on-accent);
+  --color-mid-gray: var(--dark-color-mid-gray);
   --color-logo-primary: var(--dark-color-logo-primary);
   --color-logo-stroke: var(--dark-color-logo-stroke);
   --color-warning: var(--dark-color-warning);

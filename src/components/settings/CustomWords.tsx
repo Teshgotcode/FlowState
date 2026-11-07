@@ -66,7 +66,7 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
       const load = async () => {
         const result = await commands.getWordSuggestions();
         if (!cancelled && result.status === "ok") {
-          setSuggestions(result.data);
+          setSuggestions(result.data ?? []);
         }
       };
       void load();
@@ -78,13 +78,19 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
     const handleAcceptSuggestion = async (word: string) => {
       const result = await commands.acceptWordSuggestion(word);
       if (result.status === "error") {
-        toast.error(t("settings.advanced.customWords.suggestionError", { word }));
+        toast.error(
+          t("settings.advanced.customWords.suggestionError", { word }),
+        );
         return;
       }
       // The backend retires the suggestion; the word itself goes through
       // the same path as a typed one, so it is used by the next
       // transcription.
-      if (!customWords.some((existing) => existing.toLowerCase() === word.toLowerCase())) {
+      if (
+        !customWords.some(
+          (existing) => existing.toLowerCase() === word.toLowerCase(),
+        )
+      ) {
         updateSetting("custom_words", [...customWords, word]);
       }
       setSuggestions((prev) => prev.filter((s) => s.word !== word));
@@ -93,7 +99,9 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
     const handleIgnoreSuggestion = async (word: string) => {
       const result = await commands.ignoreWordSuggestion(word);
       if (result.status === "error") {
-        toast.error(t("settings.advanced.customWords.suggestionError", { word }));
+        toast.error(
+          t("settings.advanced.customWords.suggestionError", { word }),
+        );
         return;
       }
       setSuggestions((prev) => prev.filter((s) => s.word !== word));
@@ -134,33 +142,38 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
         </SettingContainer>
         {customWords.length > 0 && (
           <div
-            className={`px-4 p-2 ${grouped ? "" : "rounded-lg border border-line"} flex flex-wrap gap-1`}
+            className={`overflow-hidden ${grouped ? "" : "rounded-lg border border-line"}`}
           >
-            {customWords.map((word) => (
-              <Button
+            {customWords.map((word, index) => (
+              <div
                 key={word}
-                onClick={() => handleRemoveWord(word)}
-                disabled={isUpdating("custom_words")}
-                variant="secondary"
-                size="sm"
-                className="inline-flex items-center gap-1 cursor-pointer"
-                aria-label={t("settings.advanced.customWords.remove", { word })}
+                className={`flex h-[52px] items-center justify-between px-4 ${
+                  index > 0 ? "border-t border-line" : ""
+                }`}
               >
-                <span>{word}</span>
-                <svg
-                  className="w-3 h-3"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+                <span className="text-[15px] font-[550] text-text">{word}</span>
+                <button
+                  type="button"
+                  onClick={() => handleRemoveWord(word)}
+                  disabled={isUpdating("custom_words")}
+                  aria-label={t("settings.advanced.customWords.remove", { word })}
+                  className="flex h-[28px] w-[28px] cursor-pointer items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-wash hover:text-text disabled:cursor-not-allowed disabled:opacity-40"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
-              </Button>
+                  <svg
+                    className="h-3.5 w-3.5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
             ))}
           </div>
         )}
@@ -207,7 +220,9 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
                     </span>
                     <span className="flex shrink-0 items-center gap-1">
                       <Button
-                        onClick={() => void handleAcceptSuggestion(suggestion.word)}
+                        onClick={() =>
+                          void handleAcceptSuggestion(suggestion.word)
+                        }
                         disabled={isUpdating("custom_words")}
                         variant="primary"
                         size="sm"
@@ -221,7 +236,9 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
                         })}
                       </Button>
                       <Button
-                        onClick={() => void handleIgnoreSuggestion(suggestion.word)}
+                        onClick={() =>
+                          void handleIgnoreSuggestion(suggestion.word)
+                        }
                         variant="secondary"
                         size="sm"
                         aria-label={t(

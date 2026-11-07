@@ -1,7 +1,7 @@
-//! Read-only access to FlowState's `history.db` for the MCP tools.
+//! Read-only access to FlowState's `history.db` for the CLI's read commands.
 //!
-//! The connection is opened with `SQLITE_OPEN_READ_ONLY`, so the server
-//! physically cannot write to the app's database — every tool is a query.
+//! The connection is opened with `SQLITE_OPEN_READ_ONLY`, so the CLI
+//! physically cannot write to the app's database — every command is a query.
 
 use chrono::{DateTime, Local};
 use rusqlite::{Connection, OpenFlags};
@@ -116,7 +116,7 @@ pub struct SearchResults {
     pub hits: Vec<SearchHit>,
 }
 
-/// The metadata JSON stored beside an entry, as far as the MCP tools read it.
+/// The metadata JSON stored beside an entry, as far as the reader reads it.
 #[derive(Clone, Debug, Default, Deserialize)]
 struct EntryMetadata {
     #[serde(default)]
@@ -227,13 +227,55 @@ fn source_name(raw: Option<String>) -> String {
     }
 }
 
-pub struct McpDb {
+/// Resolve the history database for the CLI when `--db` was not passed:
+/// portable mode's `Data/` directory when the marker is present next to the
+/// binary, otherwise the platform's app data dir.
+pub fn default_db_path() -> std::path::PathBuf {
+    // Portable detection works without an AppHandle: it only looks at the
+    // marker file next to the executable.
+    crate::portable::init();
+    if let Some(data_dir) = crate::portable::data_dir() {
+        return data_dir.join("history.db");
+    }
+
+    let identifier = "com.teshgotcode.flowstate";
+    #[cfg(target_os = "macos")]
+    {
+        let home = std::env::var_os("HOME")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_default();
+        home.join("Library")
+            .join("Application Support")
+            .join(identifier)
+            .join("history.db")
+    }
+    #[cfg(all(unix, not(target_os = "macos")))]
+    {
+        let data_root = std::env::var_os("XDG_DATA_HOME")
+            .map(std::path::PathBuf::from)
+            .or_else(|| {
+                let home = std::env::var_os("HOME").map(std::path::PathBuf::from)?;
+                Some(home.join(".local").join("share"))
+            })
+            .unwrap_or_default();
+        data_root.join(identifier).join("history.db")
+    }
+    #[cfg(windows)]
+    {
+        let appdata = std::env::var_os("APPDATA")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_default();
+        appdata.join(identifier).join("history.db")
+    }
+}
+
+pub struct HistoryDb {
     conn: Connection,
 }
 
-impl McpDb {
-    /// Open `history.db` read-only. The file must already exist — the MCP
-    /// server never creates or migrates the app's database.
+impl HistoryDb {
+    /// Open `history.db` read-only. The file must already exist — the CLI
+    /// never creates or migrates the app's database.
     pub fn open(path: &Path) -> Result<Self, String> {
         if !path.exists() {
             return Err(format!(

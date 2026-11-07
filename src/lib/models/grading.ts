@@ -46,7 +46,7 @@ export const makeGrading = (
     grade: (m, l) => (m ? gradeFor(m, l) : UNGRADED),
     overall: (m) => {
       if (!m) return UNGRADED;
-      if (missing(m).length) return { letter: "none", label: "—" };
+      if (missing(m).length) return { letter: "none", label: "-" };
       const error = averageError(m, langs);
       return error == null ? UNGRADED : gradeForError(error);
     },

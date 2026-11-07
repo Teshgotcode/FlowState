@@ -1,4 +1,4 @@
-import { listen } from "@tauri-apps/api/event";
+import { emit, listen } from "@tauri-apps/api/event";
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
@@ -131,6 +131,12 @@ const RecordingOverlay: React.FC = () => {
   // Whether the prompt is on screen right now, plus the session (by its start
   // time) that has already had it: once per meeting, reference-style.
   const [nudgeOpen, setNudgeOpen] = useState(false);
+  // The idle disc opens into its action row while the pointer is over it.
+  const [discOpen, setDiscOpen] = useState(false);
+  const discTimerRef = useRef<number | null>(null);
+  // Shrinking the window puts the pointer back over the disc; without a
+  // cooldown it would immediately re-expand and flicker.
+  const discShutAtRef = useRef(0);
   const nudgeDoneForRef = useRef(0);
   const nudgeOpenRef = useRef(false);
   const nudgeTimerRef = useRef<number | undefined>(undefined);
@@ -272,11 +278,23 @@ const RecordingOverlay: React.FC = () => {
       const unlistenHide = await listen("hide-overlay", () => {
         setIsVisible(false);
         setCaptureReady(false);
+        // A pending hover timer must not re-open the row while a dictation
+        // view owns the window.
+        if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
+        setDiscOpen(false);
       });
 
       const unlistenReady = await listen("recording-ready", () => {
         setElapsed(0);
         setCaptureReady(true);
+      });
+
+      // The bead's menu starts a meeting without opening the app window; the
+      // click path below is the only other way in, so both call the command.
+      const unlistenStartMeeting = await listen("overlay-start-meeting", () => {
+        commands
+          .startMeeting()
+          .catch((err) => console.warn("Failed to start the meeting:", err));
       });
 
       // Command Mode fell back to plain dictation (no text was selected):
@@ -417,6 +435,7 @@ const RecordingOverlay: React.FC = () => {
         unlistenShow();
         unlistenHide();
         unlistenReady();
+        unlistenStartMeeting();
         unlistenCommandFallback();
         unlistenLevel();
         unlistenStream();
@@ -627,21 +646,21 @@ const RecordingOverlay: React.FC = () => {
       );
     }
 
-    // Idle: the disc with a mic, visible while the app is in the background;
-    // one click starts the meeting without opening the app window.
-    return (
-      <div dir={direction} className={`ov-stage ${barPosition}`}>
+    // Idle: a disc with a mic. Hovering it grows the window into the action
+    // row (start a meeting, open Notes, open the Scratchpad); the window is an
+    // exact fit for whatever it shows, so the backend resizes with us.
+    const discActions = (
+      <>
         <button
           type="button"
-          className="mdisc"
+          className="mact primary"
           aria-label={t("overlay.meeting.start")}
           title={t("overlay.meeting.start")}
-          onClick={startMeeting}
-          onContextMenu={openDiscMenu}
-          onPointerDown={handleBarPointerDown}
-          onPointerMove={handleBarPointerMove}
-          onPointerUp={handleBarPointerUp}
-          onPointerCancel={handleBarPointerUp}
+          onClick={() => {
+            setDiscOpen(false);
+            commands.setMeetingBarExpanded(false);
+            startMeeting();
+          }}
         >
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <rect x="9" y="2.5" width="6" height="11" rx="3" />
@@ -661,6 +680,112 @@ const RecordingOverlay: React.FC = () => {
             />
           </svg>
         </button>
+        <button
+          type="button"
+          className="mact"
+          aria-label={t("overlay.quickNote")}
+          title={t("overlay.quickNote")}
+          onClick={() => {
+            setDiscOpen(false);
+            commands.setMeetingBarExpanded(false);
+            // The main window owns which section is showing; ask it for Notes.
+            emit("navigate-section", "notes").catch(() => {});
+            commands.showMainWindowCommand().catch(() => {});
+          }}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <rect x="4.5" y="3.5" width="15" height="17" rx="3" />
+            <path d="M8.5 9h7M8.5 13h7M8.5 17h4" />
+          </svg>
+        </button>
+        <button
+          type="button"
+          className="mact"
+          aria-label={t("tray.scratchpad_open")}
+          title={t("tray.scratchpad_open")}
+          onClick={() => {
+            setDiscOpen(false);
+            commands.setMeetingBarExpanded(false);
+            commands.openScratchpad().catch(() => {});
+          }}
+        >
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M13.2 2.5 4.8 13.4h5.1l-1.1 8.1 8.4-10.9h-5.1z" />
+          </svg>
+        </button>
+      </>
+    );
+
+    return (
+      <div
+        dir={direction}
+        className={`ov-stage ${barPosition}`}
+        onPointerEnter={() => {
+          // Re-entry cancels whatever is pending: a close in its grace
+          // period, or a stale open timer.
+          if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
+          if (discOpen) return;
+          if (Date.now() - discShutAtRef.current < 400) return;
+          discTimerRef.current = window.setTimeout(() => {
+            discTimerRef.current = null;
+            setDiscOpen(true);
+            commands.setMeetingBarExpanded(true).catch(() => {});
+          }, 140);
+        }}
+        onPointerLeave={() => {
+          if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
+          if (!discOpen) return;
+          // Close on a delay: leaving and coming straight back keeps the row
+          // open, because re-entry cancels this timer.
+          discTimerRef.current = window.setTimeout(() => {
+            discTimerRef.current = null;
+            discShutAtRef.current = Date.now();
+            setDiscOpen(false);
+            commands.setMeetingBarExpanded(false).catch(() => {});
+          }, 200);
+        }}
+      >
+        {discOpen ? (
+          <div className="midle">{discActions}</div>
+        ) : (
+          <button
+            type="button"
+            className="mdisc"
+            aria-label={t("overlay.meeting.start")}
+            title={t("overlay.meeting.start")}
+            onClick={startMeeting}
+            onContextMenu={openDiscMenu}
+            onPointerDown={handleBarPointerDown}
+            onPointerMove={handleBarPointerMove}
+            onPointerUp={handleBarPointerUp}
+            onPointerCancel={handleBarPointerUp}
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="9" y="2.5" width="6" height="11" rx="3" />
+              <path
+                d="M5.5 11.5a6.5 6.5 0 0 0 13 0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+              <path
+                d="M12 18v3.5"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+              />
+            </svg>
+          </button>
+        )}
       </div>
     );
   }

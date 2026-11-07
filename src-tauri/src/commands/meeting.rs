@@ -67,6 +67,14 @@ pub fn open_meeting_bar_menu(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
+/// Widen the idle disc into its action row while the pointer is over it. The
+/// window is an exact fit for its content, so the row needs a real resize.
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_bar_expanded(app: AppHandle, expanded: bool) {
+    crate::overlay::set_meeting_bar_expanded(&app, expanded);
+}
+
 /// Grow or shrink the meeting bar's window for the "still going?" prompt
 /// (S-24): the frontend shows the prompt once the session has recorded past
 /// `meeting_reminder_minutes`, and asks for the wider footprint here. The

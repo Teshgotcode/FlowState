@@ -10,7 +10,10 @@ import {
 } from "@/bindings";
 import { Button } from "../../ui/Button";
 import { Spinner } from "../../ui/Spinner";
+import { ExternalSendNotice } from "../../meeting/ExternalSendNotice";
+import { isExternalHost } from "../settings-utils";
 import { MeetingAskPanel } from "./MeetingAskPanel";
+import { useSettings } from "../../../hooks/useSettings";
 
 /** The message each failure reason shows. The three "no local LLM"
  * reasons share one message: the fix is the same. */
@@ -24,6 +27,43 @@ const FAILURE_MESSAGE_KEYS: Record<MeetingNoteFailure, string> = {
   llm_unreachable: "settings.history.meetingNote.failedUnreachable",
   invalid_response: "settings.history.meetingNote.failedInvalidResponse",
   cancelled: "settings.history.meetingNote.cancelled",
+};
+
+/** Acknowledged external hosts: the blocking notice shows once per host. */
+const EXTERNAL_ACK_KEY = "flowstate.meetingExternalAck";
+
+/** The host an acknowledgement is keyed on: the URL's host, or the raw
+ * string when there is nothing to parse. */
+const hostOf = (baseUrl: string): string => {
+  try {
+    return new URL(baseUrl).host || baseUrl;
+  } catch {
+    return baseUrl;
+  }
+};
+
+const readAckedHosts = (): string[] => {
+  try {
+    const stored: unknown = JSON.parse(
+      localStorage.getItem(EXTERNAL_ACK_KEY) ?? "[]",
+    );
+    return Array.isArray(stored)
+      ? stored.filter((host): host is string => typeof host === "string")
+      : [];
+  } catch {
+    return [];
+  }
+};
+
+const acknowledgeHost = (host: string) => {
+  try {
+    const acked = readAckedHosts();
+    if (!acked.includes(host)) {
+      localStorage.setItem(EXTERNAL_ACK_KEY, JSON.stringify([...acked, host]));
+    }
+  } catch {
+    // Storage may be unavailable; the notice just shows again next time.
+  }
 };
 
 interface MeetingNoteSectionProps {
@@ -44,8 +84,13 @@ export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
   onJumpToSegment,
 }) => {
   const { t } = useTranslation();
+  const { settings } = useSettings();
   const [tab, setTab] = useState<"note" | "ask">("note");
   const [generating, setGenerating] = useState(false);
+  const [pendingNotice, setPendingNotice] = useState<{
+    providerName: string;
+    host: string;
+  } | null>(null);
 
   const note = entry.metadata?.meeting_note ?? null;
   const hasTranscript =
@@ -71,8 +116,7 @@ export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
     toast.error(t(FAILURE_MESSAGE_KEYS[reason]));
   };
 
-  const handleGenerate = async () => {
-    if (generating) return;
+  const runGenerate = async () => {
     setGenerating(true);
     try {
       const result = await commands.generateMeetingNote(entry.id);
@@ -87,6 +131,39 @@ export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
     } finally {
       setGenerating(false);
     }
+  };
+
+  /** The generate button, gated: an off-machine provider must be
+   * acknowledged for its host before the meeting text is sent anywhere. */
+  const handleGenerate = async () => {
+    if (generating) return;
+    const providers = settings?.post_process_providers ?? [];
+    const providerId =
+      settings?.post_process_provider_id || providers[0]?.id || "openai";
+    const provider =
+      providers.find((candidate) => candidate.id === providerId) ||
+      providers[0];
+    const baseUrl = provider?.base_url || "";
+    if (isExternalHost(baseUrl)) {
+      const host = hostOf(baseUrl);
+      if (!readAckedHosts().includes(host)) {
+        setPendingNotice({
+          providerName: provider?.label || providerId,
+          host,
+        });
+        return;
+      }
+    }
+    await runGenerate();
+  };
+
+  const handleNoticeOk = (remember: boolean) => {
+    const host = pendingNotice?.host;
+    setPendingNotice(null);
+    if (remember && host !== undefined) {
+      acknowledgeHost(host);
+    }
+    void runGenerate();
   };
 
   const handleCancel = async () => {
@@ -196,6 +273,15 @@ export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
             {t("settings.history.meetingNote.description")}
           </p>
         )
+      )}
+
+      {pendingNotice && (
+        <ExternalSendNotice
+          providerName={pendingNotice.providerName}
+          host={pendingNotice.host}
+          onOk={handleNoticeOk}
+          onCancel={() => setPendingNotice(null)}
+        />
       )}
     </section>
   );

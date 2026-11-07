@@ -7,6 +7,7 @@ import {
   getStoredTheme,
   syncThemeFromSettings,
 } from "@/lib/utils/theme";
+import { applyAccent, getStoredAccent, getStoredHue } from "@/lib/utils/accent";
 import type { Theme } from "@/bindings";
 import { syncLanguageFromSettings } from "@/i18n";
 import "@/i18n";
@@ -15,6 +16,7 @@ import "@/i18n";
 // `data-theme` on its own document, exactly like the recording overlay:
 // last-known theme before render, reconcile with the persisted setting, then
 // follow live changes.
+applyAccent(getStoredAccent(), getStoredHue());
 applyTheme(getStoredTheme());
 syncThemeFromSettings();
 syncLanguageFromSettings();

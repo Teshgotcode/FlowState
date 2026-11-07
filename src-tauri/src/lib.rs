@@ -12,11 +12,12 @@ mod command_mode;
 mod commands;
 pub mod engine_supervisor;
 mod helpers;
+mod history_read;
 mod input;
 mod language_detection;
 mod llm_client;
 mod managers;
-pub mod mcp;
+mod meeting_detect;
 mod memory;
 mod overlay;
 mod paste_tx;
@@ -205,6 +206,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::initialize_enigo,
             commands::initialize_shortcuts,
             commands::complete_onboarding,
+            commands::get_cli_info,
             commands::models::get_available_models,
             commands::models::get_model_info,
             commands::models::download_model,
@@ -254,10 +256,6 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             commands::history::update_meeting_retention_period,
-            commands::mcp::change_mcp_enabled_setting,
-            commands::mcp::change_mcp_port_setting,
-            commands::mcp::regenerate_mcp_token,
-            commands::mcp::get_mcp_status,
             commands::word_suggestions::get_word_suggestions,
             commands::sync::sync_open_folder,
             commands::sync::sync_get_status,
@@ -283,6 +281,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::cancel_meeting_ask,
             commands::meeting::start_meeting_bar_drag,
             commands::meeting::open_meeting_bar_menu,
+            commands::meeting::set_meeting_bar_expanded,
             commands::meeting::set_meeting_bar_nudge,
             commands::meeting::set_meeting_reminder_minutes,
             commands::meeting::set_meeting_speaker_names,
@@ -466,7 +465,23 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     app_handle.manage(tray::TrayState::new());
     app_handle.manage(TranscriptionJobManager::new(app_handle));
     app_handle.manage(MeetingManager::new(app_handle));
-    app_handle.manage(mcp::manager::McpManager::new(app_handle));
+
+    // Meeting detection: another app holding the microphone for a while is
+    // what a meeting looks like from outside. The watcher never captures
+    // anything itself; it only raises a prompt in the window.
+    {
+        let handle = app_handle.clone();
+        std::thread::spawn(move || {
+            let prompt_handle = handle.clone();
+            crate::meeting_detect::watch_forever(
+                handle.clone(),
+                crate::meeting_detect::own_capture_active,
+                move || {
+                    let _ = prompt_handle.emit("meeting-detected", ());
+                },
+            );
+        });
+    }
 
     // Note: Shortcuts are NOT initialized here.
     // The frontend is responsible for calling the `initialize_shortcuts` command
@@ -1088,10 +1103,22 @@ pub fn run(cli_args: CliArgs) {
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
                     .title("FlowState")
                     .inner_size(utils::MAIN_WINDOW_SIZE.0, utils::MAIN_WINDOW_SIZE.1)
-                    .min_inner_size(utils::MAIN_WINDOW_SIZE.0, utils::MAIN_WINDOW_SIZE.1)
+                    .min_inner_size(
+                        utils::MAIN_WINDOW_MIN_SIZE.0,
+                        utils::MAIN_WINDOW_MIN_SIZE.1,
+                    )
                     .resizable(true)
                     .maximizable(true)
                     .visible(false);
+
+            // The reference draws its own top strip and lets the traffic lights
+            // sit on it; a native title bar would add chrome it does not have.
+            #[cfg(target_os = "macos")]
+            {
+                win_builder = win_builder
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true);
+            }
 
             if let Some(data_dir) = portable::data_dir() {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
@@ -1263,6 +1290,15 @@ pub fn run(cli_args: CliArgs) {
                 // keeps its text locally; dictation taken while it is
                 // focused lands in the note instead of another app.
                 crate::scratchpad::open_window(app);
+            } else if event.id.as_ref() == crate::overlay::MEETING_BAR_START_ID {
+                // Start a meeting from the bead without opening the app: the
+                // overlay runs the same command its left click does.
+                let _ = app.emit_to("recording_overlay", "overlay-start-meeting", ());
+            } else if event.id.as_ref() == crate::overlay::MEETING_BAR_NOTE_ID {
+                // Notes live in the main window, so show it and let it pick
+                // the section; the frontend owns which one is current.
+                show_main_window(app);
+                let _ = app.emit("navigate-section", "notes");
             } else if event.id.as_ref() == crate::overlay::MEETING_BAR_HIDE_FOR_HOUR_ID {
                 // the reference's "Hide for 1 hour": the idle disc goes away for an
                 // hour, until restart, or until a meeting starts.

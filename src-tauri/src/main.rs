@@ -36,5 +36,8 @@ fn main() {
     }
 
     let cli_args = CliArgs::parse();
+    if let Some(code) = flowstate_app_lib::cli::run_command(&cli_args) {
+        std::process::exit(code);
+    }
     flowstate_app_lib::run(cli_args)
 }

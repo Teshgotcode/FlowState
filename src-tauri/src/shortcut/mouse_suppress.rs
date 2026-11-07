@@ -92,11 +92,7 @@ unsafe extern "C" {
         port: *mut c_void,
         order: isize,
     ) -> *mut c_void;
-    fn CFRunLoopAddSource(
-        run_loop: *mut c_void,
-        source: *mut c_void,
-        mode: *const c_void,
-    );
+    fn CFRunLoopAddSource(run_loop: *mut c_void, source: *mut c_void, mode: *const c_void);
     fn CFRunLoopGetCurrent() -> *mut c_void;
     fn CFRunLoopRun();
     fn CFRelease(cf: *const c_void);
@@ -204,7 +200,10 @@ fn run_suppress_tap(init: Sender<Result<(), String>>) {
 /// swallowed button (or park it at `NO_BUTTON`) and start the tap thread on
 /// first use. Called from the shortcut refresh path.
 pub fn apply(button: Option<MousePttButton>) {
-    SUPPRESSED_BUTTON.store(button.map(button_number).unwrap_or(NO_BUTTON), Ordering::SeqCst);
+    SUPPRESSED_BUTTON.store(
+        button.map(button_number).unwrap_or(NO_BUTTON),
+        Ordering::SeqCst,
+    );
 
     if button.is_none() {
         return;

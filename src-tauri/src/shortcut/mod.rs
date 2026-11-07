@@ -110,11 +110,9 @@ pub fn refresh_mouse_ptt_binding(app: &AppHandle) {
         return;
     }
 
-    if let Err(e) = handy_keys::register_raw(
-        app,
-        MOUSE_PTT_BINDING_ID,
-        mouse_ptt_hotkey_string(button),
-    ) {
+    if let Err(e) =
+        handy_keys::register_raw(app, MOUSE_PTT_BINDING_ID, mouse_ptt_hotkey_string(button))
+    {
         error!("Failed to register mouse push-to-talk button: {}", e);
     } else {
         info!("Mouse push-to-talk button registered: {:?}", button);
@@ -996,10 +994,7 @@ pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), Str
 /// is ever recorded — the tally file simply stops being touched.
 #[tauri::command]
 #[specta::specta]
-pub fn change_learn_from_corrections_setting(
-    app: AppHandle,
-    value: bool,
-) -> Result<(), String> {
+pub fn change_learn_from_corrections_setting(app: AppHandle, value: bool) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.learn_from_corrections = value;
     settings::write_settings(&app, settings);

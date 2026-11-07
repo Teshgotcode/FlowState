@@ -8,6 +8,7 @@ import {
   getStoredTheme,
   syncThemeFromSettings,
 } from "./lib/utils/theme";
+import { applyAccent, getStoredAccent, getStoredHue } from "./lib/utils/accent";
 
 installCompatShims();
 
@@ -17,6 +18,7 @@ document.documentElement.dataset.platform = platform();
 // Apply the last-known theme synchronously before render to avoid a flash of
 // the wrong palette, then reconcile with the persisted setting once it loads.
 applyTheme(getStoredTheme());
+applyAccent(getStoredAccent(), getStoredHue());
 syncThemeFromSettings();
 
 // Initialize i18n

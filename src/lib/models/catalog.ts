@@ -46,7 +46,7 @@ const minus = (label: string) => label.replace("-", "−");
 
 export const gradeFor = (model: CatalogModel, language: string): Grade => {
   if (!modelMatchesLanguage(model, language))
-    return { letter: "none", label: "—", unsupported: true };
+    return { letter: "none", label: "-", unsupported: true };
   const grade = catalog.languageAccuracyGrade(model, language);
   if (!grade) return { letter: "none", label: "?" };
   return { letter: grade.letter, label: minus(grade.label) };

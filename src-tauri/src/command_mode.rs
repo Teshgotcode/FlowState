@@ -242,30 +242,30 @@ mod ax {
             ) else {
                 continue;
             };
-            let (Some(focused_application), Some(focused_ui_element), Some(selected_text), Some(title)) = (
+            let (
+                Some(focused_application),
+                Some(focused_ui_element),
+                Some(selected_text),
+                Some(title),
+            ) = (
                 sym!("kAXFocusedApplicationAttributeKey"),
                 sym!("kAXFocusedUIElementAttributeKey"),
                 sym!("kAXSelectedTextAttributeKey"),
                 sym!("kAXTitleAttributeKey"),
-            ) else {
+            )
+            else {
                 continue;
             };
 
             // `dlsym` returns `*mut c_void`; the AX entry points are plain C
             // functions, so the pointer cast is sound.
-            unsafe fn as_fn0<R>(
-                ptr: *mut c_void,
-            ) -> unsafe extern "C" fn() -> R {
+            unsafe fn as_fn0<R>(ptr: *mut c_void) -> unsafe extern "C" fn() -> R {
                 std::mem::transmute::<*mut c_void, unsafe extern "C" fn() -> R>(ptr)
             }
-            unsafe fn as_fn3<A, B, C, R>(
-                ptr: *mut c_void,
-            ) -> unsafe extern "C" fn(A, B, C) -> R {
+            unsafe fn as_fn3<A, B, C, R>(ptr: *mut c_void) -> unsafe extern "C" fn(A, B, C) -> R {
                 std::mem::transmute::<*mut c_void, unsafe extern "C" fn(A, B, C) -> R>(ptr)
             }
-            unsafe fn as_fn1<A, R>(
-                ptr: *mut c_void,
-            ) -> unsafe extern "C" fn(A) -> R {
+            unsafe fn as_fn1<A, R>(ptr: *mut c_void) -> unsafe extern "C" fn(A) -> R {
                 std::mem::transmute::<*mut c_void, unsafe extern "C" fn(A) -> R>(ptr)
             }
 
@@ -363,25 +363,19 @@ mod ax {
                 return (None, String::new());
             }
 
-            let Some(app) = copy_attribute(
-                &api,
-                system_wide,
-                api.focused_application_key,
-            ) else {
+            let Some(app) = copy_attribute(&api, system_wide, api.focused_application_key) else {
                 CFRelease(system_wide);
                 return (None, String::new());
             };
 
-            let app_name =
-                element_attribute_string(&api, app, api.title_key).unwrap_or_default();
+            let app_name = element_attribute_string(&api, app, api.title_key).unwrap_or_default();
 
             // The selected text lives on the focused UI element; fall back to
             // the application element itself (some apps expose it there).
             let focused = copy_attribute(&api, app, api.focused_ui_element_key);
             let selected = match focused {
                 Some(element) => {
-                    let text =
-                        element_attribute_string(&api, element, api.selected_text_key);
+                    let text = element_attribute_string(&api, element, api.selected_text_key);
                     CFRelease(element);
                     text
                 }

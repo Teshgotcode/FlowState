@@ -9,7 +9,9 @@
     "cancel": "İptal",
     "secureInputWarning": "⚠ Kısayollar Secure Input tarafından engelleniyor",
     "meetingBarHideForHour": "1 saat gizle",
-    "scratchpadOpen": "Hızlı not"
+    "scratchpadOpen": "Hızlı not",
+    "meeting_bar_start": "Start meeting",
+    "meeting_bar_note": "New note"
   },
   "sidebar": {
     "general": "Genel",
@@ -20,7 +22,25 @@
     "debug": "Hata Ayıklama",
     "about": "Hakkında",
     "integrations": "Integrations",
-    "sync": "Sync"
+    "sync": "Sync",
+    "mainNav": "Main navigation",
+    "home": "Dictation",
+    "notes": "Scratchpad",
+    "insights": "Insights",
+    "settings": "Settings",
+    "library": "Library",
+    "system": "System",
+    "notetaker": "Notetaker",
+    "dictionary": "Dictionary",
+    "snippets": "Snippets",
+    "style": "Style",
+    "scratchpad": "Scratchpad",
+    "help": "Help",
+    "transforms": "Transforms",
+    "promoTitle": "Get started",
+    "promoShortcuts": "Set up shortcuts",
+    "localModel": "Local model",
+    "promoDocs": "Read the docs"
   },
   "onboarding": {
     "customModelDescription": "Resmi olarak desteklenmiyor",
@@ -114,7 +134,7 @@
       },
       "es": {
         "title": "ES student? Add the ES package",
-        "description": "Entrepreneurship terms, sample lecturer and project names in one click — edit them later in Settings.",
+        "description": "Entrepreneurship terms, sample lecturer and project names in one click - edit them later in Settings.",
         "enable": "Add ES package",
         "enabled": "Added"
       }
@@ -403,7 +423,7 @@
       },
       "mousePtt": {
         "title": "Push-to-talk fare düğmesi",
-        "description": "Kaydetmek için bir fare düğmesini basılı tutun, bıraktığınızda metne dönüşür — klavye kısayolu gibi. Tıklama diğer uygulamalara iletilmez.",
+        "description": "Kaydetmek için bir fare düğmesini basılı tutun, bıraktığınızda metne dönüşür - klavye kısayolu gibi. Tıklama diğer uygulamalara iletilmez.",
         "options": {
           "off": "Kapalı",
           "middle": "Orta düğme",
@@ -438,15 +458,15 @@
       "reminderHour1": "1 saat",
       "reminderHours2": "2 saat",
       "retentionTitle": "Toplantı saklama",
-      "retentionDescription": "Tamamlanan toplantılar ne kadar süreyle saklanır. Seçilen süreden eski toplantılar kalıcı olarak silinir — ses, transkript ve notlar birlikte — FlowState başlarken ve çalışırken günde bir kez. Sesli girişler asla etkilenmez.",
+      "retentionDescription": "Tamamlanan toplantılar ne kadar süreyle saklanır. Seçilen süreden eski toplantılar kalıcı olarak silinir - ses, transkript ve notlar birlikte - FlowState başlarken ve çalışırken günde bir kez. Sesli girişler asla etkilenmez.",
       "retentionForever": "Sonsuza dek",
       "retentionDays7": "7 gün",
       "retentionDays30": "30 gün",
       "retentionDays90": "90 gün",
       "retentionPlaceholder": "Saklama süresi seçin...",
-      "retentionWarning": "Silme kalıcıdır ve geri alınamaz. Her şey yalnızca bu cihazda saklanır — hiçbir şey hiçbir yere gönderilmez.",
+      "retentionWarning": "Silme kalıcıdır ve geri alınamaz. Her şey yalnızca bu cihazda saklanır - hiçbir şey hiçbir yere gönderilmez.",
       "systemAudioTitle": "Sistem sesi",
-      "systemAudioDescription": "Toplantılar ayrıca makinenin kendisinin çaldığını kaydeder — bir Zoom ya da Teams görüşmesinin karşı tarafını — mikrofonun yanında ikinci bir kanal olarak ve zaman damgasına göre döküme birleştirir. Her şey yerel olarak kaydedilir, izin penceresi olmadan, ve hiçbir şey bu cihazdan çıkmaz.",
+      "systemAudioDescription": "Toplantılar ayrıca makinenin kendisinin çaldığını kaydeder - bir Zoom ya da Teams görüşmesinin karşı tarafını - mikrofonun yanında ikinci bir kanal olarak ve zaman damgasına göre döküme birleştirir. Her şey yerel olarak kaydedilir, izin penceresi olmadan, ve hiçbir şey bu cihazdan çıkmaz.",
       "systemAudioUnsupported": "Sistem sesi macOS 14.4 veya daha yenisini gerektirir. Bu Mac toplantıları yalnızca mikrofonla kaydeder."
     },
     "models": {
@@ -478,7 +498,7 @@
           "accelerated": "30 saniyelik konuşmanın test dizüstü bilgisayarımızın grafik yongasında yazıya dökülmesinin ne kadar sürdüğü. Bu bilgisayarda farklı olabilir.",
           "cpu": "30 saniyelik konuşmanın test dizüstü bilgisayarımızın işlemcisinde yazıya dökülmesinin ne kadar sürdüğü. Bu bilgisayarda farklı olabilir."
         },
-        "marks": "? henüz ölçülmedi. — o dili duymaz."
+        "marks": "? henüz ölçülmedi. - o dili duymaz."
       },
       "retiredNotice": {
         "title": "Eski modeller artık FlowState ile çalışmıyor",
@@ -564,7 +584,7 @@
       "overlay": {
         "style": {
           "title": "Ekran Katmanı",
-          "description": "Kayıt sırasında gösterilecek ekran katmanını seçin: 'Yok' katmanı gizler, 'Sade' küçük bir gösterge gösterir, 'Canlı' siz konuşurken transkripsiyonu gerçek zamanlı gösterir (yalnızca akış destekli modeller — model seçicide 'Akış' rozetini arayın). Linux'ta 'Yok' önerilir.",
+          "description": "Kayıt sırasında gösterilecek ekran katmanını seçin: 'Yok' katmanı gizler, 'Sade' küçük bir gösterge gösterir, 'Canlı' siz konuşurken transkripsiyonu gerçek zamanlı gösterir (yalnızca akış destekli modeller - model seçicide 'Akış' rozetini arayın). Linux'ta 'Yok' önerilir.",
           "options": {
             "none": "Yok",
             "minimal": "Sade",
@@ -706,7 +726,7 @@
       },
       "voiceCommands": {
         "title": "Konuşulan noktalama ve emoji komutları",
-        "description": "Noktalama işaretlerini ve emojileri adıyla söyleyin — «virgül», «yeni satır», «gülücük» — ve karakter olarak eklenir. Yalnızca Norveççe ve İngilizce; cümlenin parçası olan kelimeler olduğu gibi kalır."
+        "description": "Noktalama işaretlerini ve emojileri adıyla söyleyin - «virgül», «yeni satır», «gülücük» - ve karakter olarak eklenir. Yalnızca Norveççe ve İngilizce; cümlenin parçası olan kelimeler olduğu gibi kalır."
       },
       "chineseScript": {
         "title": "Çince yazı",
@@ -873,7 +893,7 @@
         "regenerate": "Yeniden oluştur",
         "generating": "Toplantı notu oluşturuluyor…",
         "cancel": "İptal",
-        "draftLabel": "{{model}} tarafından yerel olarak oluşturuldu — kullanmadan önce kontrol edin",
+        "draftLabel": "{{model}} tarafından yerel olarak oluşturuldu - kullanmadan önce kontrol edin",
         "summary": "Özet",
         "decisions": "Kararlar",
         "actionItems": "Yapılacaklar",
@@ -912,7 +932,7 @@
         "placeholder": "Toplantıyla ilgili bir şey sor…",
         "ask": "Sor",
         "searching": "Transkript okunuyor…",
-        "generatedLabel": "{{model}} tarafından yerel olarak üretildi — transkriptle karşılaştırın",
+        "generatedLabel": "{{model}} tarafından yerel olarak üretildi - transkriptle karşılaştırın",
         "showInTranscript": "Bu bölümü transkriptte göster",
         "notFound": "Transkript bunu yanıtlamıyor.",
         "cancelled": "Soru iptal edildi.",
@@ -1058,7 +1078,7 @@
       },
       "keyboardDiagnostic": {
         "title": "Klavye Tanılaması",
-        "description": "Klavye olaylarının FlowState'ye ulaşıp ulaşmadığını denetler. Yalnızca olay sayıları kaydedilir — hangi tuşlara bastığınız asla kaydedilmez.",
+        "description": "Klavye olaylarının FlowState'ye ulaşıp ulaşmadığını denetler. Yalnızca olay sayıları kaydedilir - hangi tuşlara bastığınız asla kaydedilmez.",
         "run": "10 sn'lik tanılamayı çalıştır",
         "running": "Dinleniyor… kısayolunuza birkaç kez basın (ör. Option+Space)",
         "secureInputLabel": "Secure Input",
@@ -1070,10 +1090,10 @@
         "keyUp": "Tuş bırakma",
         "flagsChanged": "Değiştiriciler",
         "mouse": "Fare",
-        "verdictBlocked": "Secure Input tuş olaylarını engelliyor — normal tuş içeren kısayollar bu sorun çözülene kadar çalışamaz.",
-        "verdictSuspicious": "Değiştirici olayları geldi ancak hiç tuş olayı gelmedi — Secure Input devre dışı görünmesine rağmen bir şey tuşları bastırıyor. Lütfen bunu GitHub'da bildirin.",
+        "verdictBlocked": "Secure Input tuş olaylarını engelliyor - normal tuş içeren kısayollar bu sorun çözülene kadar çalışamaz.",
+        "verdictSuspicious": "Değiştirici olayları geldi ancak hiç tuş olayı gelmedi - Secure Input devre dışı görünmesine rağmen bir şey tuşları bastırıyor. Lütfen bunu GitHub'da bildirin.",
         "verdictOk": "Tuş olayları FlowState'ye normal şekilde ulaşıyor.",
-        "verdictNoEvents": "Hiç olay yakalanmadı — test sırasında herhangi bir tuşa bastınız mı?",
+        "verdictNoEvents": "Hiç olay yakalanmadı - test sırasında herhangi bir tuşa bastınız mı?",
         "failed": "Tanılama başarısız: {{error}}"
       }
     },
@@ -1117,36 +1137,17 @@
       "esLine": "Built for NTNU Entreprenørskolen"
     },
     "integrations": {
-      "mcp": {
-        "title": "MCP Server",
-        "enable": {
-          "label": "Local MCP server",
-          "description": "Let Claude Desktop and Cursor read your meeting notes over MCP, on this machine only. The server listens on 127.0.0.1 and requires a token."
-        },
-        "statusChecking": "Checking…",
-        "statusRunning": "Running on 127.0.0.1:{{port}}",
-        "statusNotRunning": "Not running",
-        "port": {
-          "label": "Port"
-        },
-        "portInvalid": "Enter a port between 1 and 65535.",
-        "token": {
-          "label": "Token"
-        },
-        "tokenReveal": "Show token",
-        "tokenHide": "Hide token",
-        "tokenCopy": "Copy token",
-        "tokenCopied": "Token copied",
-        "tokenRegenerate": "Generate a new token",
-        "tokenHint": "Shown only now — copy it right away. MCP clients sign every request with it.",
-        "setupHint": "Connect Claude Desktop or Cursor via MCP; the README has the exact setup."
+      "cli": {
+        "title": "Command line",
+        "copy": "Copy to Claude",
+        "copied": "Copied to clipboard"
       }
     },
     "sync": {
       "title": "Sync between your Macs",
       "enabled": {
         "title": "Sync on",
-        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs — no account, no cloud server."
+        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs - no account, no cloud server."
       },
       "explain": {
         "offline": "Everything is plain file copy through a folder you pick (iCloud Drive, Dropbox, OneDrive or a USB stick), so it works offline and on school networks where machines cannot reach each other.",
@@ -1189,14 +1190,22 @@
       },
       "toasts": {
         "done": "Synced ({{history}} history entries imported)",
-        "doneWithConflicts": "Synced with {{count}} conflict(s) — both versions were kept, see the conflict log",
+        "doneWithConflicts": "Synced with {{count}} conflict(s) - both versions were kept, see the conflict log",
         "folderSet": "Shared folder set",
         "needFolder": "Pick a shared folder first",
         "exported": "Bundle exported",
         "imported": "Imported {{words}} words, {{snippets}} snippets, {{history}} history entries",
-        "importedConflicts": "{{count}} conflict(s) while importing — both versions were kept"
+        "importedConflicts": "{{count}} conflict(s) while importing - both versions were kept"
       }
-    }
+    },
+    "tab.general": "General",
+    "tab.models": "Models",
+    "tab.postprocessing": "Post-processing",
+    "tab.integrations": "Integrations",
+    "tab.sync": "Sync",
+    "tab.advanced": "Advanced",
+    "tab.about": "About",
+    "tab.debug": "Debug"
   },
   "footer": {
     "checkingUpdates": "Güncellemeler kontrol ediliyor...",
@@ -1208,9 +1217,9 @@
     "preparing": "Hazırlanıyor...",
     "checkForUpdates": "Güncellemeleri kontrol et",
     "portableUpdateTitle": "Manuel güncelleme gerekli",
-    "portableUpdateMessage": "Taşınabilir kurulumlar otomatik olarak güncellenemez. Aşağıdan sisteminize uygun yükleyiciyi indirin, çalıştırın ve aynı klasöre kurun — Data/ klasörünüz (ayarlar, modeller, kayıtlar) yerinde kalır.",
+    "portableUpdateMessage": "Taşınabilir kurulumlar otomatik olarak güncellenemez. Aşağıdan sisteminize uygun yükleyiciyi indirin, çalıştırın ve aynı klasöre kurun - Data/ klasörünüz (ayarlar, modeller, kayıtlar) yerinde kalır.",
     "portableUpdateButton": "Yükleyiciyi indir",
-    "portableUpdateBrowseMessage": "Taşınabilir kurulumlar otomatik olarak güncellenemez. Sisteminize uygun en son sürümü GitHub Releases’ten indirin ve aynı klasöre kurun — Data/ klasörünüz (ayarlar, modeller, kayıtlar) yerinde kalır.",
+    "portableUpdateBrowseMessage": "Taşınabilir kurulumlar otomatik olarak güncellenemez. Sisteminize uygun en son sürümü GitHub Releases’ten indirin ve aynı klasöre kurun - Data/ klasörünüz (ayarlar, modeller, kayıtlar) yerinde kalır.",
     "portableUpdateBrowseButton": "GitHub Releases’i aç"
   },
   "whatsNew": {
@@ -1254,11 +1263,22 @@
       "system": "Sistem",
       "light": "Açık",
       "dark": "Koyu"
+    },
+    "accent": {
+      "title": "Accent",
+      "description": "Pick a colour for buttons, active rows and highlights.",
+      "bla": "Blue",
+      "rosa": "Pink",
+      "gronn": "Green",
+      "rod": "Red",
+      "gul": "Yellow-orange",
+      "egen": "Custom",
+      "hue": "Hue"
     }
   },
   "overlay": {
     "transcribing": "Transkribe ediliyor...",
-    "processing": "İşleniyor...",
+    "processing": "Writing",
     "loadingModel": "Model yükleniyor...",
     "meeting": {
       "start": "Toplantıyı başlat",
@@ -1268,11 +1288,12 @@
       "stillGoing": "Toplantı hâlâ sürüyor mu?"
     },
     "command": "Komut",
-    "commandFallback": "Seçim yok — normal dikte",
+    "commandFallback": "Seçim yok - normal dikte",
     "style": {
       "menuTitle": "Style",
-      "chipTitle": "Dictation style — right-click to switch"
-    }
+      "chipTitle": "Dictation style - right-click to switch"
+    },
+    "quickNote": "New note"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} 1 kısayolu engelliyor olabilir",
@@ -1282,13 +1303,259 @@
     "recorderBlockedWithCulprit": "{{name}} kısayol değişikliklerini engelliyor olabilir",
     "recorderBlockedNoCulprit": "macOS geçici olarak kısayol değişikliklerini engelliyor",
     "learnMore": "Bu nasıl düzeltilir",
-    "recorderBlocked": "Şu anda kısayol kaydedilemiyor — macOS Secure Input tuş olaylarını engelliyor. Önce Secure Input uyarısını giderin.",
+    "recorderBlocked": "Şu anda kısayol kaydedilemiyor - macOS Secure Input tuş olaylarını engelliyor. Önce Secure Input uyarısını giderin.",
     "dismiss": "Kapat"
   },
   "scratchpad": {
     "title": "Hızlı not",
-    "placeholder": "Dikte et veya yaz — not burada, yerel olarak saklanır.",
+    "placeholder": "Dikte et veya yaz - not burada, yerel olarak saklanır.",
     "copy": "Kopyala",
     "copied": "Kopyalandı"
+  },
+  "home": {
+    "overline": "Welcome back",
+    "title": "Your dictation desk",
+    "subtitle": "Hold the shortcut, speak, and the text lands where your cursor was. Everything stays on this machine.",
+    "holdToTalk": "Hold to dictate",
+    "readyTitle": "Ready when you are",
+    "readyBody": "The microphone is idle. Press the shortcut anywhere to start.",
+    "wordsToday": "words today",
+    "statStreak": "Day streak",
+    "statStreakHint": "Best run: {{longest}} days",
+    "statWords": "Words dictated",
+    "statWordsHint": "All time",
+    "statDictations": "Dictations",
+    "statDictationsHint": "Since you started",
+    "statBusiest": "Busiest day",
+    "statBusiestHint": "No dictations in two weeks",
+    "historyHeading": "Your dictations",
+    "searchPlaceholder": "Search everything you said",
+    "clearSearch": "Clear search",
+    "emptyTitle": "No dictations yet",
+    "emptyBody": "Press the shortcut, say a sentence, and it shows up here with the words counted.",
+    "noResults": "Nothing matched",
+    "noResultsBody": "Try a shorter phrase, or a word you remember saying.",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "meeting": "Meeting",
+    "polished": "Polished",
+    "copy": "Copy text",
+    "copyFailed": "Could not copy the text",
+    "loading": "Loading your dictations…",
+    "loadMore": "Load more",
+    "emptyTranscript": "(no words in this recording)",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "bannerTitle": "Talk instead of typing",
+    "bannerBody": "Hold the shortcut, say the sentence, let go. The text lands where the cursor was, in whatever app you are in.",
+    "bannerCta": "Show me how",
+    "railWords": "total words",
+    "railDictations": "dictations",
+    "railStreak": "day streak",
+    "voiceTitle": "Your voice profile",
+    "voiceBody": "Every word is processed on this machine.",
+    "voicePill": "{{used}} active days",
+    "play": "Play",
+    "feedback": "Send feedback",
+    "more": "More",
+    "delete": "Delete",
+    "audioMissing": "No audio saved for this one",
+    "deleteFailed": "Could not delete",
+    "dismiss": "Dismiss"
+  },
+  "notes": {
+    "overline": "Scratchpad",
+    "title": "Somewhere to think out loud",
+    "subtitle": "Draft, paste, dictate. Notes save themselves and never leave the machine.",
+    "newNote": "New note",
+    "untitled": "Untitled note",
+    "titlePlaceholder": "Give the note a name",
+    "bodyPlaceholder": "Start writing, or press the dictation shortcut and talk.",
+    "searchPlaceholder": "Search notes",
+    "emptyTitle": "No notes yet",
+    "emptyBody": "A scratchpad for the half-formed thought, the meeting prep, the line you want to keep.",
+    "emptyList": "Nothing here yet",
+    "emptyListBody": "Your notes will be listed here, newest first.",
+    "noResults": "No notes matched",
+    "noResultsBody": "Try another word from the note.",
+    "delete": "Delete note",
+    "deleteTitle": "Delete this note?",
+    "deleteBody": "The text disappears for good. There is no undo.",
+    "cancel": "Cancel",
+    "confirmDelete": "Yes, delete it",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "edited": "Edited {{when}}",
+    "created": "Created {{when}}",
+    "untitledShort": "Untitled",
+    "back": "Back to notes",
+    "bannerBody": "A to-do list, a message you want to polish, a half-formed idea. Write it here first, then take it where it belongs.",
+    "bannerCta": "Start a new note",
+    "bannerTitle": "For the thoughts you want to keep",
+    "beta": "Beta",
+    "latest": "Recent",
+    "pin": "Pin note",
+    "refresh": "Refresh",
+    "unpin": "Unpin note",
+    "words": "{{count}} words"
+  },
+  "insights": {
+    "overline": "Insights",
+    "title": "You have been flowing",
+    "subtitle": "How you actually use your voice, counted locally on this machine.",
+    "range30": "Last 30 days",
+    "range90": "Last 90 days",
+    "rangeAll": "All time",
+    "cardStreak": "Day streak",
+    "cardStreakHint": "Longest: {{longest}} days",
+    "cardWords": "Words dictated",
+    "cardWordsHint": "Across {{days}} active days",
+    "cardDictations": "Dictations",
+    "cardDictationsHint": "About {{average}} words each",
+    "cardAverage": "Words per dictation",
+    "cardAverageHint": "Longer than a paragraph",
+    "cardPeak": "Peak hour",
+    "cardPeakHint": "When your voice does the work",
+    "cardLanguages": "Languages",
+    "cardLanguagesHint": "Picked up by the model",
+    "activityTitle": "Words per day",
+    "activitySubtitle": "Each bar is one day. Gaps are days off.",
+    "rhythmTitle": "Your rhythm",
+    "rhythmSubtitle": "When in the day you dictate most.",
+    "topDayTitle": "Best day",
+    "topDayWords_one": "{{count}} word in one day",
+    "topDayWords_other": "{{count}} words in one day",
+    "topDayEmpty": "Dictate for a few days and your best day shows up here.",
+    "emptyTitle": "Insights are building",
+    "emptyBody": "Once you have dictated a handful of times, this page turns into a picture of your week.",
+    "emptyCta": "Go dictate something",
+    "hourShort": "{{hour}}:00",
+    "peakHourValue": "{{hour}}:00",
+    "rangeLabel": "Range",
+    "less": "Less",
+    "more": "More",
+    "todayLabel": "Today",
+    "chartPeak": "Peak: {{count}} words · {{date}}",
+    "rhythmPeak": "Peak: {{hour}}:00",
+    "screenTitle": "Insights",
+    "tabUsage": "Usage",
+    "tabVoice": "Your voice",
+    "tabTop": "Top",
+    "cardWordsTotal": "Total words",
+    "cardActiveDays": "Active days",
+    "sourceMeeting": "Meetings",
+    "sourceDictation": "Dictation",
+    "activityCard": "Activity",
+    "topLongest": "Longest dictation",
+    "topHourCount_one": "{{count}} dictation",
+    "topHourCount_other": "{{count}} dictations",
+    "voiceEmpty": "No languages picked up yet. The model catches them as you dictate.",
+    "cardLastWeek": "Last 7 days",
+    "cardWordsToday": "Words today"
+  },
+  "topbar": {
+    "toggleSidebar": "Show or hide the sidebar"
+  },
+  "notetaker": {
+    "subtitle": "The meetings you recorded, with length and transcript.",
+    "emptyTitle": "No meetings yet",
+    "emptyBody": "Start one from the bead or the shortcut, and it lands here.",
+    "start": "Start Notetaker",
+    "today": "Today",
+    "noMeetingsToday": "No meetings today",
+    "refresh": "Refresh",
+    "tabNotes": "Past notes",
+    "tabFolders": "Folders",
+    "search": "Search notes",
+    "overview": "Overview",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "folder": "Folder",
+    "noFolder": "No folder",
+    "noNotes": "No notes in this folder yet",
+    "noFolders": "No folders yet. Make one to group notes by project.",
+    "pickNote": "Pick a note to read it.",
+    "deleteFolder": "Delete folder",
+    "folderCount_one": "{{count}} note",
+    "folderCount_other": "{{count}} notes"
+  },
+  "dictionary": {
+    "subtitle": "Words and names the transcriber should spell your way."
+  },
+  "snippets": {
+    "subtitle": "Say a trigger, get a fixed block of text."
+  },
+  "style": {
+    "subtitle": "Per-app writing rules the post-processor applies."
+  },
+  "help": {
+    "subtitle": "How to dictate, and where the rest lives.",
+    "howTitle": "Three steps",
+    "step1": "Hold the shortcut.",
+    "step2": "Say the sentence.",
+    "step3": "Release, and the text lands where the cursor is.",
+    "github": "Source on GitHub",
+    "issues": "Report a bug",
+    "localOnly": "Everything happens on this machine. Nothing is sent out."
+  },
+  "transforms": {
+    "subtitle": "Saved instructions that rewrite a dictation after it lands.",
+    "library": "Your transforms",
+    "new": "New transform",
+    "name": "Name",
+    "namePlaceholder": "For example: Bullet points",
+    "prompt": "Instruction",
+    "promptPlaceholder": "Turn the text into short bullet points. Keep every fact.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "active": "In use",
+    "use": "Use",
+    "edit": "Edit",
+    "delete": "Delete",
+    "empty": "No transforms yet",
+    "emptyHint": "Make one when you keep rewriting the same thing by hand."
+  },
+  "diktering": {
+    "loading": "Reading your history...",
+    "wordsToday_one": "word today",
+    "wordsToday_other": "words today",
+    "dictations_one": "one dictation",
+    "dictations_other": "{{count}} dictations",
+    "minutesSaved_one": "A minute you did not have to type.",
+    "minutesSaved_other": "{{count}} minutes you did not have to type.",
+    "recording": "Recording",
+    "hint": "Speak, and I write",
+    "raw": "Raw",
+    "polished": "Polished",
+    "copy": "Copy",
+    "remove": "Delete",
+    "empty": "Nothing yet. Hold ⌥ Space and say something.",
+    "local": "Nothing leaves this machine."
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Jump to, or do something",
+    "noResults": "No matches",
+    "toggleTheme": "Toggle light and dark",
+    "themeHint": "Appearance",
+    "nextAccent": "Next accent colour",
+    "accentHint": "Appearance",
+    "startMeeting": "Start a meeting"
+  },
+  "meeting": {
+    "externalNotice": {
+      "title": "Sent to an external provider",
+      "body": "The meeting text is sent to {{provider}} ({{host}}) to write the note. Nothing is sent until you press OK.",
+      "remember": "Don't show this again",
+      "ok": "OK"
+    },
+    "detected": {
+      "title": "Looks like a meeting",
+      "body": "Another app is using the microphone. Want to record it?",
+      "start": "Start notetaker",
+      "dismiss": "Not now"
+    }
   }
 }

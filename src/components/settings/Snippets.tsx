@@ -231,7 +231,7 @@ export const Snippets: React.FC<SnippetsProps> = React.memo(
           grouped={grouped}
         >
           <div className="flex flex-col gap-2 w-full">
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Input
                 type="text"
                 className="max-w-40"
@@ -303,7 +303,7 @@ export const Snippets: React.FC<SnippetsProps> = React.memo(
           >
             {snippets.map((snippet, index) => (
               <div key={snippet.trigger} className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Input
                     type="text"
                     className="max-w-40"

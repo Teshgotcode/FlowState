@@ -227,7 +227,6 @@ impl Side {
             Side::Absent => 0,
         }
     }
-
 }
 
 fn word_side(set: &ItemSet, key: &str) -> Side {
@@ -311,7 +310,12 @@ pub fn write_json<T: Serialize>(path: &Path, value: &T) -> Result<(), String> {
 /// Runs before every sync (and after every dictionary/snippet write): new
 /// entries get a timestamp, removed entries become tombstones, and edited
 /// entries get a fresh timestamp so last-writer-wins can order them.
-pub fn reconcile(mut journal: ItemSet, words: &[String], snippets: &[Snippet], now: Timestamp) -> ItemSet {
+pub fn reconcile(
+    mut journal: ItemSet,
+    words: &[String],
+    snippets: &[Snippet],
+    now: Timestamp,
+) -> ItemSet {
     let settings_words: HashMap<String, String> = words
         .iter()
         .map(|w| (word_key(w), w.trim().to_string()))
@@ -413,11 +417,7 @@ pub fn merged_words(items: &ItemSet) -> Vec<String> {
 }
 
 pub fn merged_snippets(items: &ItemSet) -> Vec<Snippet> {
-    let mut snippets: Vec<Snippet> = items
-        .snippets
-        .values()
-        .map(|s| s.snippet.clone())
-        .collect();
+    let mut snippets: Vec<Snippet> = items.snippets.values().map(|s| s.snippet.clone()).collect();
     snippets.sort_by(|a, b| a.trigger.cmp(&b.trigger));
     snippets
 }
@@ -557,9 +557,7 @@ pub fn run_sync(
     // Publish our current view, history first when enabled.
     if let Some(entries) = &history {
         if state.sync_history && !entries.is_empty() {
-            let hist_dir = root
-                .join(HISTORY_SUBDIR)
-                .join(&state.device_id);
+            let hist_dir = root.join(HISTORY_SUBDIR).join(&state.device_id);
             std::fs::create_dir_all(hist_dir.join(AUDIO_SUBDIR)).map_err(|e| e.to_string())?;
             write_json(&hist_dir.join("entries.json"), entries)?;
             if let Some(audio_dir) = audio_dir {
@@ -597,10 +595,7 @@ pub fn run_sync(
     let peers = read_peer_docs(&root, &state.device_id);
     let mut new_peers = state.peers.clone();
     for peer in &peers {
-        let base = new_peers
-            .get(&peer.device_id)
-            .cloned()
-            .unwrap_or_default();
+        let base = new_peers.get(&peer.device_id).cloned().unwrap_or_default();
         let (next, mut found) =
             merge_peer(merged.clone(), &peer.items, &base, &peer.device_name, now);
         merged = next;
@@ -723,8 +718,7 @@ fn merge_words(
                         local_version: None,
                         remote_version: word_version(remote.words.get(&key)),
                         remote_device: remote_device.into(),
-                        resolution: "a deletion collided with an edit; kept the edited word"
-                            .into(),
+                        resolution: "a deletion collided with an edit; kept the edited word".into(),
                     });
                 }
             }
@@ -753,8 +747,7 @@ fn merge_words(
                     local_version: word_version(local.words.get(&key)),
                     remote_version: None,
                     remote_device: remote_device.into(),
-                    resolution:
-                        "a deletion collided with an edit; kept the edited word".into(),
+                    resolution: "a deletion collided with an edit; kept the edited word".into(),
                 });
             }
             (Side::Live(lt), Side::Live(rt)) => {
@@ -876,8 +869,7 @@ fn merge_snippets(
                     local_version: snippet_version(local.snippets.get(&key)),
                     remote_version: None,
                     remote_device: remote_device.into(),
-                    resolution: "a deletion collided with an edit; kept the edited snippet"
-                        .into(),
+                    resolution: "a deletion collided with an edit; kept the edited snippet".into(),
                 });
             }
             (Side::Live(lt), Side::Live(rt)) => {
@@ -945,10 +937,8 @@ mod tests {
     use crate::sync::bundle::{export_bundle, import_bundle, BundleData};
 
     fn temp_dir(name: &str) -> PathBuf {
-        let dir = std::env::temp_dir().join(format!(
-            "flowstate-sync-{name}-{}",
-            std::process::id()
-        ));
+        let dir =
+            std::env::temp_dir().join(format!("flowstate-sync-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&dir);
         std::fs::create_dir_all(&dir).unwrap();
         dir
@@ -998,20 +988,12 @@ mod tests {
 
     /// One sync for one "device", persisting its state between calls the way
     /// the app does — that per-peer memory is what makes the merge three-way.
-    fn sync(
-        state_dir: &Path,
-        folder: &Path,
-        device: &str,
-        items: ItemSet,
-    ) -> SyncOutcome {
-        let mut state = load_state(state_dir)
-            .ok()
-            .flatten()
-            .unwrap_or_else(|| {
-                let mut state = state_for(folder, device, false);
-                state.device_id = format!("dev-{device}");
-                state
-            });
+    fn sync(state_dir: &Path, folder: &Path, device: &str, items: ItemSet) -> SyncOutcome {
+        let mut state = load_state(state_dir).ok().flatten().unwrap_or_else(|| {
+            let mut state = state_for(folder, device, false);
+            state.device_id = format!("dev-{device}");
+            state
+        });
         state.folder = Some(folder.to_string_lossy().to_string());
         state.enabled = true;
         let outcome =
@@ -1089,7 +1071,10 @@ mod tests {
         let out_b = sync(&dir_b, &shared, "b", b_edited);
 
         // The newer version stays live under the real trigger...
-        assert_eq!(out_b.merged.snippets["signatur"].snippet.expansion, "v3 fra B");
+        assert_eq!(
+            out_b.merged.snippets["signatur"].snippet.expansion,
+            "v3 fra B"
+        );
         // ...and the loser survives as its own snippet, not a quiet overwrite.
         let suffixed = format!("signatur{CONFLICT_TRIGGER_SUFFIX}");
         assert_eq!(
@@ -1262,12 +1247,7 @@ mod tests {
         assert_eq!(set.words["odda"].updated_at, now);
 
         // "odda" is removed -> tombstone; "kasper" edited in casing -> new ts.
-        let set = reconcile(
-            set,
-            &["KASPER".into()],
-            &[],
-            6000,
-        );
+        let set = reconcile(set, &["KASPER".into()], &[], 6000);
         assert!(set.word_tombstones.contains_key("odda"));
         assert_eq!(set.words["kasper"].word, "KASPER");
         assert_eq!(set.words["kasper"].updated_at, 6000);
@@ -1285,10 +1265,9 @@ mod tests {
     fn bundle_roundtrip_and_tamper_refusal() {
         let dir = temp_dir("bundle");
         let mut items = word_set(&[("ordbok".into(), 1000)]);
-        items.snippets.insert(
-            "signatur".into(),
-            snippet("signatur", "hilsen", 1000),
-        );
+        items
+            .snippets
+            .insert("signatur".into(), snippet("signatur", "hilsen", 1000));
 
         let audio = dir.join("take.wav");
         std::fs::write(&audio, b"RIFF fake wav").unwrap();
@@ -1330,12 +1309,7 @@ mod tests {
             "hilsen"
         );
         assert_eq!(imported.history.len(), 1);
-        assert!(imported
-            .audio
-            .values()
-            .next()
-            .unwrap()
-            .is_file());
+        assert!(imported.audio.values().next().unwrap().is_file());
 
         // Tamper with one byte of a member: refused, staging untouched.
         // The byte is picked inside the audio member's data so the flip

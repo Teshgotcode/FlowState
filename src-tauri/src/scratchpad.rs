@@ -15,8 +15,10 @@ pub const SCRATCHPAD_WINDOW_LABEL: &str = "scratchpad";
 /// Where the note's text lives, inside the app data directory.
 const NOTE_FILE: &str = "scratchpad.txt";
 
-const SCRATCHPAD_WIDTH: f64 = 360.0;
-const SCRATCHPAD_HEIGHT: f64 = 300.0;
+/// The reference's Scratchpad window measures 500x420; match it so the two
+/// windows feel the same size when you switch between them.
+const SCRATCHPAD_WIDTH: f64 = 500.0;
+const SCRATCHPAD_HEIGHT: f64 = 420.0;
 
 /// True while the Scratchpad window exists and holds the keyboard focus: a
 /// dictation taken now belongs in the note, not in another app.

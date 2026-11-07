@@ -1,7 +1,13 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { open, save } from "@tauri-apps/plugin-dialog";
-import { CloudOff, FolderOpen, Package, RefreshCw, ShieldAlert } from "lucide-react";
+import {
+  CloudOff,
+  FolderOpen,
+  Package,
+  RefreshCw,
+  ShieldAlert,
+} from "lucide-react";
 import { toast } from "sonner";
 import { commands, type ConflictRecord, type SyncStatus } from "@/bindings";
 import { SettingContainer } from "../ui/SettingContainer";
@@ -226,7 +232,10 @@ export const SyncSettings: React.FC = () => {
         >
           <div className="flex items-center gap-2">
             {status.folder ? (
-              <PathDisplay path={status.folder} onOpen={() => commands.syncOpenFolder()} />
+              <PathDisplay
+                path={status.folder}
+                onOpen={() => commands.syncOpenFolder()}
+              />
             ) : (
               <span className="text-sm text-ink-3">
                 {t("settings.sync.folder.none")}
@@ -365,9 +374,7 @@ export const SyncSettings: React.FC = () => {
                   {t("settings.sync.conflicts.device", {
                     device: conflict.remote_device,
                   })}{" "}
-                  ·{" "}
-                  {formatTime(conflict.at)} ·{" "}
-                  {conflict.resolution}
+                  · {formatTime(conflict.at)} · {conflict.resolution}
                 </div>
               </div>
             ))}

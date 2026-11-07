@@ -74,6 +74,9 @@ const MEETING_PILL_HEIGHT: f64 = 40.0;
 /// meant for the app underneath. Keep in sync with `.mnu` in
 /// RecordingOverlay.css.
 const MEETING_NUDGE_WIDTH: f64 = 226.0;
+/// The idle disc while hovered: three 40px actions with 6px gaps. Exact fit,
+/// same rule as the disc: no transparent slack to swallow clicks.
+const MEETING_DISC_WIDE: f64 = 132.0;
 
 /// The meeting bar's own `show-overlay` states. The dictation states
 /// ("recording" | "streaming" | "transcribing" | "processing") are unchanged;
@@ -692,7 +695,18 @@ fn apply_overlay_geometry_on_main(
     overlay_window: &tauri::webview::WebviewWindow,
     state: &str,
 ) {
-    let (width, height) = overlay_dimensions(state);
+    apply_overlay_geometry_sized(app_handle, overlay_window, state, overlay_dimensions(state));
+}
+
+/// Same placement as `apply_overlay_geometry_on_main`, with an explicit size:
+/// the idle disc grows while it is hovered without becoming a different state.
+fn apply_overlay_geometry_sized(
+    app_handle: &AppHandle,
+    overlay_window: &tauri::webview::WebviewWindow,
+    state: &str,
+    size: (f64, f64),
+) {
+    let (width, height) = size;
     #[cfg(not(target_os = "windows"))]
     {
         let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
@@ -984,6 +998,11 @@ static MEETING_BAR_MENU_OPEN: AtomicBool = AtomicBool::new(false);
 /// The right-click menu's "hide for an hour" item, handled by the app-wide
 /// menu-event handler in lib.rs.
 pub const MEETING_BAR_HIDE_FOR_HOUR_ID: &str = "meeting_bar_hide_for_hour";
+
+/// The idle disc's menu covers what the bead can start: a meeting (also its
+/// left click), a note, the scratchpad, and hiding the bar for an hour.
+pub const MEETING_BAR_START_ID: &str = "meeting_bar_start";
+pub const MEETING_BAR_NOTE_ID: &str = "meeting_bar_note";
 /// The menu item that opens the Scratchpad (quick note) window.
 pub const MEETING_BAR_SCRATCHPAD_ID: &str = "meeting_bar_scratchpad";
 
@@ -1083,12 +1102,19 @@ fn dock_meeting_bar_on_main(app_handle: &AppHandle, state: &str) {
     let area = monitor_dock_area(&monitor);
     let edge = nearest_overlay_edge(area, center_x, center_y);
 
-    let (width, height) = overlay_dimensions(state);
-    let (x, y) = overlay_position_on_monitor(&monitor, width, height, edge);
     // Already docked here — a programmatic placement, or a drag that ended
-    // where it began: nothing to move, and nothing to pin.
+    // where it began: nothing to move, and nothing to pin. The docked spot is
+    // computed for the footprint the window has right now: the hovered disc
+    // is wider than its resting form, and docking it back to the resting
+    // footprint's spot would collapse it 150 ms after hover opened it.
     let dropped_x = position.x as f64 / scale;
     let dropped_y = position.y as f64 / scale;
+    let (x, y) = overlay_position_on_monitor(
+        &monitor,
+        size.width as f64 / scale,
+        size.height as f64 / scale,
+        edge,
+    );
     if (dropped_x - x).abs() <= 3.0 && (dropped_y - y).abs() <= 3.0 {
         return;
     }
@@ -1144,6 +1170,26 @@ pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
     });
 }
 
+/// Grow or shrink the idle disc into its action row. Hover-driven, and only
+/// while the bar is idle: a dictation or a recording owns the window.
+pub fn set_meeting_bar_expanded(app_handle: &AppHandle, expanded: bool) {
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        if *CURRENT_OVERLAY_STATE.lock().unwrap() != MEETING_BAR_IDLE {
+            return;
+        }
+        let Some(window) = handle.get_webview_window("recording_overlay") else {
+            return;
+        };
+        let size = if expanded {
+            (MEETING_DISC_WIDE, MEETING_DISC_HEIGHT)
+        } else {
+            (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT)
+        };
+        apply_overlay_geometry_sized(&handle, &window, MEETING_BAR_IDLE, size);
+    });
+}
+
 /// The idle disc's right-click menu (the reference's escape hatch). Native, not HTML:
 /// the disc's window is exactly the disc, so a menu could never render inside
 /// it. Pops at the cursor; the item is dispatched by the app-wide menu-event
@@ -1174,23 +1220,49 @@ pub fn show_meeting_bar_menu(app_handle: &AppHandle) {
         strings.scratchpad_open
     };
 
-    let menu = match MenuItem::with_id(
-        app_handle,
-        MEETING_BAR_SCRATCHPAD_ID,
-        &scratchpad_label,
-        true,
-        None::<&str>,
-    )
-    .and_then(|scratchpad| {
-        MenuItem::with_id(
+    let start_label = if strings.meeting_bar_start.is_empty() {
+        english.meeting_bar_start
+    } else {
+        strings.meeting_bar_start
+    };
+    let note_label = if strings.meeting_bar_note.is_empty() {
+        english.meeting_bar_note
+    } else {
+        strings.meeting_bar_note
+    };
+
+    let build = || -> Result<Menu<tauri::Wry>, tauri::Error> {
+        let start = MenuItem::with_id(
+            app_handle,
+            MEETING_BAR_START_ID,
+            &start_label,
+            true,
+            None::<&str>,
+        )?;
+        let note = MenuItem::with_id(
+            app_handle,
+            MEETING_BAR_NOTE_ID,
+            &note_label,
+            true,
+            None::<&str>,
+        )?;
+        let scratchpad = MenuItem::with_id(
+            app_handle,
+            MEETING_BAR_SCRATCHPAD_ID,
+            &scratchpad_label,
+            true,
+            None::<&str>,
+        )?;
+        let hide = MenuItem::with_id(
             app_handle,
             MEETING_BAR_HIDE_FOR_HOUR_ID,
             &label,
             true,
             None::<&str>,
-        )
-        .and_then(|hide| Menu::with_items(app_handle, &[&scratchpad, &hide]))
-    }) {
+        )?;
+        Menu::with_items(app_handle, &[&start, &note, &scratchpad, &hide])
+    };
+    let menu = match build() {
         Ok(menu) => menu,
         Err(error) => {
             log::warn!("Failed to build the meeting bar menu: {error}");

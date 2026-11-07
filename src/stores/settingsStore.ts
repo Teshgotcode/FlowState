@@ -177,14 +177,6 @@ const settingUpdaters: {
   auto_submit_key: (value) =>
     commands.changeAutoSubmitKeySetting(value as string),
   history_limit: (value) => commands.updateHistoryLimit(value as number),
-  mcp_enabled: async (value) => {
-    const result = await commands.changeMcpEnabledSetting(value as boolean);
-    if (result.status === "error") throw new Error(result.error);
-  },
-  mcp_port: async (value) => {
-    const result = await commands.changeMcpPortSetting(value as number);
-    if (result.status === "error") throw new Error(result.error);
-  },
   post_process_enabled: (value) =>
     commands.changePostProcessEnabledSetting(value as boolean),
   post_process_selected_prompt_id: (value) =>

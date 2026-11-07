@@ -666,17 +666,6 @@ pub struct AppSettings {
     /// `overlay_position` (position `none` → style `None`).
     #[serde(default = "default_overlay_style")]
     pub overlay_style: OverlayStyle,
-    /// Whether the local MCP server (Settings → Integrations) is running.
-    /// Off by default: nothing listens until the user turns it on.
-    #[serde(default)]
-    pub mcp_enabled: bool,
-    /// The loopback port the MCP server listens on when enabled.
-    #[serde(default = "default_mcp_port")]
-    pub mcp_port: u16,
-    /// The per-user token guarding the MCP server, generated the first time
-    /// the user enables it. `None` until then.
-    #[serde(default)]
-    pub mcp_token: Option<String>,
 }
 
 fn default_model() -> String {
@@ -746,10 +735,6 @@ fn default_meeting_reminder_minutes() -> Option<u64> {
 /// (research/2026-10-27-systemlyd-tcc.md).
 fn default_record_system_audio() -> bool {
     true
-}
-
-fn default_mcp_port() -> u16 {
-    7869
 }
 
 fn default_overlay_style() -> OverlayStyle {
@@ -1329,9 +1314,6 @@ pub fn get_default_settings() -> AppSettings {
         language_detection: LanguageDetectionMode::default(),
         language_detection_window_secs: default_language_detection_window_secs(),
         overlay_style: default_overlay_style(),
-        mcp_enabled: false,
-        mcp_port: default_mcp_port(),
-        mcp_token: None,
     }
 }
 

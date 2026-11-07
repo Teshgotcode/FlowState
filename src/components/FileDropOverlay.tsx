@@ -39,7 +39,7 @@ export const FileDropOverlay: React.FC<FileDropOverlayProps> = ({
   return (
     <div className="fixed inset-0 z-50 p-3 bg-background/85 pointer-events-none">
       <div className="h-full w-full flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed border-logo-primary text-center">
-        <FlowStateMark width={44} height={47} />
+        <FlowStateMark width={44} height={44} />
         <p className="text-base font-semibold">
           {t("settings.history.dropTitle")}
         </p>

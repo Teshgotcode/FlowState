@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="nb"><head><meta charset="utf-8"><title>FlowState - Diktering</title>
+<style>
+@font-face{font-family:Figtree;src:url("../../src/assets/fonts/figtree-var.ttf") format("truetype");font-weight:300 900}
+@font-face{font-family:"EB Garamond";src:url("../../src/assets/fonts/ebgaramond-var.ttf") format("truetype");font-weight:400 800}
+:root{--ink:#15171d;--ink-2:#555a6a;--ink-3:#878c9c;--line:#e3e6ee;--line-soft:#eef0f5;--desk:#d5d8e2;--side:#e9ecf3;--surface:#fff;--soft:#f8f9fc;--accent:#5b51cf;--accent-ink:#4a41b8;--accent-soft:#eeecfe;--shadow:0 20px 54px rgba(20,22,28,.20),0 2px 6px rgba(20,22,28,.08)}
+body.dark{--ink:#f3f1ea;--ink-2:#b3b7c4;--ink-3:#8a8f9e;--line:#2c313c;--line-soft:#282d37;--desk:#07090d;--side:#12151b;--surface:#161920;--soft:#1c2029;--accent:#b3a9ff;--accent-ink:#c9c1ff;--accent-soft:#272441;--shadow:0 22px 64px rgba(0,0,0,.6)}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{background:var(--desk);font-family:Figtree,system-ui,sans-serif;color:var(--ink);display:flex;align-items:center;justify-content:center;-webkit-font-smoothing:antialiased}
+.window{width:1180px;height:742px;border-radius:13px;overflow:hidden;display:flex;box-shadow:var(--shadow);border:1px solid rgba(0,0,0,.07)}
+body.dark .window{border-color:rgba(255,255,255,.08)}
+.side{width:210px;flex:none;background:var(--side);display:flex;flex-direction:column;padding:14px 10px 12px;border-right:1px solid var(--line)}
+.lights{display:flex;gap:8px;padding:2px 4px 0;height:22px}
+.lights i{width:12px;height:12px;border-radius:50%}
+.lights i:nth-child(1){background:#ff5f57}.lights i:nth-child(2){background:#febc2e}.lights i:nth-child(3){background:#28c840}
+.brand{display:flex;align-items:center;gap:8px;margin:16px 6px 22px}
+.mark{display:flex;gap:3.2px;align-items:flex-end;height:19px}
+.mark i{display:block;width:5.6px;border-radius:3px;background:var(--ink)}
+.mark i:first-child{height:18px}.mark i:last-child{height:11px}
+.brand span{font-size:13.5px;font-weight:650;letter-spacing:-.01em}
+.nav{display:flex;flex-direction:column;gap:2px}
+.row{display:flex;align-items:center;gap:9px;height:29px;padding:0 8px;border-radius:6px;font-size:13px;color:var(--ink-2);letter-spacing:-.005em}
+.row.on{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(20,22,28,.10);position:relative}
+.row.on::before{content:'';position:absolute;left:3px;top:7px;bottom:7px;width:2.5px;border-radius:2px;background:var(--accent)}
+.row svg{width:15px;height:15px;opacity:.7}
+.row.on svg{opacity:1;color:var(--accent)}
+.foot{margin-top:auto}
+.status{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--ink-3);padding:0 9px 8px}
+.status .dot{width:6px;height:6px;border-radius:50%;background:#3fb950}
+.main{flex:1;background:var(--surface);display:flex;flex-direction:column;min-width:0}
+.strip{height:46px;display:flex;align-items:center;justify-content:flex-end;padding:0 26px}
+.search{display:flex;align-items:center;gap:7px;height:28px;padding:0 8px 0 9px;border:1px solid var(--line);border-radius:7px;color:var(--ink-3);font-size:12.5px;min-width:190px;justify-content:space-between}
+.search .l{display:flex;align-items:center;gap:7px}
+.kbd{font-family:"SF Pro Text",system-ui,sans-serif;font-size:11px;color:var(--ink-3);border:1px solid var(--line);border-radius:5px;padding:1px 4px;background:var(--soft)}
+.body{flex:1;padding:2px 44px 0 40px;display:flex;flex-direction:column;min-height:0}
+h1{font-family:"EB Garamond",Georgia,serif;font-weight:600;font-size:31px;line-height:38px;letter-spacing:-.015em}
+.sum{margin-top:6px;font-size:12.5px;line-height:18px;color:var(--ink-2)}
+.sum b{font-weight:600;color:var(--ink)}
+.composer{margin-top:20px;border-radius:12px;background:var(--soft);border:1px solid var(--line);padding:13px 16px 15px;display:flex;flex-direction:column;gap:10px}
+.composer.rec{background:color-mix(in srgb,var(--accent) 6%,var(--soft));border-color:color-mix(in srgb,var(--accent) 58%,var(--line));box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 12%,transparent)}
+.crow{display:flex;align-items:center;gap:11px}
+.mic{width:30px;height:30px;border-radius:8px;flex:none;display:flex;align-items:center;justify-content:center;background:var(--accent);color:#fff}
+body.dark .mic{color:#14122a}
+.state{font-size:12.5px;color:var(--ink-2)}
+.state b{font-variant-numeric:tabular-nums;font-weight:600;color:var(--accent-ink)}
+.wave{display:flex;align-items:center;gap:3px;height:22px;margin-left:2px}
+.keys{margin-left:auto;display:flex;align-items:center}
+.wave i{width:2.5px;border-radius:2px;background:var(--accent);opacity:.85}
+.live{font-family:"EB Garamond",Georgia,serif;font-size:16.5px;line-height:25px;color:var(--ink);max-width:60ch}
+.caret{display:inline-block;width:2px;height:15px;background:var(--accent);vertical-align:-2px;margin-left:2px}
+.notes{margin-top:10px;flex:1;min-height:0;overflow:hidden;display:flex;flex-direction:column}
+.note{display:flex;gap:22px;padding:17px 0 17px 0;border-bottom:1px solid var(--line-soft)}
+.note.sel{background:color-mix(in srgb,var(--accent) 8%,transparent);border-radius:9px;margin:0 -12px 2px;padding:15px 12px 15px 15px;border-bottom-color:transparent;position:relative}
+.note.sel::before{content:'';position:absolute;left:4px;top:13px;bottom:13px;width:3px;border-radius:2px;background:var(--accent)}
+.time{width:52px;flex:none;font-size:12px;font-weight:600;color:var(--ink-2);font-variant-numeric:tabular-nums;padding-top:5px;letter-spacing:.01em}
+.note.sel .time{color:var(--accent-ink)}
+.text{font-family:"EB Garamond",Georgia,serif;font-size:17.5px;font-weight:500;line-height:27px;color:var(--ink);max-width:58ch}
+.tools{display:flex;align-items:center;gap:16px;margin-top:11px}
+.seg{display:inline-flex;padding:2px;border-radius:7px;background:var(--surface);border:1px solid color-mix(in srgb,var(--ink) 10%,var(--line));box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.seg span{font-size:11.5px;padding:3px 9px;border-radius:5px;color:var(--ink-2)}
+.seg span.on{background:var(--accent);color:#fff;font-weight:600}
+body.dark .seg span.on{color:#14122a}
+.act{font-size:11.5px;color:var(--ink-2);padding:3px 2px}
+.footline{height:40px;flex:none;display:flex;align-items:center;gap:7px;font-size:11.5px;color:var(--ink-3);border-top:1px solid var(--line-soft)}
+.footline svg{width:12px;height:12px}
+</style></head>
+<body>
+<div class="window">
+<aside class="side">
+<div class="lights"><i></i><i></i><i></i></div>
+<div class="brand"><span class="mark"><i></i><i></i></span><span>FlowState</span></div>
+<nav class="nav">
+<div class="row on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 15v-3M8 18V8M12 16V6M16 17v-4M20 14v-2"/></svg>Diktering</div>
+<div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="2.6"/></svg>Møter</div>
+<div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 16l5-6 4 4 3-4 6 7"/></svg>Bakgrunn</div>
+<div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M12 4l8 4.5v7L12 20l-8-4.5v-7z"/><path d="M12 12l8-3.5M12 12v8M12 12L4 8.5"/></svg>Bibliotek</div>
+</nav>
+<div class="foot"><div class="status"><span class="dot"></span>Lokal modell · 4,2 GB</div><div class="row"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.9l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.9-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.9.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.9 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.9.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.9-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.9V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>Innstillinger</div></div>
+</aside>
+<main class="main">
+<div class="strip"><div class="search"><span class="l"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>Søk i alt</span><span class="kbd">⌘K</span></div></div>
+<div class="body">
+<h1>Fredag 7. november</h1>
+<p class="sum"><b>918 ord</b> i dag, fire dikteringer. Tolv minutter du slapp å skrive.</p>
+
+<div class="composer rec">
+  <div class="crow">
+    <span class="mic"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></span>
+    <span class="state">Tar opp <b>00:03</b></span>
+    <span class="wave"><i style="height:6px"></i><i style="height:12px"></i><i style="height:19px"></i><i style="height:10px"></i><i style="height:22px"></i><i style="height:14px"></i><i style="height:8px"></i><i style="height:16px"></i><i style="height:11px"></i><i style="height:5px"></i></span>
+    <span class="keys"><span class="kbd">⌥ Space</span></span>
+  </div>
+  <p class="live">Så det jeg tenker er at vi først viser tallene, og så tar vi historien etterpå<span class="caret"></span></p>
+</div>
+
+<div class="notes">
+<article class="note sel">
+  <span class="time">09:12</span>
+  <div>
+    <p class="text">Jeg tror vi underestimerer hvor mye tid det tar å få testet modellen på ekte brukere. Vi bør sette av en hel dag bare til det.</p>
+    <div class="tools"><span class="seg"><span class="on">Råtekst</span><span>Ryddet</span></span><span class="act">Kopier</span><span class="act">Mer</span></div>
+  </div>
+</article>
+<article class="note"><span class="time">08:47</span><p class="text">Husk å sjekke at hypotesen i business model canvas fortsatt stemmer med det vi lærte i intervjuene i forrige uke.</p></article>
+<article class="note"><span class="time">08:03</span><p class="text">Kunden sa at de var fornøyde med prisen, men at de ville ha en tydeligere tidslinje for når vi er ferdige med prototypen.</p></article>
+<article class="note"><span class="time">07:41</span><p class="text">Tre ting jeg må huske: sende regnearket til Mattias, booke møte med Irene, og skrive ferdig utkastet.</p></article>
+<article class="note"><span class="time">07:12</span><p class="text">Idé til innledningen: vi åpner med tallene, ikke med historien. Det er tallene som overrasker dem.</p></article>
+</div>
+
+<div class="footline">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
+  Alt skjer på denne maskinen. Ingenting sendes noe sted.
+</div>
+</div></main></div>
+</body></html>

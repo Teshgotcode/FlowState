@@ -9,7 +9,9 @@
     "cancel": "취소",
     "secureInputWarning": "⚠ Secure Input으로 단축키가 차단됨",
     "meetingBarHideForHour": "1시간 동안 숨기기",
-    "scratchpadOpen": "스크래치패드"
+    "scratchpadOpen": "스크래치패드",
+    "meeting_bar_start": "Start meeting",
+    "meeting_bar_note": "New note"
   },
   "sidebar": {
     "general": "일반",
@@ -20,7 +22,25 @@
     "debug": "디버그",
     "about": "정보",
     "integrations": "Integrations",
-    "sync": "Sync"
+    "sync": "Sync",
+    "mainNav": "Main navigation",
+    "home": "Dictation",
+    "notes": "Scratchpad",
+    "insights": "Insights",
+    "settings": "Settings",
+    "library": "Library",
+    "system": "System",
+    "notetaker": "Notetaker",
+    "dictionary": "Dictionary",
+    "snippets": "Snippets",
+    "style": "Style",
+    "scratchpad": "Scratchpad",
+    "help": "Help",
+    "transforms": "Transforms",
+    "promoTitle": "Get started",
+    "promoShortcuts": "Set up shortcuts",
+    "localModel": "Local model",
+    "promoDocs": "Read the docs"
   },
   "onboarding": {
     "customModelDescription": "공식 지원되지 않음",
@@ -114,7 +134,7 @@
       },
       "es": {
         "title": "ES student? Add the ES package",
-        "description": "Entrepreneurship terms, sample lecturer and project names in one click — edit them later in Settings.",
+        "description": "Entrepreneurship terms, sample lecturer and project names in one click - edit them later in Settings.",
         "enable": "Add ES package",
         "enabled": "Added"
       }
@@ -403,7 +423,7 @@
       },
       "mousePtt": {
         "title": "마우스 푸시 투 토크",
-        "description": "마우스 버튼을 누르고 있는 동안 녹음하고, 떼면 전사합니다 — 키보드 단축키와 같습니다. 클릭은 다른 앱으로 전달되지 않습니다.",
+        "description": "마우스 버튼을 누르고 있는 동안 녹음하고, 떼면 전사합니다 - 키보드 단축키와 같습니다. 클릭은 다른 앱으로 전달되지 않습니다.",
         "options": {
           "off": "끄기",
           "middle": "가운데 버튼",
@@ -446,7 +466,7 @@
       "retentionPlaceholder": "보관 기간 선택...",
       "retentionWarning": "삭제는 영구적이며 되돌릴 수 없습니다. 모든 것은 이 기기에만 저장되며 어디에도 전송되지 않습니다.",
       "systemAudioTitle": "시스템 오디오",
-      "systemAudioDescription": "회의에는 컴퓨터 자체가 재생하는 소리 — Zoom이나 Teams 통화의 상대방 목소리 — 도 마이크 옆 두 번째 트랙으로 녹음되어, 타임스탬프 순서로 전사본에 합쳐집니다. 모든 것은 권한 대화상자 없이 로컬에서 녹음되며, 이 기기를 떠나지 않습니다.",
+      "systemAudioDescription": "회의에는 컴퓨터 자체가 재생하는 소리 - Zoom이나 Teams 통화의 상대방 목소리 - 도 마이크 옆 두 번째 트랙으로 녹음되어, 타임스탬프 순서로 전사본에 합쳐집니다. 모든 것은 권한 대화상자 없이 로컬에서 녹음되며, 이 기기를 떠나지 않습니다.",
       "systemAudioUnsupported": "시스템 오디오에는 macOS 14.4 이상이 필요합니다. 이 Mac은 회의를 마이크로만 녹음합니다."
     },
     "models": {
@@ -478,7 +498,7 @@
           "accelerated": "테스트용 노트북의 그래픽 칩에서 30초 분량의 음성을 텍스트로 옮기는 데 걸리는 시간입니다. 이 컴퓨터에서는 다를 수 있습니다.",
           "cpu": "테스트용 노트북의 프로세서에서 30초 분량의 음성을 텍스트로 옮기는 데 걸리는 시간입니다. 이 컴퓨터에서는 다를 수 있습니다."
         },
-        "marks": "? 아직 측정되지 않음. — 해당 언어를 인식하지 못함."
+        "marks": "? 아직 측정되지 않음. - 해당 언어를 인식하지 못함."
       },
       "retiredNotice": {
         "title": "이전 모델은 더 이상 FlowState에서 작동하지 않습니다",
@@ -564,7 +584,7 @@
       "overlay": {
         "style": {
           "title": "오버레이",
-          "description": "녹음 오버레이를 선택하세요. '없음'은 오버레이를 숨기고, '간단'은 작은 알약 모양 표시를 보여주며, '실시간'은 말하는 동안 전사 결과를 실시간으로 표시합니다(스트리밍 지원 모델만 해당 — 모델 선택기에서 '스트리밍' 배지를 확인하세요). Linux에서는 '없음'을 권장합니다.",
+          "description": "녹음 오버레이를 선택하세요. '없음'은 오버레이를 숨기고, '간단'은 작은 알약 모양 표시를 보여주며, '실시간'은 말하는 동안 전사 결과를 실시간으로 표시합니다(스트리밍 지원 모델만 해당 - 모델 선택기에서 '스트리밍' 배지를 확인하세요). Linux에서는 '없음'을 권장합니다.",
           "options": {
             "none": "없음",
             "minimal": "간단",
@@ -873,7 +893,7 @@
         "regenerate": "다시 생성",
         "generating": "회의 노트 생성 중…",
         "cancel": "취소",
-        "draftLabel": "{{model}}이(가) 로컬에서 생성함 — 사용 전에 확인하세요",
+        "draftLabel": "{{model}}이(가) 로컬에서 생성함 - 사용 전에 확인하세요",
         "summary": "요약",
         "decisions": "결정 사항",
         "actionItems": "실행 항목",
@@ -912,7 +932,7 @@
         "placeholder": "회의에 대해 무엇이든 물어보세요…",
         "ask": "질문",
         "searching": "전사 내용을 읽는 중…",
-        "generatedLabel": "{{model}}이(가) 로컬에서 생성 — 전사 내용과 대조해 확인하세요",
+        "generatedLabel": "{{model}}이(가) 로컬에서 생성 - 전사 내용과 대조해 확인하세요",
         "showInTranscript": "전사 내용에서 이 부분 보기",
         "notFound": "전사 내용에 이에 대한 답이 없습니다.",
         "cancelled": "질문이 취소되었습니다.",
@@ -1117,36 +1137,17 @@
       "esLine": "Built for NTNU Entreprenørskolen"
     },
     "integrations": {
-      "mcp": {
-        "title": "MCP Server",
-        "enable": {
-          "label": "Local MCP server",
-          "description": "Let Claude Desktop and Cursor read your meeting notes over MCP, on this machine only. The server listens on 127.0.0.1 and requires a token."
-        },
-        "statusChecking": "Checking…",
-        "statusRunning": "Running on 127.0.0.1:{{port}}",
-        "statusNotRunning": "Not running",
-        "port": {
-          "label": "Port"
-        },
-        "portInvalid": "Enter a port between 1 and 65535.",
-        "token": {
-          "label": "Token"
-        },
-        "tokenReveal": "Show token",
-        "tokenHide": "Hide token",
-        "tokenCopy": "Copy token",
-        "tokenCopied": "Token copied",
-        "tokenRegenerate": "Generate a new token",
-        "tokenHint": "Shown only now — copy it right away. MCP clients sign every request with it.",
-        "setupHint": "Connect Claude Desktop or Cursor via MCP; the README has the exact setup."
+      "cli": {
+        "title": "Command line",
+        "copy": "Copy to Claude",
+        "copied": "Copied to clipboard"
       }
     },
     "sync": {
       "title": "Sync between your Macs",
       "enabled": {
         "title": "Sync on",
-        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs — no account, no cloud server."
+        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs - no account, no cloud server."
       },
       "explain": {
         "offline": "Everything is plain file copy through a folder you pick (iCloud Drive, Dropbox, OneDrive or a USB stick), so it works offline and on school networks where machines cannot reach each other.",
@@ -1189,14 +1190,22 @@
       },
       "toasts": {
         "done": "Synced ({{history}} history entries imported)",
-        "doneWithConflicts": "Synced with {{count}} conflict(s) — both versions were kept, see the conflict log",
+        "doneWithConflicts": "Synced with {{count}} conflict(s) - both versions were kept, see the conflict log",
         "folderSet": "Shared folder set",
         "needFolder": "Pick a shared folder first",
         "exported": "Bundle exported",
         "imported": "Imported {{words}} words, {{snippets}} snippets, {{history}} history entries",
-        "importedConflicts": "{{count}} conflict(s) while importing — both versions were kept"
+        "importedConflicts": "{{count}} conflict(s) while importing - both versions were kept"
       }
-    }
+    },
+    "tab.general": "General",
+    "tab.models": "Models",
+    "tab.postprocessing": "Post-processing",
+    "tab.integrations": "Integrations",
+    "tab.sync": "Sync",
+    "tab.advanced": "Advanced",
+    "tab.about": "About",
+    "tab.debug": "Debug"
   },
   "footer": {
     "checkingUpdates": "업데이트 확인 중...",
@@ -1254,11 +1263,22 @@
       "system": "시스템",
       "light": "밝게",
       "dark": "어둡게"
+    },
+    "accent": {
+      "title": "Accent",
+      "description": "Pick a colour for buttons, active rows and highlights.",
+      "bla": "Blue",
+      "rosa": "Pink",
+      "gronn": "Green",
+      "rod": "Red",
+      "gul": "Yellow-orange",
+      "egen": "Custom",
+      "hue": "Hue"
     }
   },
   "overlay": {
     "transcribing": "텍스트로 변환 중...",
-    "processing": "처리 중...",
+    "processing": "Writing",
     "loadingModel": "모델 로딩 중...",
     "meeting": {
       "start": "회의 시작",
@@ -1268,11 +1288,12 @@
       "stillGoing": "회의가 아직 진행 중인가요?"
     },
     "command": "명령",
-    "commandFallback": "선택 없음 — 일반 받아쓰기",
+    "commandFallback": "선택 없음 - 일반 받아쓰기",
     "style": {
       "menuTitle": "Style",
-      "chipTitle": "Dictation style — right-click to switch"
-    }
+      "chipTitle": "Dictation style - right-click to switch"
+    },
+    "quickNote": "New note"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}}이(가) 단축키 1개를 차단하고 있을 수 있습니다",
@@ -1287,8 +1308,254 @@
   },
   "scratchpad": {
     "title": "스크래치패드",
-    "placeholder": "받아쓰기나 직접 입력 — 메모는 여기에 로컬로 저장됩니다.",
+    "placeholder": "받아쓰기나 직접 입력 - 메모는 여기에 로컬로 저장됩니다.",
     "copy": "복사",
     "copied": "복사됨"
+  },
+  "home": {
+    "overline": "Welcome back",
+    "title": "Your dictation desk",
+    "subtitle": "Hold the shortcut, speak, and the text lands where your cursor was. Everything stays on this machine.",
+    "holdToTalk": "Hold to dictate",
+    "readyTitle": "Ready when you are",
+    "readyBody": "The microphone is idle. Press the shortcut anywhere to start.",
+    "wordsToday": "words today",
+    "statStreak": "Day streak",
+    "statStreakHint": "Best run: {{longest}} days",
+    "statWords": "Words dictated",
+    "statWordsHint": "All time",
+    "statDictations": "Dictations",
+    "statDictationsHint": "Since you started",
+    "statBusiest": "Busiest day",
+    "statBusiestHint": "No dictations in two weeks",
+    "historyHeading": "Your dictations",
+    "searchPlaceholder": "Search everything you said",
+    "clearSearch": "Clear search",
+    "emptyTitle": "No dictations yet",
+    "emptyBody": "Press the shortcut, say a sentence, and it shows up here with the words counted.",
+    "noResults": "Nothing matched",
+    "noResultsBody": "Try a shorter phrase, or a word you remember saying.",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "meeting": "Meeting",
+    "polished": "Polished",
+    "copy": "Copy text",
+    "copyFailed": "Could not copy the text",
+    "loading": "Loading your dictations…",
+    "loadMore": "Load more",
+    "emptyTranscript": "(no words in this recording)",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "bannerTitle": "Talk instead of typing",
+    "bannerBody": "Hold the shortcut, say the sentence, let go. The text lands where the cursor was, in whatever app you are in.",
+    "bannerCta": "Show me how",
+    "railWords": "total words",
+    "railDictations": "dictations",
+    "railStreak": "day streak",
+    "voiceTitle": "Your voice profile",
+    "voiceBody": "Every word is processed on this machine.",
+    "voicePill": "{{used}} active days",
+    "play": "Play",
+    "feedback": "Send feedback",
+    "more": "More",
+    "delete": "Delete",
+    "audioMissing": "No audio saved for this one",
+    "deleteFailed": "Could not delete",
+    "dismiss": "Dismiss"
+  },
+  "notes": {
+    "overline": "Scratchpad",
+    "title": "Somewhere to think out loud",
+    "subtitle": "Draft, paste, dictate. Notes save themselves and never leave the machine.",
+    "newNote": "New note",
+    "untitled": "Untitled note",
+    "titlePlaceholder": "Give the note a name",
+    "bodyPlaceholder": "Start writing, or press the dictation shortcut and talk.",
+    "searchPlaceholder": "Search notes",
+    "emptyTitle": "No notes yet",
+    "emptyBody": "A scratchpad for the half-formed thought, the meeting prep, the line you want to keep.",
+    "emptyList": "Nothing here yet",
+    "emptyListBody": "Your notes will be listed here, newest first.",
+    "noResults": "No notes matched",
+    "noResultsBody": "Try another word from the note.",
+    "delete": "Delete note",
+    "deleteTitle": "Delete this note?",
+    "deleteBody": "The text disappears for good. There is no undo.",
+    "cancel": "Cancel",
+    "confirmDelete": "Yes, delete it",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "edited": "Edited {{when}}",
+    "created": "Created {{when}}",
+    "untitledShort": "Untitled",
+    "back": "Back to notes",
+    "bannerBody": "A to-do list, a message you want to polish, a half-formed idea. Write it here first, then take it where it belongs.",
+    "bannerCta": "Start a new note",
+    "bannerTitle": "For the thoughts you want to keep",
+    "beta": "Beta",
+    "latest": "Recent",
+    "pin": "Pin note",
+    "refresh": "Refresh",
+    "unpin": "Unpin note",
+    "words": "{{count}} words"
+  },
+  "insights": {
+    "overline": "Insights",
+    "title": "You have been flowing",
+    "subtitle": "How you actually use your voice, counted locally on this machine.",
+    "range30": "Last 30 days",
+    "range90": "Last 90 days",
+    "rangeAll": "All time",
+    "cardStreak": "Day streak",
+    "cardStreakHint": "Longest: {{longest}} days",
+    "cardWords": "Words dictated",
+    "cardWordsHint": "Across {{days}} active days",
+    "cardDictations": "Dictations",
+    "cardDictationsHint": "About {{average}} words each",
+    "cardAverage": "Words per dictation",
+    "cardAverageHint": "Longer than a paragraph",
+    "cardPeak": "Peak hour",
+    "cardPeakHint": "When your voice does the work",
+    "cardLanguages": "Languages",
+    "cardLanguagesHint": "Picked up by the model",
+    "activityTitle": "Words per day",
+    "activitySubtitle": "Each bar is one day. Gaps are days off.",
+    "rhythmTitle": "Your rhythm",
+    "rhythmSubtitle": "When in the day you dictate most.",
+    "topDayTitle": "Best day",
+    "topDayWords_one": "{{count}} word in one day",
+    "topDayWords_other": "{{count}} words in one day",
+    "topDayEmpty": "Dictate for a few days and your best day shows up here.",
+    "emptyTitle": "Insights are building",
+    "emptyBody": "Once you have dictated a handful of times, this page turns into a picture of your week.",
+    "emptyCta": "Go dictate something",
+    "hourShort": "{{hour}}:00",
+    "peakHourValue": "{{hour}}:00",
+    "rangeLabel": "Range",
+    "less": "Less",
+    "more": "More",
+    "todayLabel": "Today",
+    "chartPeak": "Peak: {{count}} words · {{date}}",
+    "rhythmPeak": "Peak: {{hour}}:00",
+    "screenTitle": "Insights",
+    "tabUsage": "Usage",
+    "tabVoice": "Your voice",
+    "tabTop": "Top",
+    "cardWordsTotal": "Total words",
+    "cardActiveDays": "Active days",
+    "sourceMeeting": "Meetings",
+    "sourceDictation": "Dictation",
+    "activityCard": "Activity",
+    "topLongest": "Longest dictation",
+    "topHourCount_one": "{{count}} dictation",
+    "topHourCount_other": "{{count}} dictations",
+    "voiceEmpty": "No languages picked up yet. The model catches them as you dictate.",
+    "cardLastWeek": "Last 7 days",
+    "cardWordsToday": "Words today"
+  },
+  "topbar": {
+    "toggleSidebar": "Show or hide the sidebar"
+  },
+  "notetaker": {
+    "subtitle": "The meetings you recorded, with length and transcript.",
+    "emptyTitle": "No meetings yet",
+    "emptyBody": "Start one from the bead or the shortcut, and it lands here.",
+    "start": "Start Notetaker",
+    "today": "Today",
+    "noMeetingsToday": "No meetings today",
+    "refresh": "Refresh",
+    "tabNotes": "Past notes",
+    "tabFolders": "Folders",
+    "search": "Search notes",
+    "overview": "Overview",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "folder": "Folder",
+    "noFolder": "No folder",
+    "noNotes": "No notes in this folder yet",
+    "noFolders": "No folders yet. Make one to group notes by project.",
+    "pickNote": "Pick a note to read it.",
+    "deleteFolder": "Delete folder",
+    "folderCount_one": "{{count}} note",
+    "folderCount_other": "{{count}} notes"
+  },
+  "dictionary": {
+    "subtitle": "Words and names the transcriber should spell your way."
+  },
+  "snippets": {
+    "subtitle": "Say a trigger, get a fixed block of text."
+  },
+  "style": {
+    "subtitle": "Per-app writing rules the post-processor applies."
+  },
+  "help": {
+    "subtitle": "How to dictate, and where the rest lives.",
+    "howTitle": "Three steps",
+    "step1": "Hold the shortcut.",
+    "step2": "Say the sentence.",
+    "step3": "Release, and the text lands where the cursor is.",
+    "github": "Source on GitHub",
+    "issues": "Report a bug",
+    "localOnly": "Everything happens on this machine. Nothing is sent out."
+  },
+  "transforms": {
+    "subtitle": "Saved instructions that rewrite a dictation after it lands.",
+    "library": "Your transforms",
+    "new": "New transform",
+    "name": "Name",
+    "namePlaceholder": "For example: Bullet points",
+    "prompt": "Instruction",
+    "promptPlaceholder": "Turn the text into short bullet points. Keep every fact.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "active": "In use",
+    "use": "Use",
+    "edit": "Edit",
+    "delete": "Delete",
+    "empty": "No transforms yet",
+    "emptyHint": "Make one when you keep rewriting the same thing by hand."
+  },
+  "diktering": {
+    "loading": "Reading your history...",
+    "wordsToday_one": "word today",
+    "wordsToday_other": "words today",
+    "dictations_one": "one dictation",
+    "dictations_other": "{{count}} dictations",
+    "minutesSaved_one": "A minute you did not have to type.",
+    "minutesSaved_other": "{{count}} minutes you did not have to type.",
+    "recording": "Recording",
+    "hint": "Speak, and I write",
+    "raw": "Raw",
+    "polished": "Polished",
+    "copy": "Copy",
+    "remove": "Delete",
+    "empty": "Nothing yet. Hold ⌥ Space and say something.",
+    "local": "Nothing leaves this machine."
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Jump to, or do something",
+    "noResults": "No matches",
+    "toggleTheme": "Toggle light and dark",
+    "themeHint": "Appearance",
+    "nextAccent": "Next accent colour",
+    "accentHint": "Appearance",
+    "startMeeting": "Start a meeting"
+  },
+  "meeting": {
+    "externalNotice": {
+      "title": "Sent to an external provider",
+      "body": "The meeting text is sent to {{provider}} ({{host}}) to write the note. Nothing is sent until you press OK.",
+      "remember": "Don't show this again",
+      "ok": "OK"
+    },
+    "detected": {
+      "title": "Looks like a meeting",
+      "body": "Another app is using the microphone. Want to record it?",
+      "start": "Start notetaker",
+      "dismiss": "Not now"
+    }
   }
 }

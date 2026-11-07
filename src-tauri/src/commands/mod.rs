@@ -1,7 +1,6 @@
 pub mod audio;
 pub mod export;
 pub mod history;
-pub mod mcp;
 pub mod meeting;
 pub mod models;
 pub mod scratchpad;
@@ -210,4 +209,13 @@ pub fn complete_onboarding(app: AppHandle) -> Result<(), String> {
     settings.onboarding_completed = true;
     crate::settings::write_settings(&app, settings);
     Ok(())
+}
+
+/// The running app binary's path, for the Integrations panel's CLI examples.
+#[specta::specta]
+#[tauri::command]
+pub fn get_cli_info() -> Result<String, String> {
+    std::env::current_exe()
+        .map(|path| path.to_string_lossy().to_string())
+        .map_err(|e| format!("Failed to resolve the executable path: {e}"))
 }

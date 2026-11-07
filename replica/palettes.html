@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<title>FlowState — palettvalg</title>
+<style>
+  :root { color-scheme: light dark; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    color: var(--foreground, #111);
+    background: transparent;
+  }
+  h1 { font-size: 15px; font-weight: 650; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 12px; color: var(--muted-foreground, #666); margin: 0 0 14px; }
+  .opt {
+    background: var(--card, #f6f6f6);
+    border-radius: var(--radius, 10px);
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .head { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+  .num { font: 600 11px/1 ui-monospace, monospace; color: var(--muted-foreground, #777); }
+  .name { font-size: 14px; font-weight: 650; }
+  .src { font: 500 10px/1 ui-monospace, monospace; color: var(--muted-foreground, #777); }
+  .blurb { font-size: 11.5px; color: var(--muted-foreground, #666); margin-left: auto; }
+  .pair { display: flex; gap: 10px; flex-wrap: wrap; }
+  .mock {
+    flex: 1 1 260px;
+    min-width: 250px;
+    height: 154px;
+    border-radius: 10px;
+    background: var(--bg);
+    display: flex;
+    overflow: hidden;
+    position: relative;
+    border: 1px solid rgba(128,128,128,.18);
+  }
+  .side { width: 46px; padding: 8px 5px; display: flex; flex-direction: column; gap: 5px; }
+  .dot { height: 5px; border-radius: 3px; background: var(--ink); opacity: .35; }
+  .dot.on { opacity: .8; background: var(--soft); }
+  .main { flex: 1; margin: 6px 6px 6px 0; border-radius: 8px; background: var(--surf); padding: 9px; display: flex; flex-direction: column; gap: 7px; }
+  .ttl { height: 7px; width: 54%; border-radius: 3px; background: var(--ink); opacity: .85; }
+  .banner { border-radius: 6px; background: var(--soft); padding: 7px; display: flex; flex-direction: column; gap: 5px; position: relative; }
+  .banner .l1 { height: 6px; width: 62%; border-radius: 3px; background: var(--ink); opacity: .8; }
+  .banner .l2 { height: 4px; width: 80%; border-radius: 2px; background: var(--ink); opacity: .45; }
+  .banner .cta { margin-top: 2px; height: 12px; width: 46px; border-radius: 4px; background: var(--pri); }
+  .row { display: flex; gap: 6px; align-items: center; border-top: 1px solid var(--soft); padding-top: 6px; }
+  .t { width: 22px; height: 4px; border-radius: 2px; background: var(--ink); opacity: .4; }
+  .x { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .x i { height: 4px; border-radius: 2px; background: var(--ink); opacity: .55; }
+  .x i:last-child { width: 64%; opacity: .35; }
+  .rail { position: absolute; right: 12px; top: 24px; width: 44px; display: flex; flex-direction: column; gap: 4px; }
+  .rail b { display: block; height: 16px; border-radius: 4px; background: var(--soft); }
+  .rail b:first-child { border-left: 2px solid var(--cel); }
+  .tag { position: absolute; left: 54px; top: 8px; font: 600 8px/1 ui-monospace, monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--ink); opacity: .5; }
+  .roles { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; align-items: flex-end; }
+  .sw { display: flex; flex-direction: column; gap: 3px; }
+  .chip { width: 34px; height: 15px; border-radius: 4px; border: 1px solid rgba(128,128,128,.25); }
+  .hex { font: 500 8px/1 ui-monospace, monospace; white-space: nowrap; color: var(--muted-foreground, #777); }
+  .ratio { margin-left: auto; display: flex; gap: 6px; }
+  .badge { font: 600 9px/1 ui-monospace, monospace; padding: 4px 5px; border-radius: 4px; background: var(--secondary, #ececec); color: var(--muted-foreground, #555); }
+  .badge.bad { background: var(--destructive-surface, #fde8e8); color: var(--destructive, #b91c1c); }
+  .badge.good { background: var(--success-surface, #e7f6ec); color: var(--success, #166534); }
+  .foot { font-size: 10.5px; color: var(--muted-foreground, #777); margin-top: 10px; }
+  .appicon { flex: 0 0 auto; width: 96px; height: 96px; border-radius: 22px; display: flex; align-items: center; justify-content: center; align-self: center; }
+  .appicon svg { width: 52px; height: 52px; }
+</style>
+</head>
+<body>
+  <h1>Seks paletter, samme skjerm</h1>
+  <p class="lede">Hver palett er hentet fra en eksisterende samling, ikke funnet opp her. Tallene er WCAG-kontrast målt på lerret og panel. Velg et nummer, så bygger jeg det inn i token-ene.</p>
+  <div id="root"></div>
+<script>
+const OPTIONS = [
+  {
+    n: "00", name: "Slik er den nå", src: "egen", blurb: "furu og jade, varmt papir",
+    L: { bg: "#f4f1e8", surf: "#fffdf8", soft: "#efece2", ink: "#0e1a17", pri: "#0f6b5a", acc: "#c2410c", cel: "#b7791f" },
+    D: { bg: "#0a1210", surf: "#121b18", soft: "#18241f", ink: "#e9efea", pri: "#3fbfa2", acc: "#e2663a", cel: "#e0a63c" }
+  },
+  {
+    n: "01", name: "Everforest", src: "sainnhe / everforest", blurb: "grønn, varm, papir mykt",
+    L: { bg: "#efebd4", surf: "#fdf6e3", soft: "#f4f0d9", ink: "#5c6a72", pri: "#8da101", acc: "#f57d26", cel: "#dfa000" },
+    D: { bg: "#1e2326", surf: "#2d353b", soft: "#343f44", ink: "#d3c6aa", pri: "#a7c080", acc: "#e69875", cel: "#dbbc7f" }
+  },
+  {
+    n: "02", name: "Catppuccin Latte / Mocha", src: "catppuccin", blurb: "pastell, myk, teal aksent",
+    L: { bg: "#e6e9ef", surf: "#eff1f5", soft: "#dce0e8", ink: "#4c4f69", pri: "#179299", acc: "#fe640b", cel: "#df8e1d" },
+    D: { bg: "#181825", surf: "#1e1e2e", soft: "#313244", ink: "#cdd6f4", pri: "#94e2d5", acc: "#fab387", cel: "#f9e2af" }
+  },
+  {
+    n: "03", name: "Rosé Pine Dawn / Rosé Pine", src: "rose-pine", blurb: "dempet rosa, pine og gull",
+    L: { bg: "#f2e9e1", surf: "#faf4ed", soft: "#fff9f2", ink: "#575279", pri: "#286983", acc: "#d7827e", cel: "#ea9d34" },
+    D: { bg: "#191724", surf: "#1f1d2e", soft: "#26233a", ink: "#e0def4", pri: "#9ccfd8", acc: "#ebbcba", cel: "#f6c177" }
+  },
+  {
+    n: "04", name: "Nord", src: "nordtheme", blurb: "kald blå, rolig, arktisk",
+    L: { bg: "#e5e9f0", surf: "#eceff4", soft: "#d8dee9", ink: "#2e3440", pri: "#5e81ac", acc: "#bf616a", cel: "#ebcb8b" },
+    D: { bg: "#2e3440", surf: "#3b4252", soft: "#434c5e", ink: "#eceff4", pri: "#88c0d0", acc: "#d08770", cel: "#ebcb8b" }
+  },
+  {
+    n: "05", name: "Gruvbox", src: "morhetz / gruvbox", blurb: "retro, varm, markert",
+    L: { bg: "#fbf1c7", surf: "#f9f5d7", soft: "#ebdbb2", ink: "#3c3836", pri: "#427b58", acc: "#af3a03", cel: "#b57614" },
+    D: { bg: "#282828", surf: "#32302f", soft: "#3c3836", ink: "#ebdbb2", pri: "#8ec07c", acc: "#fe8019", cel: "#fabd2f" }
+  }
+];
+
+const lum = (hex) => {
+  const c = hex.replace("#", "");
+  const v = [0, 2, 4].map((i) => {
+    const s = parseInt(c.slice(i, i + 2), 16) / 255;
+    return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4);
+  });
+  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+};
+const ratio = (a, b) => {
+  const l1 = lum(a), l2 = lum(b);
+  return ((Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05)).toFixed(1);
+};
+const mock = (p, label) => `
+  <div class="mock" style="--bg:${p.bg};--surf:${p.surf};--soft:${p.soft};--ink:${p.ink};--pri:${p.pri};--acc:${p.acc};--cel:${p.cel}">
+    <span class="tag">${label}</span>
+    <div class="side">
+      <div class="dot on"></div><div class="dot"></div><div class="dot"></div>
+      <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+    </div>
+    <div class="main">
+      <div class="ttl"></div>
+      <div class="banner">
+        <div class="l1"></div><div class="l2"></div><div class="cta"></div>
+      </div>
+      <div class="row"><span class="t"></span><span class="x"><i></i><i></i></span></div>
+      <div class="row"><span class="t"></span><span class="x"><i></i><i></i></span></div>
+    </div>
+    <div class="rail"><b></b><b></b><b></b></div>
+  </div>`;
+const swatches = (p) => [["lerret", p.bg], ["panel", p.surf], ["flate", p.soft], ["tekst", p.ink], ["handling", p.pri], ["aksent", p.acc], ["feiring", p.cel]]
+  .map(([k, v]) => `<span class="sw"><span class="chip" style="background:${v}"></span><span class="hex">${v}</span></span>`).join("");
+
+document.getElementById("root").innerHTML = OPTIONS.map((o) => {
+  const lt = ratio(o.L.ink, o.L.bg), dt = ratio(o.D.ink, o.D.bg);
+  const badge = (r) => `<span class="badge ${Number(r) >= 7 ? "good" : Number(r) >= 4.5 ? "" : "bad"}">${r}:1</span>`;
+  return `<section class="opt">
+    <div class="head">
+      <span class="num">${o.n}</span>
+      <span class="name">${o.name}</span>
+      <span class="src">${o.src}</span>
+      <span class="blurb">${o.blurb}</span>
+    </div>
+    <div class="pair">${mock(o.L, "lys")}${mock(o.D, "mørk")}<div class="appicon" style="background:${o.L.pri};color:${o.L.surf}"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4.6" y="6.8" width="5.6" height="12.4" rx="2.8"/><rect x="14" y="11.6" width="5.6" height="7.6" rx="2.8"/></svg></div></div>
+    <div class="roles">
+      ${swatches(o.L)}
+      <span class="ratio">lys ${badge(lt)} mørk ${badge(dt)}</span>
+    </div>
+    <div class="roles" style="margin-top:6px">
+      ${swatches(o.D)}
+    </div>
+  </section>`;
+}).join("");
+</script>
+</body>
+</html>

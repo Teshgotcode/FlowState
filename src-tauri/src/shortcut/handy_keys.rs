@@ -513,11 +513,7 @@ pub fn ensure_state(app: &AppHandle) -> Result<(), String> {
 }
 
 /// Register a hotkey by id and string on the handy-keys manager.
-pub fn register_raw(
-    app: &AppHandle,
-    binding_id: &str,
-    hotkey_string: &str,
-) -> Result<(), String> {
+pub fn register_raw(app: &AppHandle, binding_id: &str, hotkey_string: &str) -> Result<(), String> {
     let state = app
         .try_state::<HandyKeysState>()
         .ok_or("HandyKeysState not initialized")?;

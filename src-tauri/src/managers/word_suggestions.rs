@@ -66,17 +66,15 @@ const STOPWORDS: &[&str] = &[
     "the", "and", "for", "are", "but", "not", "you", "all", "can", "was", "one", "our", "out",
     "get", "has", "him", "his", "how", "its", "new", "now", "see", "two", "who", "did", "put",
     "say", "she", "too", "use", "that", "with", "have", "this", "will", "your", "from", "they",
-    "know", "want", "been", "good", "much", "some", "time", "very", "when", "come", "here",
-    "just", "like", "long", "make", "many", "over", "such", "take", "than", "them", "well",
-    "were", "what", "then", "also", "about", "after", "into", "more", "only", "other", "same",
+    "know", "want", "been", "good", "much", "some", "time", "very", "when", "come", "here", "just",
+    "like", "long", "make", "many", "over", "such", "take", "than", "them", "well", "were", "what",
+    "then", "also", "about", "after", "into", "more", "only", "other", "same",
     // Norwegian/Danish/Swedish
     "og", "er", "det", "som", "en", "den", "til", "at", "av", "har", "ikke", "med", "på", "for",
     "han", "hun", "vi", "de", "var", "meg", "deg", "kan", "skal", "ble", "får", "eller", "men",
-    "så", "da", "nå", "her", "där", "och", "att", "ett", "bara", "väl",
-    // German/Dutch
+    "så", "da", "nå", "her", "där", "och", "att", "ett", "bara", "väl", // German/Dutch
     "der", "die", "das", "und", "ist", "nicht", "mit", "auf", "für", "von", "dem", "den", "een",
-    "het", "van", "dat", "niet", "met", "voor",
-    // French/Spanish/Italian/Portuguese
+    "het", "van", "dat", "niet", "met", "voor", // French/Spanish/Italian/Portuguese
     "les", "des", "une", "est", "que", "qui", "pour", "avec", "dans", "sur", "son", "ses", "del",
     "los", "las", "por", "con", "para", "una", "como", "che", "gli", "non", "per",
 ];
@@ -253,10 +251,7 @@ fn fnv1a(original: &str, corrected: &str) -> u64 {
         hash ^= u64::from(byte);
         hash = hash.wrapping_mul(0x0000_0100_0000_01b3);
     };
-    original
-        .as_bytes()
-        .iter()
-        .for_each(|byte| fold(*byte));
+    original.as_bytes().iter().for_each(|byte| fold(*byte));
     fold(0);
     corrected.as_bytes().iter().for_each(|byte| fold(*byte));
     hash

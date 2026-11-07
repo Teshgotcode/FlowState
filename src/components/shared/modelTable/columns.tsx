@@ -236,7 +236,7 @@ export const Values: React.FC<{
         {...vt?.("s")}
         className="whitespace-nowrap text-label tabular-nums text-ink-3"
       >
-        {sizeMb > 0 ? formatModelSize(sizeMb) : "—"}
+        {sizeMb > 0 ? formatModelSize(sizeMb) : "-"}
       </span>
     </span>
   );

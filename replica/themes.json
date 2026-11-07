@@ -1,0 +1,122 @@
+{
+  "bla": {
+    "name": "Blå",
+    "why": "rolig, minst påtrengende",
+    "L": {
+      "bg": "#f6f7fb",
+      "surf": "#ffffff",
+      "soft": "#eef1f8",
+      "ink": "#16192b",
+      "acc": "#b9c8fa",
+      "deep": "#3b5bdb",
+      "wash": "#eef2ff",
+      "onAcc": "#16192b"
+    },
+    "D": {
+      "bg": "#0e1018",
+      "surf": "#141824",
+      "soft": "#1c2130",
+      "ink": "#e8ecf7",
+      "acc": "#a9bcf7",
+      "deep": "#c7d4fb",
+      "wash": "#1a2033",
+      "onAcc": "#0e1018"
+    }
+  },
+  "rosa": {
+    "name": "Rosa",
+    "why": "varmest, mest personlig",
+    "L": {
+      "bg": "#fbf6f8",
+      "surf": "#fffdfe",
+      "soft": "#f8edf2",
+      "ink": "#241820",
+      "acc": "#f7bcd9",
+      "deep": "#be185d",
+      "wash": "#fff0f6",
+      "onAcc": "#241820"
+    },
+    "D": {
+      "bg": "#140f13",
+      "surf": "#1b151a",
+      "soft": "#251d23",
+      "ink": "#f4e9ef",
+      "acc": "#f4b6cf",
+      "deep": "#f9cfe1",
+      "wash": "#2a1c24",
+      "onAcc": "#140f13"
+    }
+  },
+  "gronn": {
+    "name": "Grønn",
+    "why": "den dere har, men renere",
+    "L": {
+      "bg": "#f5f8f5",
+      "surf": "#fdfefd",
+      "soft": "#ecf3ed",
+      "ink": "#16211a",
+      "acc": "#a7dfb8",
+      "deep": "#237032",
+      "wash": "#ebfbee",
+      "onAcc": "#16211a"
+    },
+    "D": {
+      "bg": "#0d1210",
+      "surf": "#131a16",
+      "soft": "#1b241f",
+      "ink": "#e7f0e9",
+      "acc": "#a3dcb4",
+      "deep": "#c6ecd1",
+      "wash": "#17251c",
+      "onAcc": "#0d1210"
+    }
+  },
+  "rod": {
+    "name": "Rød",
+    "why": "sterkest, tydeligst på opptak",
+    "L": {
+      "bg": "#faf6f6",
+      "surf": "#fffdfd",
+      "soft": "#f7ecec",
+      "ink": "#241819",
+      "acc": "#f5b3b3",
+      "deep": "#c92a2a",
+      "wash": "#fff5f5",
+      "onAcc": "#241819"
+    },
+    "D": {
+      "bg": "#140f0f",
+      "surf": "#1b1515",
+      "soft": "#251d1d",
+      "ink": "#f4eaea",
+      "acc": "#f3b0b0",
+      "deep": "#f8cfcf",
+      "wash": "#2a1a1a",
+      "onAcc": "#140f0f"
+    }
+  },
+  "gul": {
+    "name": "Guloransje",
+    "why": "varmest, krever mest av teksten",
+    "L": {
+      "bg": "#faf8f2",
+      "surf": "#fffdf8",
+      "soft": "#f6f0e2",
+      "ink": "#221c14",
+      "acc": "#f8cf8a",
+      "deep": "#c2410c",
+      "wash": "#fff8e8",
+      "onAcc": "#221c14"
+    },
+    "D": {
+      "bg": "#12100c",
+      "surf": "#191612",
+      "soft": "#221e17",
+      "ink": "#f3eee4",
+      "acc": "#f7cd85",
+      "deep": "#f8dfae",
+      "wash": "#241d12",
+      "onAcc": "#12100c"
+    }
+  }
+}

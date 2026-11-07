@@ -67,7 +67,7 @@ export const KeyboardDiagnostic: React.FC = () => {
             pid: r.culprit_pid,
           })
         : t("settings.debug.keyboardDiagnostic.holderUnknown");
-    return `${state} — ${holder}`;
+    return `${state} - ${holder}`;
   };
 
   return (

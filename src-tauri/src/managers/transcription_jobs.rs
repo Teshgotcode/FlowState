@@ -360,8 +360,7 @@ impl TranscriptionJobManager {
         // exactly as it was.
         if entry.source == Some(crate::managers::history::HistorySource::Meeting) {
             if let Some(system) = entry.metadata.as_ref().and_then(|m| m.system_audio.clone()) {
-                if let Err(e) =
-                    self.transcribe_system_track(&hm, &tm, entry.id, &system, cancelled)
+                if let Err(e) = self.transcribe_system_track(&hm, &tm, entry.id, &system, cancelled)
                 {
                     warn!(
                         "Entry {}'s system audio track was not transcribed: {}",

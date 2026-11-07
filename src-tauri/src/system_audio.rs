@@ -32,16 +32,13 @@ use anyhow::{anyhow, Context, Result};
 /// output sample rate. Delivered on a writer thread, never on the
 /// realtime IO thread, so the receiver may lock, write files and log.
 #[cfg(target_os = "macos")]
-pub type FramesSink =
-    std::sync::Arc<dyn Fn(&[f32]) + Send + Sync + 'static>;
+pub type FramesSink = std::sync::Arc<dyn Fn(&[f32]) + Send + Sync + 'static>;
 
 #[cfg(target_os = "macos")]
 mod imp {
     use super::*;
     use cidre::{
-        arc,
-        cat,
-        cf,
+        arc, cat, cf,
         core_audio::{
             self as ca, aggregate_device_keys as agg, device_start, hardware::StartedDevice,
             AggregateDevice, Process, System, TapDesc,
@@ -219,7 +216,9 @@ mod imp {
             let output_uid = System::default_output_device()
                 .ok()
                 .and_then(|d| d.uid().ok())
-                .ok_or_else(|| anyhow!("This Mac has no output device, so there is no system audio to capture"))?;
+                .ok_or_else(|| {
+                    anyhow!("This Mac has no output device, so there is no system audio to capture")
+                })?;
 
             let uuid = cf::Uuid::new().to_cf_string();
             let name = cf::str!(c"FlowState System Audio");
@@ -239,9 +238,8 @@ mod imp {
                     uuid.as_ref(),
                 ],
             );
-            let mut agg = AggregateDevice::with_desc(&dict).context(
-                "CoreAudio refused to create the system audio aggregate device",
-            )?;
+            let mut agg = AggregateDevice::with_desc(&dict)
+                .context("CoreAudio refused to create the system audio aggregate device")?;
 
             let mut taps = cf::ArrayOf::<cf::String>::new()
                 .copy_mut()
@@ -265,8 +263,8 @@ mod imp {
             let proc_id = agg
                 .create_io_proc_id::<2, 1, *mut Shared>(io_proc, Some(&mut raw))
                 .context("The aggregate device refused the capture callback")?;
-            let started =
-                device_start(agg, Some(proc_id)).context("The system audio capture did not start")?;
+            let started = device_start(agg, Some(proc_id))
+                .context("The system audio capture did not start")?;
 
             // Draining thread: the only place the sink runs.
             let writer = {
@@ -274,24 +272,22 @@ mod imp {
                 let frames = Arc::clone(&frames);
                 std::thread::Builder::new()
                     .name("flowstate-system-audio".into())
-                    .spawn(move || {
-                        loop {
-                            let chunk = {
-                                let mut buffer = shared.buffer.lock().unwrap();
-                                loop {
-                                    if !buffer.is_empty() {
-                                        break;
-                                    }
-                                    if shared.done.load(Ordering::Acquire) {
-                                        return;
-                                    }
-                                    buffer = shared.drained.wait(buffer).unwrap();
+                    .spawn(move || loop {
+                        let chunk = {
+                            let mut buffer = shared.buffer.lock().unwrap();
+                            loop {
+                                if !buffer.is_empty() {
+                                    break;
                                 }
-                                std::mem::take(&mut *buffer)
-                            };
-                            frames.fetch_add(chunk.len(), Ordering::Relaxed);
-                            sink(&chunk);
-                        }
+                                if shared.done.load(Ordering::Acquire) {
+                                    return;
+                                }
+                                buffer = shared.drained.wait(buffer).unwrap();
+                            }
+                            std::mem::take(&mut *buffer)
+                        };
+                        frames.fetch_add(chunk.len(), Ordering::Relaxed);
+                        sink(&chunk);
                     })
                     .context("Failed to start the system audio writer thread")?
             };
@@ -401,7 +397,10 @@ mod spike_tests {
     #[test]
     #[ignore]
     fn system_audio_tcc_spike() {
-        println!("macOS: {}", cidre::ns::ProcessInfo::current().os_version_string());
+        println!(
+            "macOS: {}",
+            cidre::ns::ProcessInfo::current().os_version_string()
+        );
         let sck_granted = unsafe { CGPreflightScreenCaptureAccess() };
         println!("ScreenCaptureKit preflight (Screen Recording granted, no dialog): {sck_granted}");
 
@@ -409,7 +408,10 @@ mod spike_tests {
         // permission would gate. No dialog may appear, and it must succeed.
         let tap = SystemTap::prepare()
             .expect("the process tap must be creatable with no permission dialog");
-        println!("process tap created with no permission dialog at {} Hz", tap.sample_rate());
+        println!(
+            "process tap created with no permission dialog at {} Hz",
+            tap.sample_rate()
+        );
         drop(tap);
 
         // The capture pipeline end to end, when the machine can run it.
@@ -443,7 +445,13 @@ mod spike_tests {
             captured.extend(chunk);
         }
         let peak = captured.iter().fold(0f32, |m, s| m.max(s.abs()));
-        println!("process tap captured {} frames in 3s, peak {peak:.4}", captured.len());
-        assert!(!captured.is_empty(), "the tap's IO cycle must deliver frames");
+        println!(
+            "process tap captured {} frames in 3s, peak {peak:.4}",
+            captured.len()
+        );
+        assert!(
+            !captured.is_empty(),
+            "the tap's IO cycle must deliver frames"
+        );
     }
 }

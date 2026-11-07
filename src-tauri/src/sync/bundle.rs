@@ -61,7 +61,12 @@ fn sha256_hex(bytes: &[u8]) -> String {
     format!("{:x}", hasher.finalize())
 }
 
-pub fn export_bundle(path: &Path, data: &BundleData, device_name: &str, app_version: &str) -> Result<(), String> {
+pub fn export_bundle(
+    path: &Path,
+    data: &BundleData,
+    device_name: &str,
+    app_version: &str,
+) -> Result<(), String> {
     let mut members: HashMap<String, Vec<u8>> = HashMap::new();
 
     let excerpt_bytes = serde_json::to_vec_pretty(&data.excerpt).map_err(|e| e.to_string())?;
@@ -168,7 +173,9 @@ pub fn import_bundle(path: &Path, staging_dir: &Path) -> Result<BundleImport, St
     .trim()
     .to_string();
     if !seal.eq_ignore_ascii_case(&sha256_hex(manifest_bytes)) {
-        return Err("bundle seal does not match the manifest; it is damaged or tampered with".into());
+        return Err(
+            "bundle seal does not match the manifest; it is damaged or tampered with".into(),
+        );
     }
 
     for (name, expected) in &manifest.members {
@@ -176,7 +183,9 @@ pub fn import_bundle(path: &Path, staging_dir: &Path) -> Result<BundleImport, St
             .get(name)
             .ok_or_else(|| format!("bundle is missing {name}"))?;
         if sha256_hex(bytes) != *expected {
-            return Err(format!("{name} does not match its checksum; refusing to import"));
+            return Err(format!(
+                "{name} does not match its checksum; refusing to import"
+            ));
         }
     }
 
@@ -190,9 +199,7 @@ pub fn import_bundle(path: &Path, staging_dir: &Path) -> Result<BundleImport, St
         let words: Vec<super::WordItem> =
             serde_json::from_slice(bytes).map_err(|e| format!("dictionary.json: {e}"))?;
         for word in words {
-            items
-                .words
-                .insert(super::word_key(&word.word), word);
+            items.words.insert(super::word_key(&word.word), word);
         }
     }
     if let Some(bytes) = raw.get(SNIPPETS_MEMBER) {
@@ -224,13 +231,13 @@ pub fn import_bundle(path: &Path, staging_dir: &Path) -> Result<BundleImport, St
     for name in audio_members {
         let bytes = raw.get(&name).ok_or_else(|| format!("missing {name}"))?;
         // Zip-slip guard: only write inside the staging dir.
-        let relative = name
-            .strip_prefix(AUDIO_PREFIX)
-            .unwrap_or(&name)
-            .to_string();
+        let relative = name.strip_prefix(AUDIO_PREFIX).unwrap_or(&name).to_string();
         let safe = Path::new(&relative);
         if safe.components().any(|c| {
-            matches!(c, std::path::Component::ParentDir | std::path::Component::RootDir)
+            matches!(
+                c,
+                std::path::Component::ParentDir | std::path::Component::RootDir
+            )
         }) {
             return Err(format!("bundle has an unsafe path: {name}"));
         }

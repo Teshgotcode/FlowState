@@ -77,8 +77,6 @@ rusqlite = { version = "0.37", features = ["bundled"] }
 sha2 = "0.10"
 # Reading/writing the signed FlowState sync bundle (export/import between machines).
 zip = { version = "4.6.1", default-features = false, features = ["deflate"] }
-# OS entropy for the MCP server's per-user token (no clock-based randomness).
-getrandom = "0.2"
 libc = "0.2"
 # Every model runs through transcribe-cpp (GGUF/ggml, native backends).
 # Per-platform backend features are added in the target tables (Cargo unifies
@@ -169,6 +167,9 @@ objc2 = "0.6"
 objc2-foundation = "0.3"
 objc2-app-kit = { version = "0.3", features = ["NSRunningApplication", "NSWorkspace"] }
 objc2-service-management = "0.3.2"
+# Meeting detection: is the default input device in use by another app?
+objc2-core-audio = "0.3"
+objc2-core-audio-types = "0.3"
 # CoreAudio process-tap bindings (S-5 system audio): CATapDescription,
 # AudioHardwareCreateProcessTap and the private aggregate device that reads
 # the tap, the route the TCC spike measured as permission-free. MIT/Apache;

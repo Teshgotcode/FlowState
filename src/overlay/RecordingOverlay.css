@@ -10,12 +10,8 @@
      near-white surface, below the 3:1 WCAG minimum for a state indicator. The
      tint keeps the orange recognisable and clears 3:1; dark mode uses the pure
      accent (6:1 on navy). */
-  --light-s-accent: color-mix(
-    in srgb,
-    var(--flow-accent) 85%,
-    var(--flow-navy)
-  );
-  --dark-s-accent: var(--flow-accent);
+  --light-s-accent: color-mix(in srgb, var(--flow-ember) 85%, var(--flow-ink));
+  --dark-s-accent: var(--flow-ember);
   --s-accent: var(--light-s-accent);
   /* Light/dark pairs for the tokens that can't flip through a shared palette
      variable on their own. Same shape as theme.css: each value is written once
@@ -67,10 +63,10 @@
      the card's max footprint (--ov-work-w for compact, --ov-open-w for Live),
      since the card is anchored flush to the screen edge in CSS. Keep overlay.rs
      in sync when these change. */
-  --ov-rest-w: 172px; /* resting compact pill (minimal, recording) -- roomy enough
+  --ov-rest-w: 118px; /* resting compact pill (minimal, recording) -- roomy enough
                          for the English working label before the grow starts */
   --ov-pill-w: 184px; /* base width / Live pill before it opens or collapses */
-  --ov-work-w: 216px; /* working pill (transcribing / polishing) -- wide enough to
+  --ov-work-w: 132px; /* working pill (transcribing / polishing) -- wide enough to
                          center longer labels; shared by Live (collapsed) + minimal */
   --ov-open-w: 392px; /* Live panel, expanded */
   --ov-base-h: 40px; /* control-row height (.sbase) */
@@ -138,14 +134,19 @@
   justify-content: center;
   cursor: pointer;
   flex: none;
+  /* Discreet at rest (D5): near-solid until the pointer is on it. The
+     shadow is native (set_shadow in overlay.rs), not CSS. */
+  opacity: 0.9;
   animation: mpop 320ms cubic-bezier(0.22, 1, 0.36, 1);
   transition:
     transform 160ms ease,
-    color 160ms ease;
+    color 160ms ease,
+    opacity 160ms ease;
 }
 .mdisc:hover {
   transform: scale(1.08);
   color: var(--s-accent);
+  opacity: 1;
 }
 .mdisc:active {
   transform: scale(0.94);
@@ -164,6 +165,49 @@
     opacity: 1;
     transform: none;
   }
+}
+
+/* The idle disc, hovered: three 40px actions with 6px gaps = 132px, the
+   window's own footprint (MEETING_DISC_WIDE). Exact fit, no transparent slack. */
+.midle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: max-content;
+}
+.mact {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--s-surface);
+  border: 1px solid var(--s-border);
+  color: var(--s-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex: none;
+  transition:
+    transform 140ms ease,
+    color 140ms ease,
+    background 140ms ease;
+}
+.mact:hover {
+  transform: translateY(-1px);
+  color: var(--s-accent);
+  background: var(--s-surface-soft);
+}
+.mact:active {
+  transform: scale(0.94);
+}
+.mact svg {
+  width: 17px;
+  height: 17px;
+  display: block;
+}
+.mact.primary {
+  color: var(--s-accent);
+  border-color: var(--s-accent);
 }
 
 .mcard {
@@ -725,4 +769,62 @@
 .sstyle-item.active {
   color: var(--s-accent);
   font-weight: 600;
+}
+
+
+/* Compact dictation pill: a thin, barely-there sliver, closer to the reference
+   than a card. Overrides the shared .scard footprint for the compact form only;
+   the Live panel keeps its own size. */
+.scard.compact {
+  height: 19px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--s-surface) 58%, transparent);
+  border-color: color-mix(in srgb, var(--s-border) 40%, transparent);
+  backdrop-filter: blur(8px) saturate(130%);
+  -webkit-backdrop-filter: blur(8px) saturate(130%);
+  box-shadow: none;
+  opacity: 0.7;
+  transition: opacity 160ms ease;
+}
+.scard.compact:hover {
+  opacity: 1;
+}
+.scard.compact .sbase {
+  height: 19px;
+  padding: 0 9px;
+  gap: 5px;
+}
+.scard.compact .sdot {
+  width: 4px;
+  height: 4px;
+}
+/* A style chip would break the sliver: the pill stays waveform-only. */
+.scard.compact .sstyle-chip {
+  display: none;
+}
+.scard.compact .swave {
+  height: 10px;
+  gap: 2px;
+  padding-right: 3px;
+}
+.scard.compact .swave i {
+  width: 1.5px;
+  max-height: 8px;
+  border-radius: 1px;
+}
+.scard.compact .sx {
+  width: 13px;
+  height: 13px;
+}
+.scard.compact .sx svg {
+  width: 7px;
+  height: 7px;
+}
+.scard.compact .swork-label {
+  font-size: 10.5px;
+  letter-spacing: 0.01em;
+}
+.scard.compact .sspinner {
+  width: 8px;
+  height: 8px;
 }

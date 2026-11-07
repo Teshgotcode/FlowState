@@ -831,7 +831,9 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
                 variant="primary"
                 size="sm"
                 onClick={() => void saveCorrection()}
-                disabled={savingCorrection || draft === entry.transcription_text}
+                disabled={
+                  savingCorrection || draft === entry.transcription_text
+                }
               >
                 {t("settings.history.correctSave")}
               </Button>
@@ -846,66 +848,69 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             </div>
           </div>
         ) : (
-        <p
-          ref={textRef}
-          className={`italic text-sm w-full ${
-            retrying
-              ? ""
-              : hasTranscription
-                ? "text-text select-text cursor-text whitespace-pre-wrap break-words"
-                : "text-ink-3"
-          }`}
-          style={
-            retrying
-              ? { animation: "transcribe-pulse 3s ease-in-out infinite" }
-              : folded
-                ? {
-                    display: "-webkit-box",
-                    WebkitLineClamp: FOLDED_LINES,
-                    WebkitBoxOrient: "vertical",
-                    overflow: "hidden",
-                  }
-                : undefined
-          }
-        >
-          {retrying && (
-            <style>{`
+          <p
+            ref={textRef}
+            className={`italic text-sm w-full ${
+              retrying
+                ? ""
+                : hasTranscription
+                  ? "text-text select-text cursor-text whitespace-pre-wrap break-words"
+                  : "text-ink-3"
+            }`}
+            style={
+              retrying
+                ? { animation: "transcribe-pulse 3s ease-in-out infinite" }
+                : folded
+                  ? {
+                      display: "-webkit-box",
+                      WebkitLineClamp: FOLDED_LINES,
+                      WebkitBoxOrient: "vertical",
+                      overflow: "hidden",
+                    }
+                  : undefined
+            }
+          >
+            {retrying && (
+              <style>{`
             @keyframes transcribe-pulse {
               0%, 100% { color: var(--color-ink-3); }
               50% { color: var(--color-text); }
             }
           `}</style>
-          )}
-          {retrying ? (
-            progressText
-          ) : hasTranscription ? (
-            highlight ? (
-              <HighlightedText
-                text={entry.transcription_text}
-                query={highlight}
-              />
+            )}
+            {retrying ? (
+              progressText
+            ) : hasTranscription ? (
+              highlight ? (
+                <HighlightedText
+                  text={entry.transcription_text}
+                  query={highlight}
+                />
+              ) : (
+                entry.transcription_text
+              )
+            ) : entry.source_name ? (
+              // Cancelled, interrupted by a quit, or failed.
+              t("settings.history.notTranscribed")
             ) : (
-              entry.transcription_text
-            )
-          ) : entry.source_name ? (
-            // Cancelled, interrupted by a quit, or failed.
-            t("settings.history.notTranscribed")
-          ) : (
-            t("settings.history.transcriptionFailed")
+              t("settings.history.transcriptionFailed")
+            )}
+          </p>
+        )}
+        {hasTranscription &&
+          !retrying &&
+          !editing &&
+          (expanded || overflows) && (
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="text-xs font-medium text-ink-3 hover:text-logo-primary cursor-pointer"
+            >
+              {expanded
+                ? t("settings.history.showLess")
+                : t("settings.history.showMore")}
+            </button>
           )}
-        </p>
-        )}
-        {hasTranscription && !retrying && !editing && (expanded || overflows) && (
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            className="text-xs font-medium text-ink-3 hover:text-logo-primary cursor-pointer"
-          >
-            {expanded
-              ? t("settings.history.showLess")
-              : t("settings.history.showMore")}
-          </button>
-        )}
       </div>
 
       <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full" />

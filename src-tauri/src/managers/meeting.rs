@@ -400,9 +400,9 @@ impl SystemTrack {
                 return SystemOutcome::Failed("the system audio thread panicked".into());
             }
         }
-        self.outcome
-            .recv()
-            .unwrap_or(SystemOutcome::Failed("the system audio thread reported nothing".into()))
+        self.outcome.recv().unwrap_or(SystemOutcome::Failed(
+            "the system audio thread reported nothing".into(),
+        ))
     }
 }
 
@@ -508,9 +508,11 @@ fn system_track_worker(
             };
             let working = match WorkingFile::create(&working_path, tap.sample_rate()) {
                 Ok(working) => Arc::new(Mutex::new(working)),
-                Err(e) => break 'capture SystemOutcome::Failed(format!(
-                    "the system working file could not be created: {e}"
-                )),
+                Err(e) => {
+                    break 'capture SystemOutcome::Failed(format!(
+                        "the system working file could not be created: {e}"
+                    ))
+                }
             };
             let sink: FramesSink = {
                 let working = Arc::clone(&working);
@@ -724,8 +726,9 @@ impl MeetingManager {
             app,
             &settings,
             started,
-            hm.recordings_dir()
-                .join(format!("flowstate-meeting-{stamp}-system.wav.{WORKING_SUFFIX}")),
+            hm.recordings_dir().join(format!(
+                "flowstate-meeting-{stamp}-system.wav.{WORKING_SUFFIX}"
+            )),
         );
         let status = session.state.status(Instant::now());
         drop(session);

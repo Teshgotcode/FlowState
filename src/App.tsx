@@ -17,7 +17,6 @@ import {
 import { ModelStateEvent, RecordingErrorEvent } from "./lib/types/events";
 import "./App.css";
 import SecureInputWarning from "./components/SecureInputWarning";
-import Footer from "./components/footer";
 import { OnboardingFlow } from "./components/onboarding/OnboardingFlow";
 import ModelMigration from "./components/onboarding/ModelMigration";
 import {
@@ -32,6 +31,28 @@ import { DebugSettings, ModelsSettings } from "./components/settings";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { FileDropOverlay } from "./components/FileDropOverlay";
 import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
+import { DictationHome } from "./components/home/DictationHome";
+import { NotesPage } from "./components/notes/NotesPage";
+import { NotetakerPage } from "./components/notetaker/NotetakerPage";
+import { DictionaryPage } from "./components/dictionary/DictionaryPage";
+import { SnippetsPage } from "./components/snippets/SnippetsPage";
+import { TransformsPage } from "./components/transforms/TransformsPage";
+import { TopBar } from "./components/TopBar";
+import { CommandPalette } from "./components/command/CommandPalette";
+import { MeetingDetectedBanner } from "./components/home/MeetingDetectedBanner";
+import { StylePage } from "./components/style/StylePage";
+import { HelpPage } from "./components/help/HelpPage";
+import { SettingsHub } from "./components/settings/SettingsHub";
+import {
+  GeneralSettings,
+  AdvancedSettings,
+  AboutSettings,
+  HistorySettings,
+  IntegrationsSettings,
+  PostProcessingSettings,
+  SyncSettings,
+} from "./components/settings";
+import { InsightsPage } from "./components/insights/InsightsPage";
 import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
@@ -46,6 +67,34 @@ type OnboardingStep =
   | "migration"
   | "replaceModel"
   | "done";
+
+/** The working screens render full-bleed; everything else is settings. */
+const renderDailyContent = (
+  section: SidebarSection,
+  onSectionChange: (section: SidebarSection) => void,
+) => {
+  if (section === "notes") return <NotesPage />;
+  if (section === "insights") return <InsightsPage />;
+  if (section === "notetaker") return <NotetakerPage />;
+  if (section === "dictionary") return <DictionaryPage />;
+  if (section === "snippets") return <SnippetsPage />;
+  if (section === "transforms") return <TransformsPage />;
+  if (section === "style") return <StylePage />;
+  if (section === "help") return <HelpPage />;
+  return <DictationHome onOpenShortcuts={() => onSectionChange("general")} />;
+};
+
+const DAILY_SECTIONS: SidebarSection[] = [
+  "home",
+  "notes",
+  "insights",
+  "notetaker",
+  "dictionary",
+  "snippets",
+  "style",
+  "transforms",
+  "help",
+];
 
 const renderSettingsContent = (
   section: SidebarSection,
@@ -68,10 +117,13 @@ const renderSettingsContent = (
       />
     );
   }
-
-  const ActiveComponent =
-    SECTIONS_CONFIG[section]?.component || SECTIONS_CONFIG.general.component;
-  return <ActiveComponent />;
+  if (section === "postprocessing") return <PostProcessingSettings />;
+  if (section === "integrations") return <IntegrationsSettings />;
+  if (section === "sync") return <SyncSettings />;
+  if (section === "advanced") return <AdvancedSettings />;
+  if (section === "about") return <AboutSettings />;
+  if (section === "history") return <HistorySettings />;
+  return <GeneralSettings />;
 };
 
 function App() {
@@ -84,8 +136,9 @@ function App() {
   // Set when a returning user's selected model is a retired (ONNX) model that
   // is still on disk: they must update it before the app can transcribe.
   const [migrationModelId, setMigrationModelId] = useState<string | null>(null);
-  const [currentSection, setCurrentSection] =
-    useState<SidebarSection>("general");
+  const [currentSection, setCurrentSection] = useState<SidebarSection>("home");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [paletteOpen, setPaletteOpen] = useState(false);
   const showHistory = useCallback(() => setCurrentSection("history"), []);
   const { settings, updateSetting } = useSettings();
   const direction = getLanguageDirection(i18n.language);
@@ -104,6 +157,22 @@ function App() {
 
   useEffect(() => {
     checkOnboardingStatus();
+  }, []);
+
+  // Cmd+K (Ctrl+K) opens the palette; Escape closes it.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        setPaletteOpen((open) => !open);
+      }
+      if ((event.metaKey || event.ctrlKey) && event.key === "\\") {
+        event.preventDefault();
+        setSidebarOpen((open) => !open);
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
   }, []);
 
   // Initialize RTL direction when language changes
@@ -182,6 +251,16 @@ function App() {
   // The technical error detail is logged to flowstate.log on the Rust side
   // (see actions.rs `error!("Failed to paste transcription: ...")`),
   // so we show a localized, user-friendly message here instead of the raw error.
+  // The bead's menu can ask for a section (it opens the app on Notes).
+  useEffect(() => {
+    const unlisten = listen<string>("navigate-section", (event) => {
+      setCurrentSection(event.payload as SidebarSection);
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, []);
+
   useEffect(() => {
     const unlisten = listen("paste-error", () => {
       toast.error(t("errors.pasteFailedTitle"), {
@@ -419,38 +498,59 @@ function App() {
     content = (
       <div
         dir={direction}
-        className="h-screen flex flex-col select-none cursor-default"
+        data-tauri-drag-region
+        className="h-screen flex flex-col select-none cursor-default bg-background text-text"
       >
         <ErrorBoundary context="What's New">
           <WhatsNewGate />
         </ErrorBoundary>
-        {/* Main content area that takes remaining space */}
+        <TopBar
+          onOpenSettings={() => setCurrentSection("general")}
+          onToggleSidebar={() => setSidebarOpen((open) => !open)}
+        />
         <div className="flex-1 flex overflow-hidden">
-          <Sidebar
-            activeSection={currentSection}
-            onSectionChange={setCurrentSection}
-          />
-          {/* Scrollable content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
-              {/* Models fills the window: its table scrolls, not the page. */}
-              <div
-                className={`flex flex-col items-center p-4 gap-4 ${currentSection === "models" ? "h-full" : ""}`}
-              >
-                <SecureInputWarning />
-                {renderSettingsContent(
-                  currentSection,
-                  setOnboardingPreview,
-                  runOnboarding,
-                  runModelMigration,
-                  setCurrentSection,
-                )}
-              </div>
+          {sidebarOpen && (
+            <Sidebar
+              activeSection={currentSection}
+              onSectionChange={setCurrentSection}
+            />
+          )}
+          <main className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 overflow-y-auto mb-[8px] me-[8px] rounded-t-[24px] rounded-b-[16px] bg-surface px-[40px] pt-[40px]">
+              <MeetingDetectedBanner />
+              {DAILY_SECTIONS.includes(currentSection) ? (
+                renderDailyContent(currentSection, setCurrentSection)
+              ) : (
+                <div
+                  ref={settingsScrollRef}
+                  className={`mx-auto flex w-full flex-col items-center gap-4 pb-10 ${
+                    currentSection === "models" ? "h-full" : "max-w-[860px]"
+                  }`}
+                >
+                  <SecureInputWarning />
+                  <SettingsHub
+                    active={currentSection}
+                    onSelect={(id) => setCurrentSection(id as SidebarSection)}
+                    render={(id) =>
+                      renderSettingsContent(
+                        id as SidebarSection,
+                        setOnboardingPreview,
+                        runOnboarding,
+                        runModelMigration,
+                        setCurrentSection,
+                      )
+                    }
+                  />
+                </div>
+              )}
             </div>
-          </div>
+          </main>
         </div>
-        {/* Fixed footer at bottom */}
-        <Footer onShowHistory={showHistory} />
+        <CommandPalette
+          open={paletteOpen}
+          onClose={() => setPaletteOpen(false)}
+          onNavigate={setCurrentSection}
+        />
         <FileDropOverlay onDropped={showHistory} />
       </div>
     );

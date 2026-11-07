@@ -9,7 +9,9 @@
     "cancel": "Avbryt",
     "secureInputWarning": "⚠ Kortkommandon blockeras av Secure Input",
     "meetingBarHideForHour": "Dölj i 1 timme",
-    "scratchpadOpen": "Snabbanteckning"
+    "scratchpadOpen": "Snabbanteckning",
+    "meeting_bar_start": "Start meeting",
+    "meeting_bar_note": "New note"
   },
   "sidebar": {
     "general": "Allmänt",
@@ -20,7 +22,25 @@
     "debug": "Felsökning",
     "about": "Om",
     "integrations": "Integrations",
-    "sync": "Sync"
+    "sync": "Sync",
+    "mainNav": "Main navigation",
+    "home": "Dictation",
+    "notes": "Scratchpad",
+    "insights": "Insights",
+    "settings": "Settings",
+    "library": "Library",
+    "system": "System",
+    "notetaker": "Notetaker",
+    "dictionary": "Dictionary",
+    "snippets": "Snippets",
+    "style": "Style",
+    "scratchpad": "Scratchpad",
+    "help": "Help",
+    "transforms": "Transforms",
+    "promoTitle": "Get started",
+    "promoShortcuts": "Set up shortcuts",
+    "localModel": "Local model",
+    "promoDocs": "Read the docs"
   },
   "onboarding": {
     "customModelDescription": "Stöds inte officiellt",
@@ -114,7 +134,7 @@
       },
       "es": {
         "title": "ES-student? Slå på ES-paketet",
-        "description": "Entreprenörskaptermer, exempel på föreläsare och projektnamn med ett klick — du kan redigera dem i inställningarna.",
+        "description": "Entreprenörskaptermer, exempel på föreläsare och projektnamn med ett klick - du kan redigera dem i inställningarna.",
         "enable": "Slå på ES-paketet",
         "enabled": "Tillagt"
       }
@@ -403,7 +423,7 @@
       },
       "mousePtt": {
         "title": "Mus som push-to-talk",
-        "description": "Håll en musknapp intryckt för att spela in, släpp för att transkribera — som tangentbordsgenvägen. Klicket skickas inte vidare till andra appar.",
+        "description": "Håll en musknapp intryckt för att spela in, släpp för att transkribera - som tangentbordsgenvägen. Klicket skickas inte vidare till andra appar.",
         "options": {
           "off": "Av",
           "middle": "Mittenknapp",
@@ -438,15 +458,15 @@
       "reminderHour1": "1 timme",
       "reminderHours2": "2 timmar",
       "retentionTitle": "Möteslagring",
-      "retentionDescription": "Hur länge avslutade möten sparas. Möten som är äldre än den valda perioden raderas permanent — ljud, utskrift och anteckningar tillsammans — när FlowState startar och en gång om dagen medan den körs. Dikteringar påverkas inte.",
+      "retentionDescription": "Hur länge avslutade möten sparas. Möten som är äldre än den valda perioden raderas permanent - ljud, utskrift och anteckningar tillsammans - när FlowState startar och en gång om dagen medan den körs. Dikteringar påverkas inte.",
       "retentionForever": "För alltid",
       "retentionDays7": "7 dagar",
       "retentionDays30": "30 dagar",
       "retentionDays90": "90 dagar",
       "retentionPlaceholder": "Välj lagringstid...",
-      "retentionWarning": "Radering är permanent och kan inte ångras. Allt sparas bara på den här enheten — ingenting skickas någon annanstans.",
+      "retentionWarning": "Radering är permanent och kan inte ångras. Allt sparas bara på den här enheten - ingenting skickas någon annanstans.",
       "systemAudioTitle": "Systemljud",
-      "systemAudioDescription": "Möten spelar även in det maskinen själv spelar upp — motparten i ett Zoom- eller Teams-möte — som ett andra spår bredvid mikrofonen, och väver samman det i transkriptet efter tidsstämpel. Allt spelas in lokalt, utan någon behörighetsdialog, och ingenting lämnar den här datorn.",
+      "systemAudioDescription": "Möten spelar även in det maskinen själv spelar upp - motparten i ett Zoom- eller Teams-möte - som ett andra spår bredvid mikrofonen, och väver samman det i transkriptet efter tidsstämpel. Allt spelas in lokalt, utan någon behörighetsdialog, och ingenting lämnar den här datorn.",
       "systemAudioUnsupported": "Systemljud kräver macOS 14.4 eller nyare. Den här Macen spelar in möten endast med mikrofonen."
     },
     "models": {
@@ -478,7 +498,7 @@
           "accelerated": "Hur lång tid 30 sekunders tal tar att skriva ut på grafikchippet i vår testdator. Den här datorn kan skilja sig.",
           "cpu": "Hur lång tid 30 sekunders tal tar att skriva ut på processorn i vår testdator. Den här datorn kan skilja sig."
         },
-        "marks": "? har inte mätts ännu. — hör inte det språket."
+        "marks": "? har inte mätts ännu. - hör inte det språket."
       },
       "retiredNotice": {
         "title": "Gamla modeller fungerar inte längre med FlowState",
@@ -564,7 +584,7 @@
       "overlay": {
         "style": {
           "title": "Overlay",
-          "description": "Välj inspelningsöverlägget: ”Ingen” döljer det, ”Minimal” visar en kompakt indikator, ”Live” visar transkriberingen i realtid medan du talar (endast modeller med streamingstöd — leta efter Streaming-märket i modellväljaren). På Linux rekommenderas ”Ingen”.",
+          "description": "Välj inspelningsöverlägget: ”Ingen” döljer det, ”Minimal” visar en kompakt indikator, ”Live” visar transkriberingen i realtid medan du talar (endast modeller med streamingstöd - leta efter Streaming-märket i modellväljaren). På Linux rekommenderas ”Ingen”.",
           "options": {
             "none": "Ingen",
             "minimal": "Minimal",
@@ -706,7 +726,7 @@
       },
       "voiceCommands": {
         "title": "Tecken- och emoji-kommandon",
-        "description": "Säg skiljetecken och emoji högt — «komma», «ny rad», «smiley» — så skrivs de som tecken. Endast norska och engelska; ord som ingår i en mening lämnas orörda."
+        "description": "Säg skiljetecken och emoji högt - «komma», «ny rad», «smiley» - så skrivs de som tecken. Endast norska och engelska; ord som ingår i en mening lämnas orörda."
       },
       "chineseScript": {
         "title": "Kinesisk skrift",
@@ -873,7 +893,7 @@
         "regenerate": "Skapa igen",
         "generating": "Skapar mötesanteckning …",
         "cancel": "Avbryt",
-        "draftLabel": "Genererad lokalt av {{model}} — kontrollera före användning",
+        "draftLabel": "Genererad lokalt av {{model}} - kontrollera före användning",
         "summary": "Sammanfattning",
         "decisions": "Beslut",
         "actionItems": "Åtgärder",
@@ -912,7 +932,7 @@
         "placeholder": "Fråga något om mötet…",
         "ask": "Fråga",
         "searching": "Läser transkriptionen…",
-        "generatedLabel": "Genererat lokalt av {{model}} — kontrollera mot transkriptionen",
+        "generatedLabel": "Genererat lokalt av {{model}} - kontrollera mot transkriptionen",
         "showInTranscript": "Visa den här delen i transkriptionen",
         "notFound": "Transkriptionen svarar inte på det.",
         "cancelled": "Frågan avbröts.",
@@ -1058,7 +1078,7 @@
       },
       "keyboardDiagnostic": {
         "title": "Tangentbordsdiagnostik",
-        "description": "Kontrollerar om tangentbordshändelser når FlowState. Endast antalet händelser registreras — aldrig vilka tangenter du trycker på.",
+        "description": "Kontrollerar om tangentbordshändelser når FlowState. Endast antalet händelser registreras - aldrig vilka tangenter du trycker på.",
         "run": "Kör 10 s diagnostik",
         "running": "Lyssnar… tryck på ditt kortkommando några gånger (t.ex. Option+Space)",
         "secureInputLabel": "Secure Input",
@@ -1070,10 +1090,10 @@
         "keyUp": "Tangent upp",
         "flagsChanged": "Modifierare",
         "mouse": "Mus",
-        "verdictBlocked": "Secure Input blockerar tangenthändelser — kortkommandon med en vanlig tangent kan inte fungera förrän det är löst.",
-        "verdictSuspicious": "Modifierarhändelser kom fram men inga tangenthändelser — något undertrycker tangenter trots att Secure Input rapporteras som inaktiverat. Rapportera gärna detta på GitHub.",
+        "verdictBlocked": "Secure Input blockerar tangenthändelser - kortkommandon med en vanlig tangent kan inte fungera förrän det är löst.",
+        "verdictSuspicious": "Modifierarhändelser kom fram men inga tangenthändelser - något undertrycker tangenter trots att Secure Input rapporteras som inaktiverat. Rapportera gärna detta på GitHub.",
         "verdictOk": "Tangenthändelser når FlowState som vanligt.",
-        "verdictNoEvents": "Inga händelser fångades — tryckte du på några tangenter under testet?",
+        "verdictNoEvents": "Inga händelser fångades - tryckte du på några tangenter under testet?",
         "failed": "Diagnostiken misslyckades: {{error}}"
       }
     },
@@ -1117,36 +1137,17 @@
       "esLine": "Built for NTNU Entreprenørskolen"
     },
     "integrations": {
-      "mcp": {
-        "title": "MCP Server",
-        "enable": {
-          "label": "Local MCP server",
-          "description": "Let Claude Desktop and Cursor read your meeting notes over MCP, on this machine only. The server listens on 127.0.0.1 and requires a token."
-        },
-        "statusChecking": "Checking…",
-        "statusRunning": "Running on 127.0.0.1:{{port}}",
-        "statusNotRunning": "Not running",
-        "port": {
-          "label": "Port"
-        },
-        "portInvalid": "Enter a port between 1 and 65535.",
-        "token": {
-          "label": "Token"
-        },
-        "tokenReveal": "Show token",
-        "tokenHide": "Hide token",
-        "tokenCopy": "Copy token",
-        "tokenCopied": "Token copied",
-        "tokenRegenerate": "Generate a new token",
-        "tokenHint": "Shown only now — copy it right away. MCP clients sign every request with it.",
-        "setupHint": "Connect Claude Desktop or Cursor via MCP; the README has the exact setup."
+      "cli": {
+        "title": "Command line",
+        "copy": "Copy to Claude",
+        "copied": "Copied to clipboard"
       }
     },
     "sync": {
       "title": "Sync between your Macs",
       "enabled": {
         "title": "Sync on",
-        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs — no account, no cloud server."
+        "description": "Keep the dictionary, snippets and (optionally) history the same on your own Macs - no account, no cloud server."
       },
       "explain": {
         "offline": "Everything is plain file copy through a folder you pick (iCloud Drive, Dropbox, OneDrive or a USB stick), so it works offline and on school networks where machines cannot reach each other.",
@@ -1189,14 +1190,22 @@
       },
       "toasts": {
         "done": "Synced ({{history}} history entries imported)",
-        "doneWithConflicts": "Synced with {{count}} conflict(s) — both versions were kept, see the conflict log",
+        "doneWithConflicts": "Synced with {{count}} conflict(s) - both versions were kept, see the conflict log",
         "folderSet": "Shared folder set",
         "needFolder": "Pick a shared folder first",
         "exported": "Bundle exported",
         "imported": "Imported {{words}} words, {{snippets}} snippets, {{history}} history entries",
-        "importedConflicts": "{{count}} conflict(s) while importing — both versions were kept"
+        "importedConflicts": "{{count}} conflict(s) while importing - both versions were kept"
       }
-    }
+    },
+    "tab.general": "General",
+    "tab.models": "Models",
+    "tab.postprocessing": "Post-processing",
+    "tab.integrations": "Integrations",
+    "tab.sync": "Sync",
+    "tab.advanced": "Advanced",
+    "tab.about": "About",
+    "tab.debug": "Debug"
   },
   "footer": {
     "checkingUpdates": "Söker efter uppdateringar...",
@@ -1208,9 +1217,9 @@
     "preparing": "Förbereder...",
     "checkForUpdates": "Sök efter uppdateringar",
     "portableUpdateTitle": "Manuell uppdatering krävs",
-    "portableUpdateMessage": "Portabla installationer kan inte uppdateras automatiskt. Ladda ner installeraren för ditt system nedan, kör den och installera i samma mapp — din Data/-mapp (inställningar, modeller, inspelningar) behålls.",
+    "portableUpdateMessage": "Portabla installationer kan inte uppdateras automatiskt. Ladda ner installeraren för ditt system nedan, kör den och installera i samma mapp - din Data/-mapp (inställningar, modeller, inspelningar) behålls.",
     "portableUpdateButton": "Ladda ner installeraren",
-    "portableUpdateBrowseMessage": "Portabla installationer kan inte uppdateras automatiskt. Ladda ner den senaste versionen för ditt system från GitHub Releases och installera den i samma mapp — din Data/-mapp (inställningar, modeller, inspelningar) behålls.",
+    "portableUpdateBrowseMessage": "Portabla installationer kan inte uppdateras automatiskt. Ladda ner den senaste versionen för ditt system från GitHub Releases och installera den i samma mapp - din Data/-mapp (inställningar, modeller, inspelningar) behålls.",
     "portableUpdateBrowseButton": "Öppna GitHub Releases"
   },
   "whatsNew": {
@@ -1254,11 +1263,22 @@
       "system": "System",
       "light": "Ljust",
       "dark": "Mörkt"
+    },
+    "accent": {
+      "title": "Accent",
+      "description": "Pick a colour for buttons, active rows and highlights.",
+      "bla": "Blue",
+      "rosa": "Pink",
+      "gronn": "Green",
+      "rod": "Red",
+      "gul": "Yellow-orange",
+      "egen": "Custom",
+      "hue": "Hue"
     }
   },
   "overlay": {
     "transcribing": "Transkriberar...",
-    "processing": "Bearbetar...",
+    "processing": "Writing",
     "loadingModel": "Laddar modell...",
     "meeting": {
       "start": "Starta möte",
@@ -1268,11 +1288,12 @@
       "stillGoing": "Pågår mötet fortfarande?"
     },
     "command": "Kommando",
-    "commandFallback": "Ingen markering — vanlig diktering",
+    "commandFallback": "Ingen markering - vanlig diktering",
     "style": {
       "menuTitle": "Style",
-      "chipTitle": "Dictation style — right-click to switch"
-    }
+      "chipTitle": "Dictation style - right-click to switch"
+    },
+    "quickNote": "New note"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} kanske blockerar 1 kortkommando",
@@ -1282,13 +1303,259 @@
     "recorderBlockedWithCulprit": "{{name}} kanske blockerar ändringar av kortkommandon",
     "recorderBlockedNoCulprit": "macOS blockerar tillfälligt ändringar av kortkommandon",
     "learnMore": "Så här löser du det",
-    "recorderBlocked": "Det går inte att spela in kortkommandon just nu — macOS Secure Input blockerar tangenthändelser. Lös varningen om Secure Input först.",
+    "recorderBlocked": "Det går inte att spela in kortkommandon just nu - macOS Secure Input blockerar tangenthändelser. Lös varningen om Secure Input först.",
     "dismiss": "Avfärda"
   },
   "scratchpad": {
     "title": "Snabbanteckning",
-    "placeholder": "Diktera eller skriv — anteckningen finns här, lokalt.",
+    "placeholder": "Diktera eller skriv - anteckningen finns här, lokalt.",
     "copy": "Kopiera",
     "copied": "Kopierad"
+  },
+  "home": {
+    "overline": "Welcome back",
+    "title": "Your dictation desk",
+    "subtitle": "Hold the shortcut, speak, and the text lands where your cursor was. Everything stays on this machine.",
+    "holdToTalk": "Hold to dictate",
+    "readyTitle": "Ready when you are",
+    "readyBody": "The microphone is idle. Press the shortcut anywhere to start.",
+    "wordsToday": "words today",
+    "statStreak": "Day streak",
+    "statStreakHint": "Best run: {{longest}} days",
+    "statWords": "Words dictated",
+    "statWordsHint": "All time",
+    "statDictations": "Dictations",
+    "statDictationsHint": "Since you started",
+    "statBusiest": "Busiest day",
+    "statBusiestHint": "No dictations in two weeks",
+    "historyHeading": "Your dictations",
+    "searchPlaceholder": "Search everything you said",
+    "clearSearch": "Clear search",
+    "emptyTitle": "No dictations yet",
+    "emptyBody": "Press the shortcut, say a sentence, and it shows up here with the words counted.",
+    "noResults": "Nothing matched",
+    "noResultsBody": "Try a shorter phrase, or a word you remember saying.",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "meeting": "Meeting",
+    "polished": "Polished",
+    "copy": "Copy text",
+    "copyFailed": "Could not copy the text",
+    "loading": "Loading your dictations…",
+    "loadMore": "Load more",
+    "emptyTranscript": "(no words in this recording)",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "bannerTitle": "Talk instead of typing",
+    "bannerBody": "Hold the shortcut, say the sentence, let go. The text lands where the cursor was, in whatever app you are in.",
+    "bannerCta": "Show me how",
+    "railWords": "total words",
+    "railDictations": "dictations",
+    "railStreak": "day streak",
+    "voiceTitle": "Your voice profile",
+    "voiceBody": "Every word is processed on this machine.",
+    "voicePill": "{{used}} active days",
+    "play": "Play",
+    "feedback": "Send feedback",
+    "more": "More",
+    "delete": "Delete",
+    "audioMissing": "No audio saved for this one",
+    "deleteFailed": "Could not delete",
+    "dismiss": "Dismiss"
+  },
+  "notes": {
+    "overline": "Scratchpad",
+    "title": "Somewhere to think out loud",
+    "subtitle": "Draft, paste, dictate. Notes save themselves and never leave the machine.",
+    "newNote": "New note",
+    "untitled": "Untitled note",
+    "titlePlaceholder": "Give the note a name",
+    "bodyPlaceholder": "Start writing, or press the dictation shortcut and talk.",
+    "searchPlaceholder": "Search notes",
+    "emptyTitle": "No notes yet",
+    "emptyBody": "A scratchpad for the half-formed thought, the meeting prep, the line you want to keep.",
+    "emptyList": "Nothing here yet",
+    "emptyListBody": "Your notes will be listed here, newest first.",
+    "noResults": "No notes matched",
+    "noResultsBody": "Try another word from the note.",
+    "delete": "Delete note",
+    "deleteTitle": "Delete this note?",
+    "deleteBody": "The text disappears for good. There is no undo.",
+    "cancel": "Cancel",
+    "confirmDelete": "Yes, delete it",
+    "saved": "Saved",
+    "saving": "Saving…",
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "edited": "Edited {{when}}",
+    "created": "Created {{when}}",
+    "untitledShort": "Untitled",
+    "back": "Back to notes",
+    "bannerBody": "A to-do list, a message you want to polish, a half-formed idea. Write it here first, then take it where it belongs.",
+    "bannerCta": "Start a new note",
+    "bannerTitle": "For the thoughts you want to keep",
+    "beta": "Beta",
+    "latest": "Recent",
+    "pin": "Pin note",
+    "refresh": "Refresh",
+    "unpin": "Unpin note",
+    "words": "{{count}} words"
+  },
+  "insights": {
+    "overline": "Insights",
+    "title": "You have been flowing",
+    "subtitle": "How you actually use your voice, counted locally on this machine.",
+    "range30": "Last 30 days",
+    "range90": "Last 90 days",
+    "rangeAll": "All time",
+    "cardStreak": "Day streak",
+    "cardStreakHint": "Longest: {{longest}} days",
+    "cardWords": "Words dictated",
+    "cardWordsHint": "Across {{days}} active days",
+    "cardDictations": "Dictations",
+    "cardDictationsHint": "About {{average}} words each",
+    "cardAverage": "Words per dictation",
+    "cardAverageHint": "Longer than a paragraph",
+    "cardPeak": "Peak hour",
+    "cardPeakHint": "When your voice does the work",
+    "cardLanguages": "Languages",
+    "cardLanguagesHint": "Picked up by the model",
+    "activityTitle": "Words per day",
+    "activitySubtitle": "Each bar is one day. Gaps are days off.",
+    "rhythmTitle": "Your rhythm",
+    "rhythmSubtitle": "When in the day you dictate most.",
+    "topDayTitle": "Best day",
+    "topDayWords_one": "{{count}} word in one day",
+    "topDayWords_other": "{{count}} words in one day",
+    "topDayEmpty": "Dictate for a few days and your best day shows up here.",
+    "emptyTitle": "Insights are building",
+    "emptyBody": "Once you have dictated a handful of times, this page turns into a picture of your week.",
+    "emptyCta": "Go dictate something",
+    "hourShort": "{{hour}}:00",
+    "peakHourValue": "{{hour}}:00",
+    "rangeLabel": "Range",
+    "less": "Less",
+    "more": "More",
+    "todayLabel": "Today",
+    "chartPeak": "Peak: {{count}} words · {{date}}",
+    "rhythmPeak": "Peak: {{hour}}:00",
+    "screenTitle": "Insights",
+    "tabUsage": "Usage",
+    "tabVoice": "Your voice",
+    "tabTop": "Top",
+    "cardWordsTotal": "Total words",
+    "cardActiveDays": "Active days",
+    "sourceMeeting": "Meetings",
+    "sourceDictation": "Dictation",
+    "activityCard": "Activity",
+    "topLongest": "Longest dictation",
+    "topHourCount_one": "{{count}} dictation",
+    "topHourCount_other": "{{count}} dictations",
+    "voiceEmpty": "No languages picked up yet. The model catches them as you dictate.",
+    "cardLastWeek": "Last 7 days",
+    "cardWordsToday": "Words today"
+  },
+  "topbar": {
+    "toggleSidebar": "Show or hide the sidebar"
+  },
+  "notetaker": {
+    "subtitle": "The meetings you recorded, with length and transcript.",
+    "emptyTitle": "No meetings yet",
+    "emptyBody": "Start one from the bead or the shortcut, and it lands here.",
+    "start": "Start Notetaker",
+    "today": "Today",
+    "noMeetingsToday": "No meetings today",
+    "refresh": "Refresh",
+    "tabNotes": "Past notes",
+    "tabFolders": "Folders",
+    "search": "Search notes",
+    "overview": "Overview",
+    "newFolder": "New folder",
+    "folderName": "Folder name",
+    "folder": "Folder",
+    "noFolder": "No folder",
+    "noNotes": "No notes in this folder yet",
+    "noFolders": "No folders yet. Make one to group notes by project.",
+    "pickNote": "Pick a note to read it.",
+    "deleteFolder": "Delete folder",
+    "folderCount_one": "{{count}} note",
+    "folderCount_other": "{{count}} notes"
+  },
+  "dictionary": {
+    "subtitle": "Words and names the transcriber should spell your way."
+  },
+  "snippets": {
+    "subtitle": "Say a trigger, get a fixed block of text."
+  },
+  "style": {
+    "subtitle": "Per-app writing rules the post-processor applies."
+  },
+  "help": {
+    "subtitle": "How to dictate, and where the rest lives.",
+    "howTitle": "Three steps",
+    "step1": "Hold the shortcut.",
+    "step2": "Say the sentence.",
+    "step3": "Release, and the text lands where the cursor is.",
+    "github": "Source on GitHub",
+    "issues": "Report a bug",
+    "localOnly": "Everything happens on this machine. Nothing is sent out."
+  },
+  "transforms": {
+    "subtitle": "Saved instructions that rewrite a dictation after it lands.",
+    "library": "Your transforms",
+    "new": "New transform",
+    "name": "Name",
+    "namePlaceholder": "For example: Bullet points",
+    "prompt": "Instruction",
+    "promptPlaceholder": "Turn the text into short bullet points. Keep every fact.",
+    "save": "Save",
+    "cancel": "Cancel",
+    "active": "In use",
+    "use": "Use",
+    "edit": "Edit",
+    "delete": "Delete",
+    "empty": "No transforms yet",
+    "emptyHint": "Make one when you keep rewriting the same thing by hand."
+  },
+  "diktering": {
+    "loading": "Reading your history...",
+    "wordsToday_one": "word today",
+    "wordsToday_other": "words today",
+    "dictations_one": "one dictation",
+    "dictations_other": "{{count}} dictations",
+    "minutesSaved_one": "A minute you did not have to type.",
+    "minutesSaved_other": "{{count}} minutes you did not have to type.",
+    "recording": "Recording",
+    "hint": "Speak, and I write",
+    "raw": "Raw",
+    "polished": "Polished",
+    "copy": "Copy",
+    "remove": "Delete",
+    "empty": "Nothing yet. Hold ⌥ Space and say something.",
+    "local": "Nothing leaves this machine."
+  },
+  "palette": {
+    "title": "Command palette",
+    "placeholder": "Jump to, or do something",
+    "noResults": "No matches",
+    "toggleTheme": "Toggle light and dark",
+    "themeHint": "Appearance",
+    "nextAccent": "Next accent colour",
+    "accentHint": "Appearance",
+    "startMeeting": "Start a meeting"
+  },
+  "meeting": {
+    "externalNotice": {
+      "title": "Sent to an external provider",
+      "body": "The meeting text is sent to {{provider}} ({{host}}) to write the note. Nothing is sent until you press OK.",
+      "remember": "Don't show this again",
+      "ok": "OK"
+    },
+    "detected": {
+      "title": "Looks like a meeting",
+      "body": "Another app is using the microphone. Want to record it?",
+      "start": "Start notetaker",
+      "dismiss": "Not now"
+    }
   }
 }

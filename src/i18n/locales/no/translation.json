@@ -9,7 +9,9 @@
     "cancel": "Avbryt",
     "secureInputWarning": "⚠ Snarveier blokkert av Secure Input",
     "meetingBarHideForHour": "Skjul i 1 time",
-    "scratchpadOpen": "Hurtignotat"
+    "scratchpadOpen": "Hurtignotat",
+    "meeting_bar_start": "Start møte",
+    "meeting_bar_note": "Nytt notat"
   },
   "sidebar": {
     "general": "Generelt",
@@ -20,7 +22,25 @@
     "debug": "Feilsøking",
     "about": "Om",
     "integrations": "Integrasjoner",
-    "sync": "Synk"
+    "sync": "Synk",
+    "mainNav": "Hovednavigasjon",
+    "home": "Diktering",
+    "notes": "Notatblokk",
+    "insights": "Innsikt",
+    "settings": "Innstillinger",
+    "library": "Bibliotek",
+    "system": "System",
+    "notetaker": "Notetaker",
+    "dictionary": "Ordbok",
+    "snippets": "Snippets",
+    "style": "Stil",
+    "scratchpad": "Hurtignotat",
+    "help": "Hjelp",
+    "transforms": "Transforms",
+    "promoTitle": "Kom i gang",
+    "promoShortcuts": "Sett opp snarveier",
+    "localModel": "Lokal modell",
+    "promoDocs": "Les dokumentasjonen"
   },
   "onboarding": {
     "customModelDescription": "Ikke offisielt støttet",
@@ -114,7 +134,7 @@
       },
       "es": {
         "title": "ES-student? Slå på ES-pakken",
-        "description": "Entreprenørskapstermer, eksempler på forelesere og prosjektnavn med ett klikk — du kan redigere dem i innstillingene.",
+        "description": "Entreprenørskapstermer, eksempler på forelesere og prosjektnavn med ett klikk - du kan redigere dem i innstillingene.",
         "enable": "Slå på ES-pakken",
         "enabled": "Lagt til"
       }
@@ -403,7 +423,7 @@
       },
       "mousePtt": {
         "title": "Mus som push-to-talk",
-        "description": "Hold en museknapp for å ta opp, slipp for å transkribere — som tastatursnarveien. Klikket sendes ikke videre til andre apper.",
+        "description": "Hold en museknapp for å ta opp, slipp for å transkribere - som tastatursnarveien. Klikket sendes ikke videre til andre apper.",
         "options": {
           "off": "Av",
           "middle": "Midtknapp",
@@ -438,15 +458,15 @@
       "reminderHour1": "1 time",
       "reminderHours2": "2 timer",
       "retentionTitle": "Oppbevaring av møter",
-      "retentionDescription": "Hvor lenge avsluttede møter beholdes. Møter som er eldre enn valgt periode, slettes permanent — lyd, utskrift og notater sammen — når FlowState starter og én gang daglig mens den kjører. Dikteringer påvirkes ikke.",
+      "retentionDescription": "Hvor lenge avsluttede møter beholdes. Møter som er eldre enn valgt periode, slettes permanent - lyd, utskrift og notater sammen - når FlowState starter og én gang daglig mens den kjører. Dikteringer påvirkes ikke.",
       "retentionForever": "For alltid",
       "retentionDays7": "7 dager",
       "retentionDays30": "30 dager",
       "retentionDays90": "90 dager",
       "retentionPlaceholder": "Velg oppbevaringstid...",
-      "retentionWarning": "Sletting er permanent og kan ikke angres. Alt lagres kun på denne enheten — ingenting sendes noen gang noe sted.",
+      "retentionWarning": "Sletting er permanent og kan ikke angres. Alt lagres kun på denne enheten - ingenting sendes noen gang noe sted.",
       "systemAudioTitle": "Systemlyd",
-      "systemAudioDescription": "Møter tar også opp det maskinen selv spiller av — fjerndelen av et Zoom- eller Teams-møte — som et andre spor ved siden av mikrofonen, og fletter det inn i transkriptet etter tidsstempel. Alt tas opp lokalt, uten noen tillatelsesdialog, og ingenting forlater denne maskinen.",
+      "systemAudioDescription": "Møter tar også opp det maskinen selv spiller av - fjerndelen av et Zoom- eller Teams-møte - som et andre spor ved siden av mikrofonen, og fletter det inn i transkriptet etter tidsstempel. Alt tas opp lokalt, uten noen tillatelsesdialog, og ingenting forlater denne maskinen.",
       "systemAudioUnsupported": "Systemlyd krever macOS 14.4 eller nyere. Denne Mac-en tar opp møter kun med mikrofonen."
     },
     "models": {
@@ -478,7 +498,7 @@
           "accelerated": "Hvor lang tid 30 sekunder tale bruker på å bli skrevet ut på testlaptoppen vår sin grafikkbrikke. Denne maskinen kan avvike.",
           "cpu": "Hvor lang tid 30 sekunder tale bruker på å bli skrevet ut på testlaptoppen vår sin prosessor. Denne maskinen kan avvike."
         },
-        "marks": "? er ikke målt ennå. — hører ikke det språket."
+        "marks": "? er ikke målt ennå. - hører ikke det språket."
       },
       "retiredNotice": {
         "title": "Gamle modeller fungerer ikke lenger med FlowState",
@@ -706,7 +726,7 @@
       },
       "voiceCommands": {
         "title": "Tegn- og emoji-kommandoer",
-        "description": "Si tegn og emoji direkte — «komma», «ny linje», «smilefjes» — så settes de inn som tegn. Bare norsk og engelsk; ord som inngår i en setning, blir stående."
+        "description": "Si tegn og emoji direkte - «komma», «ny linje», «smilefjes» - så settes de inn som tegn. Bare norsk og engelsk; ord som inngår i en setning, blir stående."
       },
       "chineseScript": {
         "title": "Kinesisk skrift",
@@ -873,7 +893,7 @@
         "regenerate": "Generer på nytt",
         "generating": "Genererer møtenotat …",
         "cancel": "Avbryt",
-        "draftLabel": "Generert lokalt av {{model}} — kontroller før bruk",
+        "draftLabel": "Generert lokalt av {{model}} - kontroller før bruk",
         "summary": "Sammendrag",
         "decisions": "Beslutninger",
         "actionItems": "Tiltak",
@@ -912,7 +932,7 @@
         "placeholder": "Spør om noe i møtet…",
         "ask": "Spør",
         "searching": "Leser transkriptet…",
-        "generatedLabel": "Generert lokalt av {{model}} — kontroller mot transkriptet",
+        "generatedLabel": "Generert lokalt av {{model}} - kontroller mot transkriptet",
         "showInTranscript": "Vis dette stedet i transkriptet",
         "notFound": "Transkriptet svarer ikke på det.",
         "cancelled": "Spørsmålet ble avbrutt.",
@@ -1117,36 +1137,17 @@
       "esLine": "Laget for Entreprenørskolen ved NTNU"
     },
     "integrations": {
-      "mcp": {
-        "title": "MCP-server",
-        "enable": {
-          "label": "Lokal MCP-server",
-          "description": "La Claude Desktop og Cursor lese møtenotatene dine over MCP, kun på denne maskinen. Serveren lytter kun på 127.0.0.1 og krever en token."
-        },
-        "statusChecking": "Sjekker…",
-        "statusRunning": "Kjører på 127.0.0.1:{{port}}",
-        "statusNotRunning": "Kjører ikke",
-        "port": {
-          "label": "Port"
-        },
-        "portInvalid": "Skriv inn en port mellom 1 og 65535.",
-        "token": {
-          "label": "Token"
-        },
-        "tokenReveal": "Vis token",
-        "tokenHide": "Skjul token",
-        "tokenCopy": "Kopier token",
-        "tokenCopied": "Token kopiert",
-        "tokenRegenerate": "Lag en ny token",
-        "tokenHint": "Vises bare nå — kopier den med én gang. MCP-klientene signerer forespørslene sine med den.",
-        "setupHint": "Koble Claude Desktop eller Cursor til via MCP; README har det nøyaktige oppsettet."
+      "cli": {
+        "title": "Kommandolinje",
+        "copy": "Kopier til Claude",
+        "copied": "Kopiert til utklippstavlen"
       }
     },
     "sync": {
       "title": "Synk mellom maskinene dine",
       "enabled": {
         "title": "Synk på",
-        "description": "Hold ordbok, snippets og (valgfritt) historikk lik på egne Macer — uten konto og uten skyserver."
+        "description": "Hold ordbok, snippets og (valgfritt) historikk lik på egne Macer - uten konto og uten skyserver."
       },
       "explain": {
         "offline": "Alt er ren filkopi via en mappe du velger (iCloud Drive, Dropbox, OneDrive eller USB), så det fungerer offline og på skolenett der maskiner ikke kan nå hverandre.",
@@ -1189,14 +1190,22 @@
       },
       "toasts": {
         "done": "Synket ({{history}} historikkoppføringer importert)",
-        "doneWithConflicts": "Synket med {{count}} konflikt(er) — begge versjoner ble bevart, se konfliktloggen",
+        "doneWithConflicts": "Synket med {{count}} konflikt(er) - begge versjoner ble bevart, se konfliktloggen",
         "folderSet": "Delt mappe satt",
         "needFolder": "Velg en delt mappe først",
         "exported": "Bunt eksportert",
         "imported": "Importerte {{words}} ord, {{snippets}} snippets, {{history}} historikkoppføringer",
-        "importedConflicts": "{{count}} konflikt(er) under import — begge versjoner ble bevart"
+        "importedConflicts": "{{count}} konflikt(er) under import - begge versjoner ble bevart"
       }
-    }
+    },
+    "tab.general": "Generelt",
+    "tab.models": "Modeller",
+    "tab.postprocessing": "Etterbehandling",
+    "tab.integrations": "Integreringer",
+    "tab.sync": "Synk",
+    "tab.advanced": "Avansert",
+    "tab.about": "Om",
+    "tab.debug": "Feilsøking"
   },
   "footer": {
     "checkingUpdates": "Ser etter oppdateringer...",
@@ -1254,25 +1263,37 @@
       "system": "System",
       "light": "Lys",
       "dark": "Mørk"
+    },
+    "accent": {
+      "title": "Aksentfarge",
+      "description": "Velg farge for knapper, aktive rader og markeringer.",
+      "bla": "Blå",
+      "rosa": "Rosa",
+      "gronn": "Grønn",
+      "rod": "Rød",
+      "gul": "Guloransje",
+      "egen": "Egen",
+      "hue": "Fargetone"
     }
   },
   "overlay": {
     "transcribing": "Transkriberer...",
-    "processing": "Behandler...",
+    "processing": "Skriver",
     "loadingModel": "Laster inn modell...",
     "meeting": {
       "start": "Start møteøkt",
       "stop": "Stopp",
       "saving": "Lagrer …",
       "recording": "Tar opp",
-      "stillGoing": "Møtet varer fortsatt — stopp?"
+      "stillGoing": "Møtet varer fortsatt - stopp?"
     },
     "command": "Kommando",
-    "commandFallback": "Ingen merking — vanlig diktering",
+    "commandFallback": "Ingen merking - vanlig diktering",
     "style": {
       "menuTitle": "Stil",
-      "chipTitle": "Dikteringsstil — høyreklikk for å bytte"
-    }
+      "chipTitle": "Dikteringsstil - høyreklikk for å bytte"
+    },
+    "quickNote": "Nytt notat"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkerer kanskje 1 snarvei",
@@ -1287,8 +1308,254 @@
   },
   "scratchpad": {
     "title": "Hurtignotat",
-    "placeholder": "Dikter eller skriv — notatet ligger her, lokalt.",
+    "placeholder": "Dikter eller skriv - notatet ligger her, lokalt.",
     "copy": "Kopier",
     "copied": "Kopiert"
+  },
+  "home": {
+    "overline": "Velkommen tilbake",
+    "title": "Alt du har sagt",
+    "subtitle": "Hold hurtigtasten, snakk, og teksten lander der markøren sto. Ingenting forlater maskinen.",
+    "holdToTalk": "Hold for å diktere",
+    "readyTitle": "Klar når du er",
+    "readyBody": "Mikrofonen venter. Trykk hurtigtasten hvor som helst for å starte.",
+    "wordsToday": "ord i dag",
+    "statStreak": "Dager på rad",
+    "statStreakHint": "Beste: {{longest}} dager",
+    "statWords": "Ord diktert",
+    "statWordsHint": "Hele historikken",
+    "statDictations": "Dikteringer",
+    "statDictationsHint": "Siden starten",
+    "statBusiest": "Beste dag",
+    "statBusiestHint": "Ingen dikteringer på to uker",
+    "historyHeading": "Dikteringene dine",
+    "searchPlaceholder": "Søk i alt du har sagt",
+    "clearSearch": "Tøm søket",
+    "emptyTitle": "Ingen dikteringer ennå",
+    "emptyBody": "Trykk hurtigtasten, si en setning, og den dukker opp her med ordene talt opp.",
+    "noResults": "Ingen treff",
+    "noResultsBody": "Prøv en kortere frase, eller et ord du husker at du sa.",
+    "words_one": "{{count}} ord",
+    "words_other": "{{count}} ord",
+    "meeting": "Møte",
+    "polished": "Ryddet",
+    "copy": "Kopier teksten",
+    "copyFailed": "Kunne ikke kopiere teksten",
+    "loading": "Henter dikteringene…",
+    "loadMore": "Last inn flere",
+    "emptyTranscript": "(ingen ord i opptaket)",
+    "today": "I dag",
+    "yesterday": "I går",
+    "bannerTitle": "Snakk i stedet for å skrive",
+    "bannerBody": "Hold snarveien, si setningen, slipp. Teksten havner der markøren står, i hvilken som helst app.",
+    "bannerCta": "Vis meg hvordan",
+    "railWords": "ord totalt",
+    "railDictations": "dikteringer",
+    "railStreak": "dager på rad",
+    "voiceTitle": "Stemmeprofilen din",
+    "voiceBody": "Hvert ord blir på denne maskinen.",
+    "voicePill": "{{used}} aktive dager",
+    "play": "Spill av",
+    "feedback": "Send tilbakemelding",
+    "more": "Mer",
+    "delete": "Slett",
+    "audioMissing": "Lyden er ikke lagret for denne",
+    "deleteFailed": "Kunne ikke slette",
+    "dismiss": "Skjul"
+  },
+  "notes": {
+    "overline": "Notatblokk",
+    "title": "Noe å tenke høyt i",
+    "subtitle": "Skriv, lim inn, dikter. Notatene lagrer seg selv og blir på maskinen.",
+    "newNote": "Nytt notat",
+    "untitled": "Notat uten navn",
+    "titlePlaceholder": "Gi notatet et navn",
+    "bodyPlaceholder": "Begynn å skrive, eller trykk dikteringshurtigtasten og snakk.",
+    "searchPlaceholder": "Søk i notater",
+    "emptyTitle": "Ingen notater ennå",
+    "emptyBody": "En notatblokk for den halvferdige tanken, møteforberedelsen, linjen du vil beholde.",
+    "emptyList": "Ingenting her ennå",
+    "emptyListBody": "Notatene dine havner her, nyeste først.",
+    "noResults": "Ingen notater traff",
+    "noResultsBody": "Prøv et annet ord fra notatet.",
+    "delete": "Slett notat",
+    "deleteTitle": "Slette notatet?",
+    "deleteBody": "Teksten forsvinner for godt. Det finnes ingen angre.",
+    "cancel": "Avbryt",
+    "confirmDelete": "Ja, slett det",
+    "saved": "Lagret",
+    "saving": "Lagrer…",
+    "words_one": "{{count}} ord",
+    "words_other": "{{count}} ord",
+    "edited": "Endret {{when}}",
+    "created": "Opprettet {{when}}",
+    "untitledShort": "Uten navn",
+    "back": "Tilbake til notatene",
+    "bannerBody": "En huskeliste, en melding du vil pusse på, en halvferdig idé. Skriv den her først, og ta den med dit den hører.",
+    "bannerCta": "Start et nytt notat",
+    "bannerTitle": "For tankene du vil ta vare på",
+    "beta": "Beta",
+    "latest": "Siste",
+    "pin": "Fest notatet",
+    "refresh": "Oppdater",
+    "unpin": "Løsne notatet",
+    "words": "{{count}} ord"
+  },
+  "insights": {
+    "overline": "Innsikt",
+    "title": "Du har hatt flyt",
+    "subtitle": "Hvordan du faktisk bruker stemmen, talt opp lokalt på denne maskinen.",
+    "range30": "Siste 30 dager",
+    "range90": "Siste 90 dager",
+    "rangeAll": "Hele perioden",
+    "cardStreak": "Dager på rad",
+    "cardStreakHint": "Lengste: {{longest}} dager",
+    "cardWords": "Ord diktert",
+    "cardWordsHint": "Fordelt på {{days}} aktive dager",
+    "cardDictations": "Dikteringer",
+    "cardDictationsHint": "Rundt {{average}} ord hver",
+    "cardAverage": "Ord per diktering",
+    "cardAverageHint": "Lengre enn et avsnitt",
+    "cardPeak": "Travelste time",
+    "cardPeakHint": "Da stemmen gjør jobben",
+    "cardLanguages": "Språk",
+    "cardLanguagesHint": "Plukket opp av modellen",
+    "activityTitle": "Ord per dag",
+    "activitySubtitle": "Hver søyle er en dag. Hull er fridager.",
+    "rhythmTitle": "Rytmen din",
+    "rhythmSubtitle": "Når på dagen du dikterer mest.",
+    "topDayTitle": "Beste dag",
+    "topDayWords_one": "{{count}} ord på én dag",
+    "topDayWords_other": "{{count}} ord på én dag",
+    "topDayEmpty": "Dikter noen dager, så dukker den beste dagen opp her.",
+    "emptyTitle": "Innsikten bygger seg opp",
+    "emptyBody": "Når du har diktert noen ganger, blir denne siden et bilde av uken din.",
+    "emptyCta": "Gå og dikter noe",
+    "hourShort": "{{hour}}:00",
+    "peakHourValue": "{{hour}}:00",
+    "rangeLabel": "Periode",
+    "less": "Mindre",
+    "more": "Mer",
+    "todayLabel": "I dag",
+    "chartPeak": "Topp: {{count}} ord · {{date}}",
+    "rhythmPeak": "Topp: {{hour}}:00",
+    "screenTitle": "Innsikt",
+    "tabUsage": "Bruk",
+    "tabVoice": "Stemmen",
+    "tabTop": "Topp",
+    "cardWordsTotal": "Ord totalt",
+    "cardActiveDays": "Aktive dager",
+    "sourceMeeting": "Møter",
+    "sourceDictation": "Diktering",
+    "activityCard": "Aktivitet",
+    "topLongest": "Lengste diktering",
+    "topHourCount_one": "{{count}} diktering",
+    "topHourCount_other": "{{count}} dikteringer",
+    "voiceEmpty": "Ingen språk plukket opp ennå. Modellen fanger dem opp fortløpende.",
+    "cardLastWeek": "Siste 7 dager",
+    "cardWordsToday": "Ord i dag"
+  },
+  "topbar": {
+    "toggleSidebar": "Vis eller skjul sidepanelet"
+  },
+  "notetaker": {
+    "subtitle": "Møtene du har tatt opp, med lengde og transkripsjon.",
+    "emptyTitle": "Ingen møter ennå",
+    "emptyBody": "Start et møte fra perlen eller snarveien, så dukker det opp her.",
+    "start": "Start notetaker",
+    "today": "I dag",
+    "noMeetingsToday": "Ingen møter i dag",
+    "refresh": "Oppdater",
+    "tabNotes": "Tidligere notater",
+    "tabFolders": "Mapper",
+    "search": "Søk i notater",
+    "overview": "Oversikt",
+    "newFolder": "Ny mappe",
+    "folderName": "Navnet på mappen",
+    "folder": "Mappe",
+    "noFolder": "Ingen mappe",
+    "noNotes": "Ingen notater i denne mappen ennå",
+    "noFolders": "Ingen mapper ennå. Lag en, så kan du samle notatene etter prosjekt.",
+    "pickNote": "Velg et notat for å se teksten.",
+    "deleteFolder": "Slett mappe",
+    "folderCount_one": "{{count}} notat",
+    "folderCount_other": "{{count}} notater"
+  },
+  "dictionary": {
+    "subtitle": "Ord og navn transkriberingen skal skrive som du vil."
+  },
+  "snippets": {
+    "subtitle": "Si en snarvei, få en fast tekst."
+  },
+  "style": {
+    "subtitle": "Skriveregler per app, brukt av etterbehandlingen."
+  },
+  "help": {
+    "subtitle": "Slik dikterer du, og hvor du finner resten.",
+    "howTitle": "Tre steg",
+    "step1": "Hold snarveien.",
+    "step2": "Si setningen.",
+    "step3": "Slipp, og teksten havner der markøren står.",
+    "github": "Kildekode på GitHub",
+    "issues": "Meld en feil",
+    "localOnly": "Alt skjer på denne maskinen. Ingenting sendes ut."
+  },
+  "transforms": {
+    "subtitle": "Lagrede instrukser som skriver om dikteringen etter at den er ferdig.",
+    "library": "Dine transforms",
+    "new": "Ny transform",
+    "name": "Navn",
+    "namePlaceholder": "For eksempel: Kulepunkter",
+    "prompt": "Instruks",
+    "promptPlaceholder": "Gjør teksten om til korte kulepunkter. Behold alle fakta.",
+    "save": "Lagre",
+    "cancel": "Avbryt",
+    "active": "I bruk",
+    "use": "Bruk",
+    "edit": "Rediger",
+    "delete": "Slett",
+    "empty": "Ingen transforms ennå",
+    "emptyHint": "Lag en når du skriver om det samme for hånd gang på gang."
+  },
+  "diktering": {
+    "loading": "Leser historikken...",
+    "wordsToday_one": "ord i dag",
+    "wordsToday_other": "ord i dag",
+    "dictations_one": "én diktering",
+    "dictations_other": "{{count}} dikteringer",
+    "minutesSaved_one": "Ett minutt du slapp å skrive.",
+    "minutesSaved_other": "{{count}} minutter du slapp å skrive.",
+    "recording": "Tar opp",
+    "hint": "Snakk, så skriver jeg",
+    "raw": "Råtekst",
+    "polished": "Ryddet",
+    "copy": "Kopier",
+    "remove": "Slett",
+    "empty": "Ingenting ennå. Hold ⌥ Space og si noe.",
+    "local": "Ingenting forlater denne maskinen."
+  },
+  "palette": {
+    "title": "Kommandopalett",
+    "placeholder": "Hopp til, eller gjør noe",
+    "noResults": "Ingen treff",
+    "toggleTheme": "Bytt lys og mørk",
+    "themeHint": "Utseende",
+    "nextAccent": "Neste aksentfarge",
+    "accentHint": "Utseende",
+    "startMeeting": "Start et møte"
+  },
+  "meeting": {
+    "externalNotice": {
+      "title": "Sendes til ekstern leverandør",
+      "body": "Møteteksten sendes til {{provider}} ({{host}}) for å lage notatet. Ingenting sendes før du trykker OK.",
+      "remember": "Ikke vis dette igjen",
+      "ok": "OK"
+    },
+    "detected": {
+      "title": "Ser ut som et møte",
+      "body": "En annen app bruker mikrofonen. Vil du ta opp?",
+      "start": "Start notetaker",
+      "dismiss": "Ikke nå"
+    }
   }
 }

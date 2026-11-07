@@ -9,6 +9,7 @@ import { AppDataDirectory } from "../AppDataDirectory";
 import { AppLanguageSelector } from "../AppLanguageSelector";
 import { ShowWhatsNewOnUpdate } from "../ShowWhatsNewOnUpdate";
 import { ThemeSelector } from "../ThemeSelector";
+import { AccentSelector } from "../AccentSelector";
 import { LogDirectory } from "../debug";
 
 // ES brand identity, localised: Norwegian is the default UI language, English
@@ -48,6 +49,7 @@ export const AboutSettings: React.FC = () => {
       <SettingsGroup title={t("settings.about.title")}>
         <AppLanguageSelector descriptionMode="tooltip" grouped={true} />
         <ThemeSelector descriptionMode="tooltip" grouped={true} />
+        <AccentSelector descriptionMode="tooltip" grouped={true} />
         <SettingContainer
           title={t("settings.about.version.title")}
           description={t("settings.about.version.description")}

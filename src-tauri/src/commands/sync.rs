@@ -8,9 +8,9 @@ use crate::managers::word_suggestions::WordSuggestionLearner;
 use crate::settings::{get_settings, write_settings, AppSettings};
 use crate::sync::{
     bundle::{export_bundle, import_bundle, BundleData},
-    history_key, load_journal, merged_snippets, merged_words, now_ms,
-    read_local_conflicts, reconcile, save_journal, save_state, validate_shared_folder,
-    HistoryDocEntry, ItemSet, SyncState, CONFLICTS_LOG,
+    history_key, load_journal, merged_snippets, merged_words, now_ms, read_local_conflicts,
+    reconcile, save_journal, save_state, validate_shared_folder, HistoryDocEntry, ItemSet,
+    SyncState, CONFLICTS_LOG,
 };
 use crate::sync::{run_sync, ConflictRecord};
 use serde::{Deserialize, Serialize};
@@ -54,8 +54,7 @@ pub struct SyncImportResult {
 }
 
 fn state_dir(app: &AppHandle) -> Result<PathBuf, String> {
-    let dir = crate::portable::app_data_dir(app)
-        .map_err(|e| format!("app data directory: {e}"))?;
+    let dir = crate::portable::app_data_dir(app).map_err(|e| format!("app data directory: {e}"))?;
     Ok(dir.join("sync"))
 }
 
@@ -89,7 +88,12 @@ fn reconciled_items(app: &AppHandle) -> ItemSet {
     let dir = state_dir(app).unwrap_or_else(|_| PathBuf::from(".sync"));
     let journal = load_journal(&dir);
     let settings = get_settings(app);
-    reconcile(journal, &settings.custom_words, &settings.snippets, now_ms())
+    reconcile(
+        journal,
+        &settings.custom_words,
+        &settings.snippets,
+        now_ms(),
+    )
 }
 
 /// Write the merged dictionary/snippets back into the settings store.
@@ -141,17 +145,12 @@ fn status_of(app: &AppHandle, state: &SyncState) -> SyncStatus {
 
 /// All local history as sync documents, capped, oldest first so the newest
 /// entries always make it into the bundle/document.
-async fn collect_history(
-    history_manager: &HistoryManager,
-) -> (Vec<HistoryDocEntry>, Vec<String>) {
+async fn collect_history(history_manager: &HistoryManager) -> (Vec<HistoryDocEntry>, Vec<String>) {
     let mut entries_out = Vec::new();
     let mut keys = Vec::new();
     let mut cursor: Option<i64> = None;
     loop {
-        let Ok(page) = history_manager
-            .get_history_entries(cursor, Some(100))
-            .await
-        else {
+        let Ok(page) = history_manager.get_history_entries(cursor, Some(100)).await else {
             break;
         };
         if page.entries.is_empty() {
@@ -172,7 +171,11 @@ async fn collect_history(
                     .is_file();
             entries_out.push(HistoryDocEntry {
                 key: history_key(entry.timestamp, &entry.title, &entry.transcription_text),
-                file_name: if has_audio { entry.file_name.clone() } else { String::new() },
+                file_name: if has_audio {
+                    entry.file_name.clone()
+                } else {
+                    String::new()
+                },
                 timestamp: entry.timestamp,
                 saved: entry.saved,
                 title: entry.title.clone(),
@@ -324,7 +327,11 @@ pub async fn sync_now(
         &dir,
         &state,
         local,
-        if state.sync_history { Some(history) } else { None },
+        if state.sync_history {
+            Some(history)
+        } else {
+            None
+        },
         &local_keys,
         Some(&audio_dir),
     )?;
@@ -384,7 +391,10 @@ pub fn sync_open_folder(app: AppHandle) -> Result<(), String> {
 /// Recent collisions from this machine's own log, newest first.
 #[tauri::command]
 #[specta::specta]
-pub fn sync_get_conflicts(app: AppHandle, limit: Option<usize>) -> Result<Vec<ConflictRecord>, String> {
+pub fn sync_get_conflicts(
+    app: AppHandle,
+    limit: Option<usize>,
+) -> Result<Vec<ConflictRecord>, String> {
     let dir = state_dir(&app)?;
     Ok(read_local_conflicts(&dir, limit.unwrap_or(20)))
 }
@@ -418,8 +428,7 @@ pub async fn sync_export_bundle(
     let mut audio = std::collections::HashMap::new();
     for (index, entry) in history.iter().enumerate() {
         if !entry.file_name.is_empty() {
-            let source = history_manager
-                .get_audio_file_path(&entry.file_name);
+            let source = history_manager.get_audio_file_path(&entry.file_name);
             if source.is_file() {
                 audio.insert(format!("audio/{:04}-{}", index, entry.file_name), source);
             }
@@ -511,7 +520,11 @@ pub async fn sync_import_bundle(
     if imported.excerpt.is_object() {
         let mut settings: AppSettings = get_settings(&app);
         let mut changed = false;
-        if let Some(value) = imported.excerpt.get("selected_language").and_then(|v| v.as_str()) {
+        if let Some(value) = imported
+            .excerpt
+            .get("selected_language")
+            .and_then(|v| v.as_str())
+        {
             settings.selected_language = value.to_string();
             changed = true;
         }
@@ -521,7 +534,11 @@ pub async fn sync_import_bundle(
                 changed = true;
             }
         }
-        if let Some(value) = imported.excerpt.get("app_language").and_then(|v| v.as_str()) {
+        if let Some(value) = imported
+            .excerpt
+            .get("app_language")
+            .and_then(|v| v.as_str())
+        {
             settings.app_language = value.to_string();
             changed = true;
         }

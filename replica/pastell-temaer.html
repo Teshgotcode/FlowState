@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="no">
+<head>
+<meta charset="utf-8">
+<title>FlowState — fem pastellmaler</title>
+<style>
+  :root { color-scheme: light dark; }
+  body { margin:0; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; color:var(--foreground,#111); background:transparent; }
+  h1 { font-size:15px; font-weight:650; margin:0 0 4px; letter-spacing:-.01em; }
+  .lede { font-size:12px; color:var(--muted-foreground,#666); margin:0 0 14px; line-height:1.5; }
+  .rule { background:var(--card,#f2f2f2); border-radius:10px; padding:11px 13px; font-size:11.5px; line-height:1.55; color:var(--muted-foreground,#555); margin-bottom:12px; }
+  .rule b { color:var(--foreground,#111); font-weight:600; }
+  .switcher { display:flex; gap:8px; background:var(--card,#f2f2f2); border-radius:10px; padding:11px 13px; margin-bottom:12px; align-items:center; flex-wrap:wrap; }
+  .switcher .lbl { font-size:11px; font-weight:600; color:var(--muted-foreground,#666); margin-right:2px; }
+  .pill { display:flex; align-items:center; gap:6px; font-size:11.5px; font-weight:550; padding:4px 10px 4px 4px; border-radius:999px; background:var(--background,#fff); }
+  .pill.sel { box-shadow:0 0 0 1.5px currentColor; }
+  .pill i { width:16px; height:16px; border-radius:999px; display:block; }
+  .opt { background:var(--card,#f2f2f2); border-radius:10px; padding:14px; margin-bottom:10px; }
+  .head { display:flex; align-items:baseline; gap:8px; margin-bottom:10px; flex-wrap:wrap; }
+  .name { font-size:14px; font-weight:650; }
+  .hue { font:500 10px/1 ui-monospace,monospace; color:var(--muted-foreground,#777); }
+  .why { font-size:11.5px; color:var(--muted-foreground,#666); margin-left:auto; }
+  .pair { display:flex; gap:10px; flex-wrap:wrap; align-items:stretch; }
+  .mock { flex:1 1 250px; min-width:230px; height:168px; border-radius:10px; background:var(--bg); display:flex; overflow:hidden; position:relative; border:1px solid rgba(128,128,128,.16); }
+  .side { width:52px; padding:9px 6px; display:flex; flex-direction:column; gap:6px; }
+  .dot { height:5px; border-radius:3px; background:var(--ink); opacity:.28; }
+  .dot.on { opacity:1; background:var(--acc); }
+  .main { flex:1; margin:6px 6px 6px 0; border-radius:8px; background:var(--surf); padding:9px; display:flex; flex-direction:column; gap:7px; }
+  .ttl { height:7px; width:50%; border-radius:3px; background:var(--ink); opacity:.85; }
+  .banner { border-radius:6px; background:var(--wash); padding:7px; display:flex; flex-direction:column; gap:5px; }
+  .banner .l1 { height:6px; width:56%; border-radius:3px; background:var(--ink); opacity:.8; }
+  .banner .l2 { height:4px; width:74%; border-radius:2px; background:var(--ink); opacity:.38; }
+  .cta { margin-top:3px; align-self:flex-start; font:600 8.5px/1 -apple-system,sans-serif; letter-spacing:.01em; padding:5px 9px; border-radius:6px; background:var(--acc); color:var(--onAcc); border:1px solid var(--deep); }
+  .row { display:flex; gap:6px; align-items:center; border-top:1px solid var(--soft); padding-top:6px; }
+  .row .lbl { font:600 8px/1 -apple-system,sans-serif; color:var(--deep); }
+  .t { width:18px; height:4px; border-radius:2px; background:var(--ink); opacity:.32; }
+  .x { flex:1; display:flex; flex-direction:column; gap:3px; }
+  .x i { height:4px; border-radius:2px; background:var(--ink); opacity:.48; }
+  .x i:last-child { width:60%; opacity:.28; }
+  .rail { position:absolute; right:12px; top:22px; width:40px; display:flex; flex-direction:column; gap:4px; }
+  .rail b { display:block; height:15px; border-radius:4px; background:var(--soft); }
+  .rail b:first-child { border-left:2px solid var(--acc); }
+  .tag { position:absolute; left:60px; top:8px; font:600 8px/1 ui-monospace,monospace; letter-spacing:.06em; text-transform:uppercase; color:var(--ink); opacity:.45; }
+  .icon { flex:0 0 auto; width:84px; height:84px; border-radius:20px; display:flex; align-items:center; justify-content:center; align-self:center; }
+  .icon svg { width:46px; height:46px; }
+  .roles { display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; align-items:flex-end; }
+  .sw { display:flex; flex-direction:column; gap:3px; }
+  .chip { width:34px; height:15px; border-radius:4px; border:1px solid rgba(128,128,128,.22); }
+  .hex { font:500 8px/1 ui-monospace,monospace; white-space:nowrap; color:#555; }
+  .checks { display:flex; gap:6px; flex-wrap:wrap; align-items:center; margin-top:8px; }
+  .checks .cap { font:600 9px/1 ui-monospace,monospace; color:var(--muted-foreground,#777); letter-spacing:.04em; text-transform:uppercase; }
+  .badge { font:600 9px/1 ui-monospace,monospace; padding:4px 6px; border-radius:4px; background:#e7f6ec; color:#166534; }
+  .badge.bad { background:#fde8e8; color:#b91c1c; }
+  .badge span { opacity:.62; font-weight:500; }
+  .total { background:var(--card,#f2f2f2); border-radius:10px; padding:12px 14px; font-size:12px; font-weight:600; display:flex; align-items:center; gap:8px; }
+  .total .ok { color:#166534; } .total .no { color:#b91c1c; }
+</style>
+</head>
+<body>
+<h1>Fem pastellmaler</h1>
+<p class="lede">Samme apparat, fem fargetoner. Hver mal har lys og mørk modus, og hver modus er målt mot WCAG før den havner her.</p>
+<div class="rule">
+  <b>Slik er pastellen brukt:</b> pastellfyllet bærer mørk tekst, aldri hvit. En dypere variant av samme tone bærer aksenttekst, ikoner og den 1 px rammen rundt knappen, fordi en pastell alene ikke synes mot hvitt. Nøytrale flater er tonet i samme retning som aksenten, så det ikke ser ut som grått med en farget knapp.
+</div>
+<div class="switcher" id="switcher"></div>
+<div id="root"></div>
+<div class="total" id="total"></div>
+<script>
+const T = {"bla": {"name": "Blå", "why": "rolig, minst påtrengende", "L": {"bg": "#f6f7fb", "surf": "#ffffff", "soft": "#eef1f8", "ink": "#16192b", "acc": "#b9c8fa", "deep": "#3b5bdb", "wash": "#eef2ff", "onAcc": "#16192b"}, "D": {"bg": "#0e1018", "surf": "#141824", "soft": "#1c2130", "ink": "#e8ecf7", "acc": "#a9bcf7", "deep": "#c7d4fb", "wash": "#1a2033", "onAcc": "#0e1018"}}, "rosa": {"name": "Rosa", "why": "varmest, mest personlig", "L": {"bg": "#fbf6f8", "surf": "#fffdfe", "soft": "#f8edf2", "ink": "#241820", "acc": "#f7bcd9", "deep": "#be185d", "wash": "#fff0f6", "onAcc": "#241820"}, "D": {"bg": "#140f13", "surf": "#1b151a", "soft": "#251d23", "ink": "#f4e9ef", "acc": "#f4b6cf", "deep": "#f9cfe1", "wash": "#2a1c24", "onAcc": "#140f13"}}, "gronn": {"name": "Grønn", "why": "den dere har, men renere", "L": {"bg": "#f5f8f5", "surf": "#fdfefd", "soft": "#ecf3ed", "ink": "#16211a", "acc": "#a7dfb8", "deep": "#237032", "wash": "#ebfbee", "onAcc": "#16211a"}, "D": {"bg": "#0d1210", "surf": "#131a16", "soft": "#1b241f", "ink": "#e7f0e9", "acc": "#a3dcb4", "deep": "#c6ecd1", "wash": "#17251c", "onAcc": "#0d1210"}}, "rod": {"name": "Rød", "why": "sterkest, tydeligst på opptak", "L": {"bg": "#faf6f6", "surf": "#fffdfd", "soft": "#f7ecec", "ink": "#241819", "acc": "#f5b3b3", "deep": "#c92a2a", "wash": "#fff5f5", "onAcc": "#241819"}, "D": {"bg": "#140f0f", "surf": "#1b1515", "soft": "#251d1d", "ink": "#f4eaea", "acc": "#f3b0b0", "deep": "#f8cfcf", "wash": "#2a1a1a", "onAcc": "#140f0f"}}, "gul": {"name": "Guloransje", "why": "varmest, krever mest av teksten", "L": {"bg": "#faf8f2", "surf": "#fffdf8", "soft": "#f6f0e2", "ink": "#221c14", "acc": "#f8cf8a", "deep": "#c2410c", "wash": "#fff8e8", "onAcc": "#221c14"}, "D": {"bg": "#12100c", "surf": "#191612", "soft": "#221e17", "ink": "#f3eee4", "acc": "#f7cd85", "deep": "#f8dfae", "wash": "#241d12", "onAcc": "#12100c"}}};
+const ORDER = ["bla", "rosa", "gronn", "rod", "gul"];
+const MARK = `<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><rect x="4.6" y="6.8" width="5.6" height="12.4" rx="2.8"/><rect x="14" y="11.6" width="5.6" height="7.6" rx="2.8"/></svg>`;
+const lum = (h) => { const c=h.replace("#",""); const v=[0,2,4].map(i=>{const s=parseInt(c.slice(i,i+2),16)/255; return s<=0.03928?s/12.92:Math.pow((s+0.055)/1.055,2.4);}); return 0.2126*v[0]+0.7152*v[1]+0.0722*v[2]; };
+const cr = (a,b) => { const l1=lum(a),l2=lum(b); return (Math.max(l1,l2)+0.05)/(Math.min(l1,l2)+0.05); };
+const mix = (fg,bg,alpha) => { const f=fg.replace("#",""),b=bg.replace("#",""); const c=[0,2,4].map(i=>Math.round(parseInt(f.slice(i,i+2),16)*alpha+parseInt(b.slice(i,i+2),16)*(1-alpha))); return "#"+c.map(x=>x.toString(16).padStart(2,"0")).join(""); };
+const r1 = (a,b) => cr(a,b).toFixed(1);
+const badge = (label, val, min) => `<span class="badge ${val>=min?"":"bad"}">${label} ${val.toFixed(1)}:1</span>`;
+
+let allPass = true, total = 0;
+const mock = (p, label) => `
+  <div class="mock" style="--bg:${p.bg};--surf:${p.surf};--soft:${p.soft};--ink:${p.ink};--acc:${p.acc};--deep:${p.deep};--wash:${p.wash};--onAcc:${p.onAcc}">
+    <span class="tag">${label}</span>
+    <div class="side"><div class="dot on"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="main"><div class="ttl"></div><div class="banner"><div class="l1"></div><div class="l2"></div><div class="cta">Start diktering</div></div>
+      <div class="row"><span class="t"></span><span class="x"><i></i><i></i></span></div>
+      <div class="row"><span class="t"></span><span class="x"><i></i><i></i></span></div>
+    </div>
+    <div class="rail"><b></b><b></b><b></b></div>
+  </div>`;
+
+const swatches = (p) => [["lerret",p.bg],["panel",p.surf],["flate",p.soft],["tekst",p.ink],["pastell",p.acc],["dyp",p.deep],["vask",p.wash]]
+  .map(([k,v]) => `<span class="sw"><span class="chip" style="background:${v}"></span><span class="hex">${v}</span></span>`).join("");
+
+document.getElementById("switcher").innerHTML = `<span class="lbl">Tema</span>` + ORDER.map((k,i) =>
+  `<span class="pill ${i===0?"sel":""}" style="color:${T[k].L.acc}"><i style="background:${T[k].L.acc}"></i><span style="color:var(--foreground,#111)">${T[k].name}</span></span>`).join("")
+  + `<span class="lbl" style="margin-left:auto">+ eget tema</span>`;
+
+document.getElementById("root").innerHTML = ORDER.map((k) => {
+  const t = T[k];
+  const pairs = (p, dark) => {
+    const muted = mix(p.ink, p.bg, 0.72);
+    const list = dark
+      ? [["tekst/lerret", cr(p.ink,p.bg), 7], ["dempet/lerret", cr(muted,p.bg), 4.5], ["dyp/panel", cr(p.deep,p.surf), 4.5], ["tekst/pastell", cr(p.onAcc,p.acc), 4.5], ["pastell/panel", cr(p.acc,p.surf), 3]]
+      : [["tekst/lerret", cr(p.ink,p.bg), 7], ["dempet/lerret", cr(muted,p.bg), 4.5], ["dyp/panel", cr(p.deep,p.surf), 4.5], ["tekst/pastell", cr(p.onAcc,p.acc), 4.5], ["dyp/vask", cr(p.deep,p.wash), 4.5]];
+    return list;
+  };
+  const light = pairs(t.L,false), dark = pairs(t.D,true);
+  [...light,...dark].forEach(([,v,min]) => { total++; if (v < min) allPass = false; });
+  return `<section class="opt">
+    <div class="head"><span class="name">${t.name}</span><span class="hue">pastell ${t.L.acc} · dyp ${t.L.deep}</span><span class="why">${t.why}</span></div>
+    <div class="pair">${mock(t.L,"lys")}${mock(t.D,"mørk")}<div class="icon" style="background:${t.L.acc};color:${t.L.onAcc}">${MARK}</div></div>
+    <div class="roles">${swatches(t.L)}</div>
+    <div class="checks"><span class="cap">lys</span>${light.map(([l,v,m])=>badge(l,v,m)).join("")}</div>
+    <div class="roles" style="margin-top:6px">${swatches(t.D)}</div>
+    <div class="checks"><span class="cap">mørk</span>${dark.map(([l,v,m])=>badge(l,v,m)).join("")}</div>
+  </section>`;
+}).join("");
+
+document.getElementById("total").innerHTML = allPass
+  ? `<span class="ok">✓</span> ${total} av ${total} kontrastpar består. Ingen tekst under 4,5:1, ingen brødtekst under 7:1.`
+  : `<span class="no">✗</span> noen par feiler, se røde merker.`;
+</script>
+</body>
+</html>

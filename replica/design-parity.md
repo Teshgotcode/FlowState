@@ -39,6 +39,26 @@ Målband: 75–90 %. Over 90 er for likt, under 75 er for fremmed.
 Alle 12 skjermer i 75–90-båndet; snitt 84.4 ligger midt i. Ingenting over 90
 (for likt) eller under 75 (for fremmed).
 
+## Hjem-skjermene (S05, S12 og Innsikt)
+
+Hovedvinduet er bygget om fra en innstillingsliste til tre daglige skjermer
+med referansens informasjonsarkitektur: en sidestolpe i tre bånd (daglige
+skjermer, bibliotek, system), og en hovedkolonne med tittel, kort, og liste.
+
+- **Diktering** (`src/components/home/DictationHome.tsx`): tittelblokk med
+  hurtigtasten øverst til høyre, et handlingskort, fire nøkkeltall, søk, og
+  dikteringene gruppert per dag med tid, ordtelling, språk og møte-merke.
+  Radene kan utvides på plass og kopieres. Data kommer fra
+  `commands.getHistoryEntries` og `commands.searchHistory`, samme kontrakt som
+  Historikk-siden bruker.
+- **Notatblokk** (`src/components/notes/NotesPage.tsx`): liste med søk og
+  «Nytt notat» til venstre, redigering til høyre, autolagring etter 400 ms.
+  Notatene ligger i `localStorage` (`flowstate.notes.v1`), som er det minste
+  lageret som overlever omstart og aldri forlater maskinen.
+- **Innsikt** (`src/components/insights/InsightsPage.tsx`): seks nøkkeltall,
+  «Ord per dag»-søyler, og «Rytmen din» over døgnet. Alt er talt opp lokalt i
+  `src/lib/insights/stats.ts` fra historikken; ingen nye datakilder.
+
 ## Hva som matcher referansen
 
 - **Informasjonsarkitektur:** hver skjerm i `replica/recon.md` finnes hos oss
@@ -52,12 +72,16 @@ Alle 12 skjermer i 75–90-båndet; snitt 84.4 ligger midt i. Ingenting over 90
 
 ## Hva som er FlowStates eget
 
-- **Palett:** uendret — alle farger går fortsatt gjennom `--flow-*`-tokenene i
-  `src/styles/theme.css` (navy/blå/action/accent). Ingen referansefarger.
-- **Typografi:** eget par, bundet lokalt (SIL OFL, ingen nettverkskall):
-  *Bricolage Grotesque* (display, 400–800) + *Instrument Sans* (UI, 400–700),
-  latin + latin-ext som variabel woff2 i `src/assets/fonts/`; alle andre
-  skript faller tilbake på systemstabelen som før. Token:
+- **Palett:** alle farger går gjennom `--flow-*`-tokenene i
+  `src/styles/theme.css`. Paletten er byttet fra navy/blå til furu og jade
+  (ink `#0e1a17`, deep `#17352d`, jade `#0f6b5a`, ember `#c2410c`) med varmt
+  papir (`#f4f1e8`) som lerret og marigold (`#b7791f`) for tall som feires.
+  Ingen referansefarger; navnene er semantiske, ikke fargenavn, så et nytt
+  bytte er fire hex-verdier.
+- **Typografi:** samme par som referanseappen, bundet lokalt (SIL OFL, ingen
+  nettverkskall): *Figtree* (UI) + *EB Garamond* (display), hentet fra Google
+  Fonts som variabel TTF i `src/assets/fonts/` med lisensfilene ved siden av.
+  Målt i referansen: UI-tekst er Figtree, banner-titler er EB Garamond. Token:
   `--flow-font-display` / `--flow-font-ui`, satt som standard i `App.css`
   `@layer base` og brukt av overlegg og hurtignotat.
 - **Ikoner:** Lucide-settet (allerede i bruk); eget ordmerke
@@ -80,3 +104,21 @@ Alle 12 skjermer i 75–90-båndet; snitt 84.4 ligger midt i. Ingenting over 90
 filnavn) etter referansenavn, produktnavn, deres skrifttyper og domener:
 **0 funn**. Referansens logo, ikoner, illustrasjoner og tekst finnes ikke i repoet; alle
 kommentarer som tidligere nevnte referansen er omskrevet til atferdsbeskrivelser.
+
+## Aksenttemaer
+
+Fem pastellmaler pluss ett eget tema, styrt av `src/lib/utils/accent.ts` og satt som
+CSS-variabler på dokumentroten. `theme.ts` eier fortsatt lys/mørk; aksenten maler
+paletten under den.
+
+| Tema | Pastell | Dyp |
+| --- | --- | --- |
+| Blå | `#b9c8fa` | `#3b5bdb` |
+| Rosa | `#f7bcd9` | `#be185d` |
+| Grønn | `#a7dfb8` | `#237032` |
+| Rød | `#f5b3b3` | `#c92a2a` |
+| Guloransje | `#f8cf8a` | `#c2410c` |
+
+Regel: pastellfyllet bærer mørk tekst (`--color-on-accent`), aldri hvit. Den dype tonen
+bærer aksenttekst, ikoner, fokusringer og kontrollkanter. `accent.test.ts` sjekker
+kontrasten for alle fem malene og for 24 tilfeldige fargetoner.
