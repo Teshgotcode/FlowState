@@ -25,7 +25,7 @@
     "sync": "Sync",
     "mainNav": "Main navigation",
     "home": "Dictation",
-    "notes": "Scratchpad",
+    "notes": "नोट्स",
     "insights": "Insights",
     "settings": "Settings",
     "library": "Library",
@@ -34,7 +34,7 @@
     "dictionary": "Dictionary",
     "snippets": "Snippets",
     "style": "Style",
-    "scratchpad": "Scratchpad",
+    "scratchpad": "स्क्रैचपैड",
     "help": "Help",
     "transforms": "Transforms",
     "promoTitle": "Get started",
@@ -1499,7 +1499,10 @@
     "pickNote": "Pick a note to read it.",
     "deleteFolder": "Delete folder",
     "folderCount_one": "{{count}} note",
-    "folderCount_other": "{{count}} notes"
+    "folderCount_other": "{{count}} notes",
+    "openTranscript": "Open transcript",
+    "deleteMeeting": "Delete meeting",
+    "deleteFailed": "Could not delete the meeting"
   },
   "dictionary": {
     "subtitle": "Words and names the transcriber should spell your way."
@@ -1577,5 +1580,11 @@
       "start": "Start notetaker",
       "dismiss": "Not now"
     }
+  },
+  "meetingLive": {
+    "title": "Meeting",
+    "stop": "Stop",
+    "listening": "Listening. The text appears here as people speak.",
+    "footnote": "Transcribed locally on this machine."
   }
 }

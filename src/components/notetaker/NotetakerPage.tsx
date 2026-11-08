@@ -1,6 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import {
+  FileText,
   Folder as FolderIcon,
   Mic,
   RefreshCcw,
@@ -10,6 +12,7 @@ import {
 } from "lucide-react";
 
 import { commands, type HistoryEntry } from "@/bindings";
+import { TranscriptDialog } from "@/components/settings/history/TranscriptDialog";
 import { Page, PageHeader } from "@/components/hub/Primitives";
 import {
   loadAssignments,
@@ -76,6 +79,22 @@ export const NotetakerPage: React.FC = () => {
     reload();
   }, [reload]);
 
+  /** Delete a meeting and everything that belongs to it: audio, segments,
+   * note and its folder assignment. */
+  const removeMeeting = async (entry: HistoryEntry) => {
+    const result = await commands.deleteHistoryEntry(entry.id);
+    if (result.status !== "ok") {
+      toast.error(t("notetaker.deleteFailed"));
+      return;
+    }
+    setSelectedId(null);
+    const stored = loadAssignments();
+    delete stored[String(entry.id)];
+    saveAssignments(stored);
+    setAssignments(stored);
+    reload();
+  };
+
   const timeFormat = useMemo(
     () => new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }),
     [locale],
@@ -123,6 +142,7 @@ export const NotetakerPage: React.FC = () => {
   }, [past]);
 
   const selected = meetings.find((entry) => entry.id === selectedId) ?? null;
+  const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   const today = new Date().toDateString();
   const todayMeetings = visible.filter(
@@ -413,6 +433,25 @@ export const NotetakerPage: React.FC = () => {
                 {timeFormat.format(new Date(selected.timestamp * 1000))}
                 {durationOf(selected) ? ` · ${durationOf(selected)}` : ""}
               </p>
+              <div className="mt-[12px] flex items-center gap-[8px]">
+                <button
+                  type="button"
+                  onClick={() => setTranscriptOpen(true)}
+                  className="flex h-[30px] cursor-pointer items-center gap-[6px] rounded-[7px] border border-line bg-surface px-[10px] text-[12.5px] font-[550] text-text transition-colors hover:bg-wash"
+                >
+                  <FileText size={13} />
+                  {t("notetaker.openTranscript")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void removeMeeting(selected)}
+                  aria-label={t("notetaker.deleteMeeting")}
+                  title={t("notetaker.deleteMeeting")}
+                  className="flex h-[30px] w-[30px] cursor-pointer items-center justify-center rounded-[7px] border border-line text-ink-3 transition-colors hover:bg-wash hover:text-text"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
               <div className="mt-[16px] border-t border-line pt-[16px]">
                 <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
                   {t("notetaker.overview")}
@@ -444,6 +483,16 @@ export const NotetakerPage: React.FC = () => {
           )}
         </aside>
       </div>
+      {selected && (
+        <TranscriptDialog
+          entry={selected}
+          open={transcriptOpen}
+          onOpenChange={(open) => {
+            setTranscriptOpen(open);
+            if (!open) reload();
+          }}
+        />
+      )}
     </Page>
   );
 };

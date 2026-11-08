@@ -18,6 +18,7 @@ mod language_detection;
 mod llm_client;
 mod managers;
 mod meeting_detect;
+mod meeting_live;
 mod memory;
 mod overlay;
 mod paste_tx;

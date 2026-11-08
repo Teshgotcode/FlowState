@@ -734,6 +734,8 @@ impl MeetingManager {
         drop(session);
 
         debug!("Meeting recording started: {}", working_path.display());
+        // The live transcript panel follows the session.
+        crate::meeting_live::open_window(app);
         emit_meeting_state(app, &status);
         // Starting from Settings also dismisses the disc's "hide for an
         // hour": a live session always brings the bar back.
@@ -808,6 +810,7 @@ impl MeetingManager {
             "Meeting stopped after {}s; history entry {:?}",
             decision.duration_secs, entry_id
         );
+        crate::meeting_live::close_window(app);
         emit_meeting_state(app, &MeetingStatus::Idle);
         // The history entry is in place: the pill gives the window back to the
         // idle disc. Skipped while a dictation overlay owns the window — its
@@ -849,6 +852,7 @@ impl MeetingManager {
         }
         drop(session);
 
+        crate::meeting_live::close_window(app);
         info!("Meeting cancelled; the working file was removed");
         emit_meeting_state(app, &MeetingStatus::Idle);
         crate::overlay::refresh_meeting_bar(app);

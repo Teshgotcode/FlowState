@@ -25,7 +25,7 @@
     "sync": "Synk",
     "mainNav": "Hovednavigasjon",
     "home": "Diktering",
-    "notes": "Notatblokk",
+    "notes": "Notater",
     "insights": "Innsikt",
     "settings": "Innstillinger",
     "library": "Bibliotek",
@@ -1499,7 +1499,10 @@
     "pickNote": "Velg et notat for å se teksten.",
     "deleteFolder": "Slett mappe",
     "folderCount_one": "{{count}} notat",
-    "folderCount_other": "{{count}} notater"
+    "folderCount_other": "{{count}} notater",
+    "openTranscript": "Åpne transkript",
+    "deleteMeeting": "Slett møtet",
+    "deleteFailed": "Kunne ikke slette møtet"
   },
   "dictionary": {
     "subtitle": "Ord og navn transkriberingen skal skrive som du vil."
@@ -1577,5 +1580,11 @@
       "start": "Start notetaker",
       "dismiss": "Ikke nå"
     }
+  },
+  "meetingLive": {
+    "title": "Møte",
+    "stop": "Stopp",
+    "listening": "Lytter. Teksten kommer her etter hvert som det snakkes.",
+    "footnote": "Transkriberes lokalt på denne maskinen."
   }
 }
