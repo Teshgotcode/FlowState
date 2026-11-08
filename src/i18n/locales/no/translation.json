@@ -1419,7 +1419,8 @@
     "pin": "Fest notatet",
     "refresh": "Oppdater",
     "unpin": "Løsne notatet",
-    "words": "{{count}} ord"
+    "words": "{{count}} ord",
+    "openWindow": "Åpne hurtignotat"
   },
   "insights": {
     "overline": "Innsikt",

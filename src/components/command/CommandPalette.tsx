@@ -75,13 +75,12 @@ export const CommandPalette: React.FC<Props> = ({ open, onClose, onNavigate }) =
       { id: "nav-home", label: t("sidebar.home"), icon: <AudioLines size={15} />, run: go("home") },
       { id: "nav-meetings", label: t("sidebar.notetaker"), icon: <Mic size={15} />, run: go("notetaker") },
       { id: "nav-insights", label: t("sidebar.insights"), icon: <ChartNoAxesColumn size={15} />, run: go("insights") },
-      { id: "nav-notes", label: t("sidebar.notes"), icon: <NotebookPen size={15} />, run: go("notes") },
       {
         id: "scratchpad",
         label: t("sidebar.scratchpad"),
         icon: <SquarePen size={15} />,
         run: () => {
-          commands.openScratchpad().catch(() => {});
+          go("scratchpad");
           onClose();
         },
       },

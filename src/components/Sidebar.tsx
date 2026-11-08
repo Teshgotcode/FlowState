@@ -96,13 +96,6 @@ export const SECTIONS_CONFIG = {
     enabled: () => true,
     group: "daily",
   },
-  notes: {
-    labelKey: "sidebar.notes",
-    icon: NotebookPen,
-    component: null,
-    enabled: () => true,
-    group: "daily",
-  },
   scratchpad: {
     labelKey: "sidebar.scratchpad",
     icon: SquarePen,
@@ -254,15 +247,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         key={section.id}
         type="button"
         aria-current={isActive ? "page" : undefined}
-        onClick={() => {
-          // The scratchpad is a window, not a page: it opens and the rail
-          // stays where it is.
-          if (section.id === "scratchpad") {
-            commands.openScratchpad().catch(() => {});
-            return;
-          }
-          onSectionChange(section.id);
-        }}
+        onClick={() => onSectionChange(section.id)}
         className={`relative flex h-[30px] cursor-pointer items-center gap-[9px] rounded-[6px] px-[9px] text-start transition-colors ${
           isActive
             ? "bg-surface font-[600] text-text shadow-[0_1px_3px_rgba(20,22,28,0.10)]"

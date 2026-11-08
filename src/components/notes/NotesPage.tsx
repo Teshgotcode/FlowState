@@ -6,7 +6,8 @@ import React, {
   useState,
 } from "react";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Pin, Plus, RefreshCw, Search, Trash2 } from "lucide-react";
+import { commands } from "@/bindings";
+import { ArrowLeft, Pin, Plus, RefreshCw, Search, SquarePen, Trash2 } from "lucide-react";
 import { wordCount } from "@/lib/insights/stats";
 import {
   deleteNote,
@@ -219,12 +220,21 @@ export const NotesPage: React.FC = () => {
       <div className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <h1 className="font-ui text-[24px] font-semibold leading-8 tracking-[-0.02em] text-text">
-            {t("sidebar.notes")}
+            {t("sidebar.scratchpad")}
           </h1>
           <span className="inline-flex h-5 items-center rounded-full bg-text px-2 text-[11px] font-semibold text-surface">
             {t("notes.beta")}
           </span>
         </div>
+        {/* The floating note, the reference's "open note in window". */}
+        <button
+          type="button"
+          onClick={() => void commands.openScratchpad().catch(() => {})}
+          className="inline-flex h-[30px] cursor-pointer items-center gap-[6px] rounded-[7px] border border-line bg-surface px-[10px] text-[12.5px] font-[550] text-text transition-colors hover:bg-wash"
+        >
+          <SquarePen size={13} />
+          {t("notes.openWindow")}
+        </button>
       </div>
 
       {/* Intro: one serif line and one sentence, the way a notebook opens. */}

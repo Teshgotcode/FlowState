@@ -73,7 +73,7 @@ const renderDailyContent = (
   section: SidebarSection,
   onSectionChange: (section: SidebarSection) => void,
 ) => {
-  if (section === "notes") return <NotesPage />;
+  if (section === "scratchpad") return <NotesPage />;
   if (section === "insights") return <InsightsPage />;
   if (section === "notetaker") return <NotetakerPage />;
   if (section === "dictionary") return <DictionaryPage />;
@@ -86,7 +86,7 @@ const renderDailyContent = (
 
 const DAILY_SECTIONS: SidebarSection[] = [
   "home",
-  "notes",
+  "scratchpad",
   "insights",
   "notetaker",
   "dictionary",

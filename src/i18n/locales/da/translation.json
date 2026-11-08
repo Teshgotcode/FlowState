@@ -1419,7 +1419,8 @@
     "pin": "Pin note",
     "refresh": "Refresh",
     "unpin": "Unpin note",
-    "words": "{{count}} words"
+    "words": "{{count}} words",
+    "openWindow": "Open quick note"
   },
   "insights": {
     "overline": "Insights",
