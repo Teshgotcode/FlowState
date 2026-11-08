@@ -796,7 +796,11 @@ const RecordingOverlay: React.FC = () => {
             onPointerUp={handleBarPointerUp}
             onPointerCancel={handleBarPointerUp}
           >
-            <span aria-hidden="true" />
+            <span className="mwave" aria-hidden="true">
+              {Array.from({ length: 10 }, (_, index) => (
+                <i key={index} />
+              ))}
+            </span>
           </button>
         )}
       </div>

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { listen } from "@tauri-apps/api/event";
+import { X } from "lucide-react";
 import { commands } from "@/bindings";
 import type { MeetingSegment, MeetingStateEvent } from "@/bindings";
 import "./MeetingLive.css";
@@ -74,6 +75,15 @@ const MeetingLive: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
     };
   }, [demo]);
 
+  // Escape closes the panel; the meeting keeps recording.
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape") void getCurrentWindow().close();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+
   // The clock under the title.
   useEffect(() => {
     if (startedAt == null) return;
@@ -113,6 +123,15 @@ const MeetingLive: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
           onClick={() => void commands.stopMeeting().catch(() => {})}
         >
           {t("meetingLive.stop")}
+        </button>
+        <button
+          type="button"
+          className="ml-close"
+          aria-label={t("meetingLive.close")}
+          title={t("meetingLive.close")}
+          onClick={() => void getCurrentWindow().close()}
+        >
+          <X size={13} />
         </button>
       </header>
 

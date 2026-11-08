@@ -72,6 +72,24 @@ body {
   background: color-mix(in srgb, var(--color-text) 8%, transparent);
 }
 
+.ml-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--color-mid-gray);
+  cursor: pointer;
+}
+
+.ml-close:hover {
+  background: color-mix(in srgb, var(--color-text) 8%, transparent);
+  color: var(--color-text);
+}
+
 .ml-list {
   flex: 1;
   overflow-y: auto;

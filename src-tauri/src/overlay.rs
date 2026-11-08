@@ -64,7 +64,7 @@ const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
 // and the CSS hover no longer scales the disc past the window. Keep in sync
 // with .mdisc / .mcard in RecordingOverlay.css (both border-box). The
 // recording pill shares its footprint with the frontend's short "Saving" pill.
-const MEETING_DISC_WIDTH: f64 = 9.0;
+const MEETING_DISC_WIDTH: f64 = 8.0;
 const MEETING_DISC_HEIGHT: f64 = 40.0;
 const MEETING_PILL_WIDTH: f64 = 176.0;
 const MEETING_PILL_HEIGHT: f64 = 40.0;
@@ -331,7 +331,9 @@ fn overlay_position_for(settings: &AppSettings, state: &str) -> OverlayPosition 
     } else {
         settings
             .meeting_bar_position
-            .unwrap_or(settings.overlay_position)
+            // The reference docks its bar on the right; the dictation card's
+            // edge says nothing about where the meeting bar belongs.
+            .unwrap_or(OverlayPosition::Right)
     }
 }
 
@@ -1523,10 +1525,11 @@ mod tests {
     fn meeting_bar_edge_follows_the_dictation_overlay_until_dragged() {
         let mut settings = crate::settings::get_default_settings();
         settings.overlay_position = OverlayPosition::Top;
-        // Unpinned (the default): the bar follows the dictation overlay.
+        // Unpinned (the default): the bar sits on the right edge, where the
+        // reference's Flow Bar lives, whatever the dictation card does.
         assert_eq!(
             overlay_position_for(&settings, MEETING_BAR_IDLE),
-            OverlayPosition::Top
+            OverlayPosition::Right
         );
         // Pinned by a drag: the bar keeps its own edge, the dictation card
         // keeps the setting's.

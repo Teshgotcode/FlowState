@@ -1585,6 +1585,7 @@
     "title": "Møte",
     "stop": "Stopp",
     "listening": "Lytter. Teksten kommer her etter hvert som det snakkes.",
-    "footnote": "Transkriberes lokalt på denne maskinen."
+    "footnote": "Transkriberes lokalt på denne maskinen.",
+    "close": "Lukk panelet"
   }
 }
