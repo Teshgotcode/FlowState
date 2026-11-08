@@ -201,6 +201,18 @@ const handlers: Record<string, Handler> = {
     settings.post_process_selected_prompt_id = id;
     return null;
   },
+  // Notes are written to the entry the preview already holds, so the panel
+  // reads back what was typed.
+  set_meeting_user_notes: ({ entryId, notes }: Record<string, any>) => {
+    const entry = entries.find((item) => item.id === entryId);
+    if (!entry) return null;
+    const trimmed = String(notes ?? "").trim();
+    entry.metadata = {
+      ...(entry.metadata ?? {}),
+      user_notes: trimmed.length > 0 ? trimmed : null,
+    };
+    return entry;
+  },
   // The ask endpoint answers from one transcript; the preview stands in with a
   // fixed answer so the panel and the cross-meeting pick can be exercised.
   ask_meeting_transcript: ({ entryId, question }: Record<string, any>) => ({

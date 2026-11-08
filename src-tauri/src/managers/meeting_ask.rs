@@ -668,6 +668,7 @@ mod tests {
             source: Some(HistorySource::Meeting),
             metadata: Some(crate::managers::history::HistoryMetadata {
                 duration_secs: Some(60),
+                user_notes: None,
                 segments: Some(
                     segments
                         .iter()

@@ -1473,6 +1473,20 @@ async setMeetingReminderMinutes(minutes: number | null) : Promise<void> {
     await TAURI_INVOKE("set_meeting_reminder_minutes", { minutes });
 },
 /**
+ * What the user typed during a meeting, in their own words. Kept apart from
+ * the transcript and the generated note: neither is rewritten from it, and it
+ * survives restarts and re-transcriptions. An empty string clears the field,
+ * so "no notes" reads the same as never having written any.
+ */
+async setMeetingUserNotes(entryId: number, notes: string) : Promise<Result<HistoryEntry, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_meeting_user_notes", { entryId, notes }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Name a finished meeting's speakers: the names are stored on the entry's
  * metadata, indexed by speaker number (S1 is index 0), shown in the
  * transcript window and carried into its exports. Names live per meeting —
@@ -1860,6 +1874,12 @@ meeting_note?: MeetingNote | null;
  * meeting: they survive restarts and re-transcriptions.
  */
 speaker_names?: (string | null)[] | null; 
+/**
+ * What the user typed during the meeting, in their own words. Kept
+ * apart from the transcript and the generated note: neither is ever
+ * rewritten from it, and it survives restarts and re-transcriptions.
+ */
+user_notes?: string | null; 
 /**
  * The meeting's second track: the system audio (what the machine was
  * playing — a call's far end) captured beside the microphone (S-5),

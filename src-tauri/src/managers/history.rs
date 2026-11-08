@@ -175,6 +175,11 @@ pub struct HistoryMetadata {
     /// meeting: they survive restarts and re-transcriptions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub speaker_names: Option<Vec<Option<String>>>,
+    /// What the user typed during the meeting, in their own words. Kept
+    /// apart from the transcript and the generated note: neither is ever
+    /// rewritten from it, and it survives restarts and re-transcriptions.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub user_notes: Option<String>,
     /// The meeting's second track: the system audio (what the machine was
     /// playing — a call's far end) captured beside the microphone (S-5),
     /// when one was. Its transcript is merged into the segments by
@@ -219,6 +224,7 @@ fn fresh_metadata(segments: &[TranscriptSegment]) -> Option<HistoryMetadata> {
         system_audio: None,
         meeting_note: None,
         speaker_names: None,
+        user_notes: None,
     })
 }
 
@@ -560,6 +566,7 @@ impl HistoryManager {
                 segments: None,
                 meeting_note: None,
                 speaker_names: None,
+                user_notes: None,
                 system_audio,
             }),
         })?;
@@ -693,6 +700,18 @@ impl HistoryManager {
             error!("Failed to emit history-updated event: {}", e);
         }
 
+        Ok(entry)
+    }
+
+    /// Save the user's own notes for a meeting. An empty string clears the
+    /// field instead of storing a blank, so "no notes" reads the same as
+    /// never having written any.
+    pub fn save_user_notes(&self, id: i64, notes: String) -> Result<HistoryEntry> {
+        let mut metadata = self.read_metadata(id)?;
+        let trimmed = notes.trim();
+        metadata.user_notes = (!trimmed.is_empty()).then(|| trimmed.to_string());
+        let entry = self.write_metadata(id, metadata)?;
+        self.announce(&entry);
         Ok(entry)
     }
 
@@ -1363,6 +1382,22 @@ mod tests {
     }
 
     #[test]
+    fn user_notes_round_trip_and_old_metadata_still_parses() {
+        let with = HistoryMetadata {
+            user_notes: Some("budsjett før fredag".to_string()),
+            ..Default::default()
+        };
+        let json = serde_json::to_string(&with).expect("serialize");
+        let back: HistoryMetadata = serde_json::from_str(&json).expect("deserialize");
+        assert_eq!(back.user_notes.as_deref(), Some("budsjett før fredag"));
+
+        // Metadata written before the field existed has no key at all.
+        let old: HistoryMetadata =
+            serde_json::from_str(r#"{"duration_secs":240}"#).expect("parse old metadata");
+        assert_eq!(old.user_notes, None);
+    }
+
+    #[test]
     fn migrating_adds_columns_without_raising_the_version() {
         let mut conn = Connection::open_in_memory().expect("open in-memory db");
         HistoryManager::apply_migrations(&mut conn).expect("migrate");
@@ -1477,6 +1512,7 @@ mod tests {
             }]),
             meeting_note: None,
             speaker_names: None,
+            user_notes: None,
             system_audio: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
@@ -1597,6 +1633,7 @@ mod tests {
         let metadata = HistoryMetadata {
             duration_secs: None,
             segments: None,
+            user_notes: None,
             meeting_note: Some(MeetingNote {
                 summary: "Møtet avgjorde lanseringen.".to_string(),
                 decisions: vec!["Vi lanserer 1. mai.".to_string()],

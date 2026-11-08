@@ -121,6 +121,22 @@ pub fn set_record_system_audio(app: AppHandle, enabled: bool) {
     write_settings(&app, settings);
 }
 
+/// What the user typed during a meeting, in their own words. Kept apart from
+/// the transcript and the generated note: neither is rewritten from it, and it
+/// survives restarts and re-transcriptions. An empty string clears the field,
+/// so "no notes" reads the same as never having written any.
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_user_notes(
+    app: AppHandle,
+    entry_id: i64,
+    notes: String,
+) -> Result<HistoryEntry, String> {
+    let hm = app.state::<Arc<HistoryManager>>();
+    hm.save_user_notes(entry_id, notes)
+        .map_err(|e| e.to_string())
+}
+
 /// Name a finished meeting's speakers: the names are stored on the entry's
 /// metadata, indexed by speaker number (S1 is index 0), shown in the
 /// transcript window and carried into its exports. Names live per meeting —

@@ -1510,7 +1510,11 @@
     "askPlaceholder": "Spør om noe fra møtene dine",
     "askSource": "Svar fra: {{title}}",
     "askNoMatch": "Fant ikke noe møte som handler om det.",
-    "askFailed": "Kunne ikke svare nå."
+    "askFailed": "Kunne ikke svare nå.",
+    "myThoughts": "Mine tanker",
+    "myThoughtsPlaceholder": "Skriv det du tenker mens møtet går. Bare du ser det.",
+    "notesSaved": "Lagret",
+    "notesFailed": "Kunne ikke lagre notatene."
   },
   "dictionary": {
     "subtitle": "Ord og navn transkriberingen skal skrive som du vil.",

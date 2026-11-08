@@ -63,6 +63,8 @@ export const NotetakerPage: React.FC = () => {
     answer: string;
     source: string;
   } | null>(null);
+  const [notesDraft, setNotesDraft] = useState("");
+  const [notesSaved, setNotesSaved] = useState(false);
   const [folders, setFolders] = useState<Folder[]>(() => loadFolders());
   const [assignments, setAssignments] = useState<Record<string, string>>(() =>
     loadAssignments(),
@@ -154,6 +156,21 @@ export const NotetakerPage: React.FC = () => {
     });
   };
 
+  /** Save the field on blur; an unchanged field writes nothing. */
+  const saveNotes = async () => {
+    if (!selected) return;
+    if (notesDraft.trim() === (selected.metadata?.user_notes ?? "").trim()) return;
+    const result = await commands.setMeetingUserNotes(selected.id, notesDraft);
+    if (result.status !== "ok") {
+      toast.error(t("notetaker.notesFailed"));
+      return;
+    }
+    const updated = result.data;
+    setMeetings((list) => list.map((entry) => (entry.id === updated.id ? updated : entry)));
+    setNotesSaved(true);
+    setTimeout(() => setNotesSaved(false), 1500);
+  };
+
   const timeFormat = useMemo(
     () => new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit" }),
     [locale],
@@ -201,6 +218,12 @@ export const NotetakerPage: React.FC = () => {
   }, [past]);
 
   const selected = meetings.find((entry) => entry.id === selectedId) ?? null;
+
+  /** The user's own notes for the selected meeting, saved when the field
+   * loses focus. Kept out of the transcript and the generated note. */
+  useEffect(() => {
+    setNotesDraft(selected?.metadata?.user_notes ?? "");
+  }, [selected]);
   const [transcriptOpen, setTranscriptOpen] = useState(false);
 
   const today = new Date().toDateString();
@@ -589,6 +612,24 @@ export const NotetakerPage: React.FC = () => {
                 >
                   <Trash2 size={14} />
                 </button>
+              </div>
+              <div className="mt-[16px] border-t border-line pt-[16px]">
+                <p className="flex items-center gap-[8px] text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
+                  {t("notetaker.myThoughts")}
+                  {notesSaved && (
+                    <span className="text-[10.5px] normal-case tracking-normal text-ink-3">
+                      {t("notetaker.notesSaved")}
+                    </span>
+                  )}
+                </p>
+                <textarea
+                  value={notesDraft}
+                  onChange={(event) => setNotesDraft(event.target.value)}
+                  onBlur={() => void saveNotes()}
+                  placeholder={t("notetaker.myThoughtsPlaceholder")}
+                  rows={4}
+                  className="mt-[8px] w-full resize-y rounded-[10px] border border-line bg-surface px-[10px] py-[8px] text-[12.5px] leading-[20px] text-text outline-none placeholder:text-ink-3 focus:border-text/25"
+                />
               </div>
               <div className="mt-[16px] border-t border-line pt-[16px]">
                 <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
