@@ -14,7 +14,7 @@ import { formatSegmentTimestamp } from "./transcriptExport";
 
 /** The message each failure reason shows. The three "no local LLM" reasons
  * share one message: the fix is the same. */
-const FAILURE_MESSAGE_KEYS: Record<MeetingAskFailure, string> = {
+export const FAILURE_MESSAGE_KEYS: Record<MeetingAskFailure, string> = {
   not_a_meeting: "settings.history.meetingAsk.failedNotMeeting",
   no_transcript: "settings.history.meetingAsk.failedNoTranscript",
   no_provider: "settings.history.meetingAsk.failedNoLocalLlm",

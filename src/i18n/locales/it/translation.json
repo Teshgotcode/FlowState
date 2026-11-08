@@ -1505,7 +1505,12 @@
     "openTranscript": "Open transcript",
     "deleteMeeting": "Delete meeting",
     "deleteFailed": "Could not delete the meeting",
-    "addToFolder": "Add to folder"
+    "addToFolder": "Add to folder",
+    "ask": "Ask",
+    "askPlaceholder": "Ask anything about your meetings",
+    "askSource": "Answer from: {{title}}",
+    "askNoMatch": "No meeting seemed to cover that.",
+    "askFailed": "Couldn't answer just now."
   },
   "dictionary": {
     "subtitle": "Words and names the transcriber should spell your way.",

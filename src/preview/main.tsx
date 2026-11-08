@@ -201,6 +201,17 @@ const handlers: Record<string, Handler> = {
     settings.post_process_selected_prompt_id = id;
     return null;
   },
+  // The ask endpoint answers from one transcript; the preview stands in with a
+  // fixed answer so the panel and the cross-meeting pick can be exercised.
+  ask_meeting_transcript: ({ entryId, question }: Record<string, any>) => ({
+    outcome: "answered",
+    answer: {
+      found: true,
+      answer: `Preview-svar på «${question}» fra møte ${entryId}.`,
+      quotes: [],
+      model: "preview",
+    },
+  }),
   get_history_entries: ({ limit }) => ({
     entries: entries.slice(0, (limit as number) ?? 50),
     has_more: false,

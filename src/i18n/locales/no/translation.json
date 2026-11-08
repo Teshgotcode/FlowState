@@ -1505,7 +1505,12 @@
     "openTranscript": "Åpne transkript",
     "deleteMeeting": "Slett møtet",
     "deleteFailed": "Kunne ikke slette møtet",
-    "addToFolder": "Legg til i mappe"
+    "addToFolder": "Legg til i mappe",
+    "ask": "Spør",
+    "askPlaceholder": "Spør om noe fra møtene dine",
+    "askSource": "Svar fra: {{title}}",
+    "askNoMatch": "Fant ikke noe møte som handler om det.",
+    "askFailed": "Kunne ikke svare nå."
   },
   "dictionary": {
     "subtitle": "Ord og navn transkriberingen skal skrive som du vil.",

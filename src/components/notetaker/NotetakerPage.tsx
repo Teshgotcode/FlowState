@@ -7,13 +7,16 @@ import {
   Mic,
   RefreshCcw,
   Search,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
 
 import { commands, type HistoryEntry } from "@/bindings";
+import { FAILURE_MESSAGE_KEYS } from "@/components/settings/history/MeetingAskPanel";
 import { TranscriptDialog } from "@/components/settings/history/TranscriptDialog";
 import { Page, PageHeader } from "@/components/hub/Primitives";
+import { Spinner } from "@/components/ui/Spinner";
 import {
   loadAssignments,
   loadFolders,
@@ -53,6 +56,13 @@ export const NotetakerPage: React.FC = () => {
   const [selectedId, setSelectedId] = useState<number | null>(null);
   const [query, setQuery] = useState("");
   const [searchOpen, setSearchOpen] = useState(false);
+  const [askQuestion, setAskQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [askResult, setAskResult] = useState<{
+    question: string;
+    answer: string;
+    source: string;
+  } | null>(null);
   const [folders, setFolders] = useState<Folder[]>(() => loadFolders());
   const [assignments, setAssignments] = useState<Record<string, string>>(() =>
     loadAssignments(),
@@ -93,6 +103,55 @@ export const NotetakerPage: React.FC = () => {
     saveAssignments(stored);
     setAssignments(stored);
     reload();
+  };
+
+  /** Ask across every meeting. The ask endpoint answers from a single
+   * transcript, so the meeting whose text overlaps the question most is the
+   * one asked; a question that matches nothing says so instead of guessing.
+   * shortcut: one meeting per question, upgrade to multi-meeting retrieval
+   * when answers start missing context spread over several calls. */
+  const askAcrossMeetings = async () => {
+    const question = askQuestion.trim();
+    if (!question || asking) return;
+    const words = question
+      .toLowerCase()
+      .split(/[^\p{L}\p{N}]+/u)
+      .filter((word) => word.length > 2);
+    const scored = meetings
+      .map((entry) => {
+        const haystack = `${entry.post_processed_text ?? ""} ${
+          entry.transcription_text ?? ""
+        }`.toLowerCase();
+        const score = words.reduce(
+          (sum, word) => sum + (haystack.includes(word) ? 1 : 0),
+          0,
+        );
+        return { entry, score };
+      })
+      .sort((a, b) => b.score - a.score);
+    const best = scored[0];
+    if (!best || best.score === 0) {
+      toast.error(t("notetaker.askNoMatch"));
+      return;
+    }
+    setAsking(true);
+    const result = await commands.askMeetingTranscript(best.entry.id, question);
+    setAsking(false);
+    if (result.status !== "ok" || result.data.outcome === "failed") {
+      const reason =
+        result.status === "ok" && result.data.outcome === "failed"
+          ? result.data.reason
+          : null;
+      toast.error(
+        reason ? t(FAILURE_MESSAGE_KEYS[reason]) : t("notetaker.askFailed"),
+      );
+      return;
+    }
+    setAskResult({
+      question,
+      answer: result.data.answer.answer,
+      source: titleOf(best.entry),
+    });
   };
 
   const timeFormat = useMemo(
@@ -207,6 +266,52 @@ export const NotetakerPage: React.FC = () => {
           </button>
         }
       />
+
+      <form
+        onSubmit={(event) => {
+          event.preventDefault();
+          void askAcrossMeetings();
+        }}
+        className="mb-[18px] flex items-center gap-[8px]"
+      >
+        <input
+          value={askQuestion}
+          onChange={(event) => setAskQuestion(event.target.value)}
+          placeholder={t("notetaker.askPlaceholder")}
+          className="h-[38px] flex-1 rounded-[10px] border border-line bg-surface px-[12px] text-[13px] text-text outline-none placeholder:text-ink-3 focus:border-text/25"
+        />
+        <button
+          type="submit"
+          disabled={asking || !askQuestion.trim()}
+          className="flex h-[38px] cursor-pointer items-center gap-[6px] rounded-[10px] border border-line bg-surface px-[14px] text-[13px] font-[550] text-text transition-colors hover:bg-wash disabled:cursor-default disabled:opacity-40"
+        >
+          {asking ? <Spinner /> : <Sparkles size={14} />}
+          {t("notetaker.ask")}
+        </button>
+      </form>
+
+      {askResult && (
+        <div className="mb-[18px] rounded-[12px] border border-line bg-wash px-[16px] py-[12px]">
+          <div className="flex items-start gap-[10px]">
+            <div className="min-w-0 flex-1">
+              <p className="text-[12px] text-ink-3">
+                {t("notetaker.askSource", { title: askResult.source })}
+              </p>
+              <p className="mt-[6px] whitespace-pre-wrap text-[13px] leading-[21px] text-text">
+                {askResult.answer}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setAskResult(null)}
+              aria-label={t("common.close")}
+              className="flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-[6px] text-ink-3 hover:bg-surface hover:text-text"
+            >
+              <X size={13} />
+            </button>
+          </div>
+        </div>
+      )}
 
       <div className="flex items-start gap-[24px]">
         <div className="min-w-0 flex-1">
