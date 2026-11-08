@@ -1302,7 +1302,10 @@
       "stop": "Stopp",
       "saving": "Lagrer …",
       "recording": "Tar opp",
-      "stillGoing": "Møtet varer fortsatt - stopp?"
+      "stillGoing": "Møtet varer fortsatt - stopp?",
+      "micBlocked": "Mikrofonen er blokkert",
+      "startFailed": "Møtet startet ikke",
+      "openSettings": "Åpne innstillinger"
     },
     "command": "Kommando",
     "commandFallback": "Ingen merking - vanlig diktering",

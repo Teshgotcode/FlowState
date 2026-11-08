@@ -1302,7 +1302,10 @@
       "stop": "Detener",
       "saving": "Guardando…",
       "recording": "Grabando",
-      "stillGoing": "¿Sigue la reunión en marcha?"
+      "stillGoing": "¿Sigue la reunión en marcha?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Comando",
     "commandFallback": "Nada seleccionado - dictado normal",

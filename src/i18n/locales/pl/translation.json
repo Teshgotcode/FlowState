@@ -1302,7 +1302,10 @@
       "stop": "Zatrzymaj",
       "saving": "Zapisywanie…",
       "recording": "Nagrywanie",
-      "stillGoing": "Spotkanie wciąż trwa?"
+      "stillGoing": "Spotkanie wciąż trwa?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Polecenie",
     "commandFallback": "Brak zaznaczenia - zwykłe dyktowanie",

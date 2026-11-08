@@ -1302,7 +1302,10 @@
       "stop": "Hentikan",
       "saving": "Menyimpan…",
       "recording": "Merekam",
-      "stillGoing": "Rapat masih berlangsung?"
+      "stillGoing": "Rapat masih berlangsung?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Perintah",
     "commandFallback": "Tidak ada yang dipilih - dikte normal",

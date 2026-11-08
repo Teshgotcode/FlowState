@@ -1302,7 +1302,10 @@
       "stop": "إيقاف",
       "saving": "جارٍ الحفظ…",
       "recording": "جارٍ التسجيل",
-      "stillGoing": "هل ما زال الاجتماع جاريً؟"
+      "stillGoing": "هل ما زال الاجتماع جاريً؟",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "أمر",
     "commandFallback": "لا يوجد تحديد - إملاء عادي",

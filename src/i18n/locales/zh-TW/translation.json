@@ -1302,7 +1302,10 @@
       "stop": "停止",
       "saving": "儲存中…",
       "recording": "錄音中",
-      "stillGoing": "會議還在進行中嗎？"
+      "stillGoing": "會議還在進行中嗎？",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "命令",
     "commandFallback": "未選取文字 - 一般聽寫",

@@ -1302,7 +1302,10 @@
       "stop": "Atura",
       "saving": "S'està desant…",
       "recording": "Enregistrant",
-      "stillGoing": "La reunió encara està en marxa?"
+      "stillGoing": "La reunió encara està en marxa?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Comanda",
     "commandFallback": "Res seleccionat - dictat normal",

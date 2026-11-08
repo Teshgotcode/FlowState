@@ -1302,7 +1302,10 @@
       "stop": "停止",
       "saving": "保存中…",
       "recording": "録音中",
-      "stillGoing": "会議はまだ続いていますか？"
+      "stillGoing": "会議はまだ続いていますか？",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "コマンド",
     "commandFallback": "選択なし - 通常のディクテーション",

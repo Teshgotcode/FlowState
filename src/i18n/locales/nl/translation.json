@@ -1302,7 +1302,10 @@
       "stop": "Stoppen",
       "saving": "Opslaan …",
       "recording": "Opnemen",
-      "stillGoing": "Duurt de vergadering nog voort?"
+      "stillGoing": "Duurt de vergadering nog voort?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Commando",
     "commandFallback": "Niets geselecteerd - normaal dicteren",

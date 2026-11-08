@@ -1302,7 +1302,10 @@
       "stop": "Stop",
       "saving": "Gemmer …",
       "recording": "Optager",
-      "stillGoing": "Mødet er stadig i gang?"
+      "stillGoing": "Mødet er stadig i gang?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Kommando",
     "commandFallback": "Ingen markering - almindelig diktering",

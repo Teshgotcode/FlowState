@@ -56,15 +56,15 @@ const OVERLAY_HEIGHT: f64 = 50.0;
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;
 const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
 
-// Meeting bar (the Flow-style floating bar): the idle disc is a 40x40 circle
-// with a mic icon, and the recording pill is the Flow-style capsule with the
+// Meeting bar (the Flow-style floating bar): idle is a 9x30 translucent
+// sliver at the screen edge, and the recording pill is the capsule with the
 // running clock and Stop. Both windows are EXACT fits for their visible
 // content: a transparent margin would swallow clicks meant for the app
 // underneath the bar (Sjekkis' S-4c remark), so the slack S-4c carried is gone
 // and the CSS hover no longer scales the disc past the window. Keep in sync
 // with .mdisc / .mcard in RecordingOverlay.css (both border-box). The
 // recording pill shares its footprint with the frontend's short "Saving" pill.
-const MEETING_DISC_WIDTH: f64 = 40.0;
+const MEETING_DISC_WIDTH: f64 = 9.0;
 const MEETING_DISC_HEIGHT: f64 = 40.0;
 const MEETING_PILL_WIDTH: f64 = 176.0;
 const MEETING_PILL_HEIGHT: f64 = 40.0;

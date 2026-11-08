@@ -1302,7 +1302,10 @@
       "stop": "Dừng",
       "saving": "Đang lưu…",
       "recording": "Đang ghi",
-      "stillGoing": "Cuộc họp vẫn đang diễn ra?"
+      "stillGoing": "Cuộc họp vẫn đang diễn ra?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Lệnh",
     "commandFallback": "Không có lựa chọn - đọc chính tả bình thường",

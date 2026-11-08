@@ -1302,7 +1302,10 @@
       "stop": "Зупинити",
       "saving": "Збереження…",
       "recording": "Триває запис",
-      "stillGoing": "Зустріч усе ще триває?"
+      "stillGoing": "Зустріч усе ще триває?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Команда",
     "commandFallback": "Нічого не виділено - звичайний диктант",

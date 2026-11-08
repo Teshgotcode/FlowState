@@ -1302,7 +1302,10 @@
       "stop": "עצור",
       "saving": "שומר…",
       "recording": "מקליט",
-      "stillGoing": "הפגישה עדיין נמשכת?"
+      "stillGoing": "הפגישה עדיין נמשכת?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "פקודה",
     "commandFallback": "לא נבחר טקסט - הכתבה רגילה",

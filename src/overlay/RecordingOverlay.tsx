@@ -133,6 +133,7 @@ const RecordingOverlay: React.FC = () => {
   const [nudgeOpen, setNudgeOpen] = useState(false);
   // The idle disc opens into its action row while the pointer is over it.
   const [discOpen, setDiscOpen] = useState(false);
+  const [barError, setBarError] = useState<string | null>(null);
   const discTimerRef = useRef<number | null>(null);
   // Shrinking the window puts the pointer back over the disc; without a
   // cooldown it would immediately re-expand and flicker.
@@ -541,7 +542,21 @@ const RecordingOverlay: React.FC = () => {
     try {
       await commands.startMeeting();
     } catch (err) {
-      console.warn("Failed to start the meeting:", err);
+      // A dead sliver is the worst outcome: say what failed, and give the
+      // microphone case its one useful action.
+      const message = String(err);
+      console.error("Failed to start the meeting:", message);
+      setBarError(
+        /permission|denied|microphone|input/i.test(message)
+          ? t("overlay.meeting.micBlocked")
+          : t("overlay.meeting.startFailed"),
+      );
+      setDiscOpen(false);
+      void commands.setMeetingBarExpanded(true).catch(() => {});
+      window.setTimeout(() => {
+        setBarError(null);
+        void commands.setMeetingBarExpanded(false).catch(() => {});
+      }, 8000);
     }
   };
 
@@ -754,6 +769,20 @@ const RecordingOverlay: React.FC = () => {
       >
         {discOpen ? (
           <div className="midle">{discActions}</div>
+        ) : barError ? (
+          <button
+            type="button"
+            className="merr"
+            role="alert"
+            onClick={() => {
+              void commands.openMicrophonePrivacySettings().catch(() => {});
+              setBarError(null);
+              void commands.setMeetingBarExpanded(false).catch(() => {});
+            }}
+          >
+            <span className="merr-line">{barError}</span>
+            <span className="merr-action">{t("overlay.meeting.openSettings")}</span>
+          </button>
         ) : (
           <button
             type="button"
@@ -767,23 +796,7 @@ const RecordingOverlay: React.FC = () => {
             onPointerUp={handleBarPointerUp}
             onPointerCancel={handleBarPointerUp}
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-              <rect x="9" y="2.5" width="6" height="11" rx="3" />
-              <path
-                d="M5.5 11.5a6.5 6.5 0 0 0 13 0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-              />
-              <path
-                d="M12 18v3.5"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-              />
-            </svg>
+            <span aria-hidden="true" />
           </button>
         )}
       </div>

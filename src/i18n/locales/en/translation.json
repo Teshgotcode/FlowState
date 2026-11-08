@@ -1302,7 +1302,10 @@
       "stop": "Stop",
       "saving": "Saving…",
       "recording": "Recording",
-      "stillGoing": "Meeting still going?"
+      "stillGoing": "Meeting still going?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Command",
     "commandFallback": "Nothing selected - dictating normally",

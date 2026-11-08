@@ -1302,7 +1302,10 @@
       "stop": "중지",
       "saving": "저장 중…",
       "recording": "녹음 중",
-      "stillGoing": "회의가 아직 진행 중인가요?"
+      "stillGoing": "회의가 아직 진행 중인가요?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "명령",
     "commandFallback": "선택 없음 - 일반 받아쓰기",

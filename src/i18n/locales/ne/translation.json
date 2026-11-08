@@ -1302,7 +1302,10 @@
       "stop": "रोक्नुहोस्",
       "saving": "सुरक्षित गर्दै…",
       "recording": "रेकर्ड हुँदैछ",
-      "stillGoing": "बैठक अझै चलिरहेको छ?"
+      "stillGoing": "बैठक अझै चलिरहेको छ?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "आदेश",
     "commandFallback": "कुनै चयन छैन - सामान्य डिक्टेसन",

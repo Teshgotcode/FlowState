@@ -1302,7 +1302,10 @@
       "stop": "Ferma",
       "saving": "Salvataggio…",
       "recording": "Registrazione in corso",
-      "stillGoing": "La riunione è ancora in corso?"
+      "stillGoing": "La riunione è ancora in corso?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Comando",
     "commandFallback": "Nessuna selezione - dettatura normale",

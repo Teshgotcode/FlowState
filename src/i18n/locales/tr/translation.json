@@ -1302,7 +1302,10 @@
       "stop": "Durdur",
       "saving": "Kaydediliyor…",
       "recording": "Kaydediliyor",
-      "stillGoing": "Toplantı hâlâ sürüyor mu?"
+      "stillGoing": "Toplantı hâlâ sürüyor mu?",
+      "micBlocked": "The microphone is blocked",
+      "startFailed": "The meeting did not start",
+      "openSettings": "Open settings"
     },
     "command": "Komut",
     "commandFallback": "Seçim yok - normal dikte",
