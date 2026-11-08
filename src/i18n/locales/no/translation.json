@@ -1638,6 +1638,11 @@
     "stop": "Stopp",
     "listening": "Lytter. Teksten kommer her etter hvert som det snakkes.",
     "footnote": "Transkriberes lokalt på denne maskinen.",
-    "close": "Lukk panelet"
+    "close": "Lukk panelet",
+    "tab_thoughts": "Mine tanker",
+    "tab_summary": "Sammendrag",
+    "tab_transcript": "Transkript",
+    "thoughtsPlaceholder": "Skriv det du tenker. Det lagres på møtet når du stopper.",
+    "summaryLater": "Sammendraget skrives når møtet er ferdig."
   }
 }

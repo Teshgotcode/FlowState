@@ -573,6 +573,10 @@ struct MeetingSession {
     /// The system-audio capture running beside it (S-5), when the Mac can
     /// tap and the setting asks for it. `None` means mic-only.
     system: Option<SystemTrack>,
+    /// What the user types while the meeting runs, from the live window. Held
+    /// here because the history entry does not exist until the stop; it is
+    /// written onto that entry then. Cleared when a session starts.
+    notes: String,
 }
 
 /// Owns the meeting session for the whole app: the lifecycle commands
@@ -600,6 +604,7 @@ impl MeetingManager {
                 state: MeetingState::default(),
                 working: None,
                 system: None,
+                notes: String::new(),
             }),
         })
     }
@@ -666,6 +671,8 @@ impl MeetingManager {
             .join(format!("{file_name}.{WORKING_SUFFIX}"));
 
         let mut session = self.session.lock().unwrap();
+        // The notes belong to one session: a new one starts empty.
+        session.notes.clear();
         session.state.start(
             started,
             started_unix,
@@ -800,6 +807,14 @@ impl MeetingManager {
                 decision.duration_secs,
                 system_info,
             )?;
+            // Notes typed during the meeting go onto its entry now that one
+            // exists; an empty field writes nothing.
+            if !session.notes.trim().is_empty() {
+                if let Err(e) = hm.save_user_notes(entry.id, session.notes.clone()) {
+                    error!("Failed to save the meeting's notes: {e}");
+                }
+            }
+            session.notes.clear();
             jobs.queue_saved_recording(entry.id);
             Some(entry.id)
         };
@@ -887,6 +902,20 @@ impl MeetingManager {
         self.app
             .state::<Arc<TranscriptionManager>>()
             .set_live_segment_sink(None);
+    }
+
+    /// Save what the user typed in the live window. Nothing is written to
+    /// history yet: the entry only exists after the stop.
+    pub fn set_notes(&self, notes: String) {
+        let mut session = self.session.lock().unwrap();
+        if session.state.is_recording() {
+            session.notes = notes;
+        }
+    }
+
+    /// The notes typed so far in this session, empty when none are.
+    pub fn notes(&self) -> String {
+        self.session.lock().unwrap().notes.clone()
     }
 
     /// The session's stage right now.

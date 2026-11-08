@@ -285,6 +285,8 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::set_meeting_bar_expanded,
             commands::meeting::set_meeting_bar_nudge,
             commands::meeting::set_meeting_reminder_minutes,
+            commands::meeting::set_current_meeting_notes,
+            commands::meeting::get_current_meeting_notes,
             commands::meeting::set_meeting_user_notes,
             commands::meeting::set_meeting_speaker_names,
             commands::meeting::diarize_meeting_entry,

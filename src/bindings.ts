@@ -1473,6 +1473,19 @@ async setMeetingReminderMinutes(minutes: number | null) : Promise<void> {
     await TAURI_INVOKE("set_meeting_reminder_minutes", { minutes });
 },
 /**
+ * The notes typed in the live window while this meeting runs. They live on
+ * the session until it stops, then land on the finished entry's metadata.
+ */
+async setCurrentMeetingNotes(notes: string) : Promise<void> {
+    await TAURI_INVOKE("set_current_meeting_notes", { notes });
+},
+/**
+ * What has been typed in the live window so far; empty when nothing has.
+ */
+async getCurrentMeetingNotes() : Promise<string> {
+    return await TAURI_INVOKE("get_current_meeting_notes");
+},
+/**
  * What the user typed during a meeting, in their own words. Kept apart from
  * the transcript and the generated note: neither is rewritten from it, and it
  * survives restarts and re-transcriptions. An empty string clears the field,

@@ -90,9 +90,50 @@ body {
   color: var(--color-text);
 }
 
+/* The three panes the reference puts on its meeting note. */
+.ml-tabs {
+  display: flex;
+  gap: 14px;
+  padding: 0 14px;
+  border-bottom: 1px solid var(--color-line, rgba(127, 127, 127, 0.18));
+}
+
+.ml-tab {
+  padding: 8px 0;
+  margin-bottom: -1px;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--color-mid-gray);
+  font: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+
+.ml-tab[data-active="true"] {
+  color: var(--color-text);
+  border-bottom-color: var(--color-text);
+}
+
+.ml-thoughts {
+  flex: 1;
+  margin: 12px 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-line, rgba(127, 127, 127, 0.22));
+  border-radius: 10px;
+  background: transparent;
+  color: var(--color-text);
+  font: inherit;
+  font-size: 13px;
+  line-height: 20px;
+  resize: none;
+  outline: none;
+}
+
 .ml-list {
   flex: 1;
   overflow-y: auto;
+  min-height: 0;
   padding: 12px 14px 6px;
   display: flex;
   flex-direction: column;

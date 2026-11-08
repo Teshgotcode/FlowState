@@ -1638,6 +1638,11 @@
     "stop": "Stop",
     "listening": "Listening. The text appears here as people speak.",
     "footnote": "Transcribed locally on this machine.",
-    "close": "Close panel"
+    "close": "Close panel",
+    "tab_thoughts": "My thoughts",
+    "tab_summary": "Summary",
+    "tab_transcript": "Transcript",
+    "thoughtsPlaceholder": "Type what you think. It is saved onto the meeting when you stop.",
+    "summaryLater": "The summary is written when the meeting ends."
   }
 }

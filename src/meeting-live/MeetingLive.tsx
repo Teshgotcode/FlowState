@@ -34,6 +34,27 @@ const MeetingLive: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
   const [now, setNow] = useState(() => Date.now());
   const listRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
+  const [tab, setTab] = useState<"thoughts" | "summary" | "transcript">("transcript");
+  const [thoughts, setThoughts] = useState("");
+  const saveTimer = useRef<number | null>(null);
+
+  // The notes already typed, so closing and reopening the window keeps them.
+  useEffect(() => {
+    if (demo) return;
+    void commands.getCurrentMeetingNotes().then((notes) => {
+      if (typeof notes === "string") setThoughts(notes);
+    });
+  }, [demo]);
+
+  /** Save what is typed after a short pause: the buffer lives on the session
+   * in the backend, and lands on the entry when the meeting stops. */
+  const onThoughts = (value: string) => {
+    setThoughts(value);
+    if (saveTimer.current != null) window.clearTimeout(saveTimer.current);
+    saveTimer.current = window.setTimeout(() => {
+      void commands.setCurrentMeetingNotes(value).catch(() => {});
+    }, 600);
+  };
 
   useEffect(() => {
     if (demo) return;
@@ -135,9 +156,35 @@ const MeetingLive: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
         </button>
       </header>
 
+      <div className="ml-tabs">
+        {(["thoughts", "summary", "transcript"] as const).map((id) => (
+          <button
+            key={id}
+            type="button"
+            className="ml-tab"
+            data-active={tab === id}
+            onClick={() => setTab(id)}
+          >
+            {t(`meetingLive.tab_${id}`)}
+          </button>
+        ))}
+      </div>
+
+      {tab === "thoughts" && (
+        <textarea
+          className="ml-thoughts"
+          value={thoughts}
+          onChange={(event) => onThoughts(event.target.value)}
+          placeholder={t("meetingLive.thoughtsPlaceholder")}
+        />
+      )}
+
+      {tab === "summary" && <p className="ml-empty">{t("meetingLive.summaryLater")}</p>}
+
       <div
         ref={listRef}
         className="ml-list"
+        hidden={tab !== "transcript"}
         onScroll={() => {
           const el = listRef.current;
           if (!el) return;
