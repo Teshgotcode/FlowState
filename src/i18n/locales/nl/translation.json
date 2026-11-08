@@ -1249,7 +1249,8 @@
     "open": "Openen",
     "copy": "Kopiëren",
     "clear": "Wissen",
-    "noOptionsFound": "Geen opties gevonden"
+    "noOptionsFound": "Geen opties gevonden",
+    "cancel": "Cancel"
   },
   "errors": {
     "loadDirectory": "Fout bij laden van map: {{error}}",
@@ -1503,16 +1504,57 @@
     "folderCount_other": "{{count}} notes",
     "openTranscript": "Open transcript",
     "deleteMeeting": "Delete meeting",
-    "deleteFailed": "Could not delete the meeting"
+    "deleteFailed": "Could not delete the meeting",
+    "addToFolder": "Add to folder"
   },
   "dictionary": {
-    "subtitle": "Words and names the transcriber should spell your way."
+    "subtitle": "Words and names the transcriber should spell your way.",
+    "import": "Import",
+    "importTitle": "Import words",
+    "importHint": "One word per line. Commas and semicolons work too. Words you already have are skipped.",
+    "importPlaceholder": "Tejas\nFlowState\nstud.ntnu.no",
+    "importCount": "Add {{count}}"
   },
   "snippets": {
     "subtitle": "Say a trigger, get a fixed block of text."
   },
   "style": {
-    "subtitle": "Per-app writing rules the post-processor applies."
+    "subtitle": "Per-app writing rules the post-processor applies.",
+    "intro": "Choose how the text looks when it lands. One style is the default; a single app can get its own.",
+    "disabledHint": "Post-processing is off. Turn it on in Settings → Post-processing for the style to apply.",
+    "perApp": "Per app",
+    "presets": {
+      "style_neutral": {
+        "name": "Neutral",
+        "description": "Fixes spelling, numbers and filler words. Leaves the tone alone.",
+        "sample": "Hey, can we take the meeting tomorrow at 12?"
+      },
+      "style_formal": {
+        "name": "Formal",
+        "description": "Complete, polite sentences without slang.",
+        "sample": "Hello, I would like to ask whether tomorrow at 12 works for a meeting."
+      },
+      "style_email": {
+        "name": "Email",
+        "description": "A finished email with a subject, greeting and sign-off.",
+        "sample": "Subject: Meeting tomorrow. Hi, does tomorrow at 12 work for you?"
+      },
+      "style_short": {
+        "name": "Short",
+        "description": "Only the point, without pleasantries.",
+        "sample": "Meeting tomorrow at 12?"
+      },
+      "style_note": {
+        "name": "Note",
+        "description": "A one-line summary with bullets under it.",
+        "sample": "Meeting: tomorrow at 12. Budget first."
+      },
+      "style_code_comment": {
+        "name": "Code comment",
+        "description": "One short line per point, no markdown.",
+        "sample": "// Fix the race in the sync loop when two calls land together"
+      }
+    }
   },
   "help": {
     "subtitle": "How to dictate, and where the rest lives.",

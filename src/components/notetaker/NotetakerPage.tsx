@@ -391,11 +391,18 @@ export const NotetakerPage: React.FC = () => {
                   </p>
                   <div className="overflow-hidden rounded-[12px] border border-line bg-surface">
                     {entries.map((entry, index) => (
-                      <button
+                      <div
                         key={entry.id}
-                        type="button"
+                        role="button"
+                        tabIndex={0}
                         onClick={() => setSelectedId(entry.id)}
-                        className={`relative flex w-full cursor-pointer items-center gap-[12px] px-[12px] py-[12px] text-start transition-colors hover:bg-wash ${
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            setSelectedId(entry.id);
+                          }
+                        }}
+                        className={`group relative flex w-full cursor-pointer items-center gap-[12px] px-[12px] py-[12px] text-start transition-colors hover:bg-wash ${
                           index > 0 ? "border-t border-line" : ""
                         } ${selectedId === entry.id ? "bg-wash" : ""}`}
                       >
@@ -413,7 +420,33 @@ export const NotetakerPage: React.FC = () => {
                             {timeFormat.format(new Date(entry.timestamp * 1000))}
                           </span>
                         </span>
-                      </button>
+                        {/* Folder assignment on the row itself, the reference's
+                            "Add to folder". */}
+                        <select
+                          value={assignments[String(entry.id)] ?? ""}
+                          onClick={(event) => event.stopPropagation()}
+                          onChange={(event) => {
+                            const value = event.target.value;
+                            const next = { ...assignments };
+                            if (value) next[String(entry.id)] = value;
+                            else delete next[String(entry.id)];
+                            setAssignments(next);
+                            saveAssignments(next);
+                          }}
+                          aria-label={t("notetaker.addToFolder")}
+                          title={t("notetaker.addToFolder")}
+                          className={`h-[24px] max-w-[120px] cursor-pointer rounded-[6px] border border-line bg-surface px-[4px] text-[11.5px] text-ink-3 opacity-0 outline-none transition-opacity focus:opacity-100 group-hover:opacity-100 ${
+                            assignments[String(entry.id)] ? "opacity-100" : ""
+                          }`}
+                        >
+                          <option value="">{t("notetaker.addToFolder")}</option>
+                          {folders.map((folder) => (
+                            <option key={folder.id} value={folder.id}>
+                              {folder.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
                     ))}
                   </div>
                 </div>

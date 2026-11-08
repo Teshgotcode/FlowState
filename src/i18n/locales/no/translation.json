@@ -1249,7 +1249,8 @@
     "open": "Åpne",
     "copy": "Kopier",
     "clear": "Tøm",
-    "noOptionsFound": "Ingen alternativer funnet"
+    "noOptionsFound": "Ingen alternativer funnet",
+    "cancel": "Avbryt"
   },
   "errors": {
     "loadDirectory": "Kunne ikke laste mappen: {{error}}",
@@ -1503,16 +1504,57 @@
     "folderCount_other": "{{count}} notater",
     "openTranscript": "Åpne transkript",
     "deleteMeeting": "Slett møtet",
-    "deleteFailed": "Kunne ikke slette møtet"
+    "deleteFailed": "Kunne ikke slette møtet",
+    "addToFolder": "Legg til i mappe"
   },
   "dictionary": {
-    "subtitle": "Ord og navn transkriberingen skal skrive som du vil."
+    "subtitle": "Ord og navn transkriberingen skal skrive som du vil.",
+    "import": "Importer",
+    "importTitle": "Importer ord",
+    "importHint": "Ett ord per linje. Komma og semikolon går også. Ord du allerede har, hoppes over.",
+    "importPlaceholder": "Tejas\nFlowState\nstud.ntnu.no",
+    "importCount": "Legg til {{count}}"
   },
   "snippets": {
     "subtitle": "Si en snarvei, få en fast tekst."
   },
   "style": {
-    "subtitle": "Skriveregler per app, brukt av etterbehandlingen."
+    "subtitle": "Skriveregler per app, brukt av etterbehandlingen.",
+    "intro": "Velg hvordan teksten skal se ut når den lander. Én stil er standard; enkelte apper kan få sin egen.",
+    "disabledHint": "Etterbehandling er av. Slå den på i Innstillinger → Etterbehandling for at stilen skal brukes.",
+    "perApp": "Per app",
+    "presets": {
+      "style_neutral": {
+        "name": "Nøytral",
+        "description": "Rydder skrivefeil, tall og fyllord. Endrer ikke tonen.",
+        "sample": "Hei, kan vi ta møtet i morgen klokka 12?"
+      },
+      "style_formal": {
+        "name": "Formell",
+        "description": "Fullstendige, høflige setninger uten slang.",
+        "sample": "Hei, jeg vil gjerne høre om det passer å møtes i morgen klokken 12."
+      },
+      "style_email": {
+        "name": "E-post",
+        "description": "Ferdig e-post med emnefelt, hilsen og avslutning.",
+        "sample": "Emne: Møte i morgen. Hei, passer det å møtes klokka 12?"
+      },
+      "style_short": {
+        "name": "Kort",
+        "description": "Bare kjernebudskapet, uten høflighetsfraser.",
+        "sample": "Møte i morgen kl 12?"
+      },
+      "style_note": {
+        "name": "Notat",
+        "description": "Én linje sammendrag og kulepunkter under.",
+        "sample": "Møte: i morgen kl 12. Vi tar budsjettet først."
+      },
+      "style_code_comment": {
+        "name": "Kode-kommentar",
+        "description": "Én kort linje per poeng, uten markdown.",
+        "sample": "// Retter race i sync-løkka når to kall treffer samtidig"
+      }
+    }
   },
   "help": {
     "subtitle": "Slik dikterer du, og hvor du finner resten.",

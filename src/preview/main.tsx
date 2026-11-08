@@ -153,23 +153,16 @@ const settings = {
   custom_words: ["Tejas", "stud.ntnu.no", "FlowState"],
   post_process_enabled: true,
   post_process_prompts: [
+    { id: "style_neutral", name: "Nøytral", prompt: "Rydd skrivefeil og fyllord." },
+    { id: "style_formal", name: "Formell", prompt: "Formelt bokmål, uten slang." },
+    { id: "style_email", name: "E-post", prompt: "Lag en ferdig e-post." },
     {
       id: "p1",
       name: "Kulepunkter",
       prompt: "Gjør teksten om til korte kulepunkter. Behold alle fakta og navn.",
     },
-    {
-      id: "p2",
-      name: "Kortere",
-      prompt: "Kort ned teksten til halve lengden uten å miste poenget.",
-    },
-    {
-      id: "p3",
-      name: "Formelt",
-      prompt: "Skriv om til formelt bokmål, uten slang og uten fyllord.",
-    },
   ],
-  post_process_selected_prompt_id: "p1",
+  post_process_selected_prompt_id: "style_neutral",
   bindings: {
     transcribe: {
       id: "transcribe",
