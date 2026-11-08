@@ -39,11 +39,28 @@ fn model_languages(model: Option<&ModelInfo>, streaming: bool) -> ModelLanguages
 /// How a transcription on `model` picks its language (`None`: a model the
 /// registry doesn't know). Computed fresh each time and never written back
 /// to settings, so the persisted intent survives switching models and back.
-pub fn plan_for(settings: &AppSettings, model: Option<&ModelInfo>, streaming: bool) -> Plan {
+pub fn plan_for(
+    settings: &AppSettings,
+    model: Option<&ModelInfo>,
+    streaming: bool,
+    restrict_to_spoken: bool,
+) -> Plan {
+    let languages = model_languages(model, streaming);
+    if restrict_to_spoken {
+        // A meeting runs for an hour: if the model's own per-chunk detection
+        // picks a language it likes, one noisy stretch transcribes the whole
+        // thing as Hindi. Detect once, among the languages actually spoken.
+        return policy::plan_restricted(
+            &settings.selected_language,
+            &settings.spoken_languages,
+            &languages,
+            detector_labels(),
+        );
+    }
     policy::plan(
         &settings.selected_language,
         &settings.spoken_languages,
-        &model_languages(model, streaming),
+        &languages,
         settings.language_detection,
         detector_labels(),
     )

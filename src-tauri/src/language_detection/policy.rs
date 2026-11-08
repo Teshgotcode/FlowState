@@ -151,6 +151,32 @@ pub fn auto_language(
 
 /// The plan for one transcription. `intent` is the persisted selection
 /// (`"auto"` or a code); an explicit language the model supports always wins.
+/// A plan that never lets the model choose outside `preferred`: for a
+/// meeting, where the model's own per-chunk detection once turned an hour of
+/// Norwegian into Hindi after one noisy stretch. Detection still happens, but
+/// only among the languages the person speaks.
+pub fn plan_restricted(
+    intent: &str,
+    preferred: &[String],
+    model: &ModelLanguages,
+    labels: &[String],
+) -> Plan {
+    // "Doesn't detect, isn't streaming" is how plan() asks for restricted
+    // detection; the streaming exclusion exists for dictation's live preview,
+    // not for a batch meeting.
+    plan(
+        intent,
+        preferred,
+        &ModelLanguages {
+            detects: false,
+            streaming: false,
+            languages: model.languages,
+        },
+        LanguageDetectionMode::Always,
+        labels,
+    )
+}
+
 pub fn plan(
     intent: &str,
     preferred: &[String],
@@ -397,6 +423,19 @@ mod tests {
         let streaming = model(&languages, true, true);
         assert_eq!(plan_on(&streaming, "auto", "en de", Always), Plan::Native);
         assert_eq!(plan_on(&streaming, "auto", "en", Always), Plan::Native);
+
+        // A meeting overrides both guards: the detector still chooses, but
+        // only among the spoken languages, even on a streaming model.
+        let detected_on_streaming = plan_restricted(
+            "auto",
+            &codes("nb en"),
+            &model(&codes("en nb de hi"), true, true),
+            &codes("no en de"),
+        );
+        assert_eq!(
+            detected_on_streaming,
+            detect("nb en", "no en", FirstLanguage)
+        );
     }
 
     #[test]

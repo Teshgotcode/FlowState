@@ -49,7 +49,8 @@ impl<'a> LiveSession<'a> {
         // The same run setup as the batch path: task + language gated
         // against what the model actually advertises.
         let settings = get_settings(&tm.app_handle);
-        let plan = tm.language_plan(&settings, model_id, info);
+        let restrict = tm.stream_restrict.load(std::sync::atomic::Ordering::Acquire);
+        let plan = tm.language_plan(&settings, model_id, info, restrict);
         let decoder = match mode {
             LiveDecode::None => unreachable!("returned above"),
             LiveDecode::Stream => {

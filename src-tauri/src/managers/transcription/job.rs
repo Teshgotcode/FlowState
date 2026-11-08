@@ -40,6 +40,7 @@ impl TranscriptionManager {
         &self,
         audio: Vec<f32>,
         control: &dyn ChunkControl,
+        restrict_to_spoken: bool,
     ) -> Result<Option<Transcription>> {
         let started = Instant::now();
         let total = audio.len();
@@ -59,7 +60,7 @@ impl TranscriptionManager {
             active_model,
             setup,
             ..
-        } = self.batch_context(&audio)?;
+        } = self.batch_context(&audio, restrict_to_spoken)?;
 
         let backend = settings.vad_backend;
         let app_handle = self.app_handle.clone();

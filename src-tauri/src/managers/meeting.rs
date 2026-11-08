@@ -653,7 +653,7 @@ impl MeetingManager {
             settings.long_form_chunking,
         ) != LiveDecode::None
         {
-            tm.start_stream();
+            tm.start_stream(true);
         }
 
         let hm = app.state::<Arc<HistoryManager>>();

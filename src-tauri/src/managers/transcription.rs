@@ -21,9 +21,11 @@ use anyhow::Result;
 use chunked::{ChunkSetup, ChunkedDecode};
 use live::LiveSession;
 use log::{debug, error, info, warn};
+use regex::Regex;
 use policy::{batch_decode, live_decode, BatchDecode, ModelTraits};
 use serde::{Deserialize, Serialize};
 use specta::Type;
+use std::sync::OnceLock;
 use std::panic::{catch_unwind, AssertUnwindSafe};
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Condvar, Mutex, MutexGuard};
@@ -270,6 +272,9 @@ pub struct TranscriptionManager {
     /// yet. This prevents a second worker from starting after finalize/cancel
     /// closes the router but before the first worker has fully exited.
     active_stream_worker: Arc<AtomicU64>,
+    /// Whether the live decode must keep its language among the spoken ones.
+    /// A meeting sets it so no noisy stretch can flip the preview's language.
+    stream_restrict: Arc<AtomicBool>,
     /// True while a background job is queued or running. It holds the model,
     /// so one transcript is never written by two models.
     job_active: Arc<AtomicBool>,
@@ -297,6 +302,7 @@ impl TranscriptionManager {
             loading_condvar: Arc::new(Condvar::new()),
             reload_model_on_next_use: Arc::new(AtomicBool::new(false)),
             router: Arc::new(StreamRouter::new()),
+            stream_restrict: Arc::new(AtomicBool::new(false)),
             live_segment_sink: Arc::new(Mutex::new(None)),
             stream_active: Arc::new(AtomicBool::new(false)),
             next_stream_worker_id: Arc::new(AtomicU64::new(1)),
@@ -771,7 +777,10 @@ impl TranscriptionManager {
     /// worker idles until finalize/cancel and reports `None` so the caller
     /// falls back to batch transcription. Frames sent before the decode begins
     /// queue on the channel and are not lost.
-    pub fn start_stream(&self) {
+    pub fn start_stream(&self, restrict_to_spoken: bool) {
+        // Live decode reads this once, when its session begins.
+        self.stream_restrict
+            .store(restrict_to_spoken, Ordering::Release);
         if self.router.is_open() || self.active_stream_worker.load(Ordering::Acquire) != 0 {
             warn!("start_stream called while a stream worker is already active");
             return;
@@ -996,7 +1005,7 @@ impl TranscriptionManager {
 
         let mut outcome = match live {
             Some(outcome) => outcome,
-            None => self.decode_batch(audio)?,
+            None => self.decode_batch(audio, false)?,
         };
         let settings = get_settings(&self.app_handle);
         let language = outcome
@@ -1041,19 +1050,19 @@ impl TranscriptionManager {
 
     /// Decode a whole clip with the loaded model, loading it first if a load
     /// is under way.
-    fn decode_batch(&self, audio: Vec<f32>) -> Result<RunOutcome> {
+    fn decode_batch(&self, audio: Vec<f32>, restrict_to_spoken: bool) -> Result<RunOutcome> {
         // A cancel from here on (during the model-load wait or chunk planning
         // included) stops every run of this transcription.
         let mark = self.engine.cancel_mark();
         self.touch_activity();
-        let batch = self.batch_context(&audio)?;
+        let batch = self.batch_context(&audio, restrict_to_spoken)?;
         self.transcribe_cpp(mark, batch, audio)
     }
 
     /// Waits out any model load, then reads what a batch transcription of
     /// `audio` runs with: the loaded model, the settings, and the language
     /// resolved for it.
-    fn batch_context(&self, audio: &[f32]) -> Result<BatchContext> {
+    fn batch_context(&self, audio: &[f32], restrict_to_spoken: bool) -> Result<BatchContext> {
         {
             let mut is_loading = self.is_loading.lock().unwrap();
             while *is_loading {
@@ -1072,7 +1081,7 @@ impl TranscriptionManager {
         let active_model = self
             .get_current_model()
             .unwrap_or_else(|| settings.selected_model.clone());
-        let plan = self.language_plan(&settings, &active_model, &info);
+        let plan = self.language_plan(&settings, &active_model, &info, restrict_to_spoken);
         let setup = self.setup_for(&info, &settings, &plan, audio);
         Ok(BatchContext {
             info,
@@ -1085,12 +1094,19 @@ impl TranscriptionManager {
     /// How a transcription on `model_id` picks its language, decided before
     /// any audio. Computed fresh each time and never written back to
     /// settings, so the persisted intent survives switching models and back.
-    fn language_plan(&self, settings: &AppSettings, model_id: &str, info: &LoadedInfo) -> Plan {
+    fn language_plan(
+        &self,
+        settings: &AppSettings,
+        model_id: &str,
+        info: &LoadedInfo,
+        restrict_to_spoken: bool,
+    ) -> Plan {
         let model = self.model_manager.get_model_info(model_id);
         crate::language_detection::plan_for(
             settings,
             model.as_ref(),
             info.capabilities.supports_streaming,
+            restrict_to_spoken,
         )
     }
 
@@ -1278,6 +1294,20 @@ struct RunOutcome {
 
 /// One transcription's final text: its output language resolved, then
 /// post-processed.
+/// A confused model sometimes emits its own control tokens ("<sl-SI>",
+/// "<|en|>") into the text. They are not speech and never belong in a note.
+fn strip_model_tags(text: String) -> String {
+    static TAG: OnceLock<Regex> = OnceLock::new();
+    let tag = TAG.get_or_init(|| {
+        Regex::new(r"<\s*\|?[A-Za-z]{2,3}([-_][A-Za-z0-9]{2,4})?\|?\s*>").expect("valid tag regex")
+    });
+    if !text.contains('<') {
+        return text;
+    }
+    let stripped = tag.replace_all(&text, " ").into_owned();
+    stripped.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 fn finish_text(outcome: RunOutcome, settings: &AppSettings) -> String {
     let RunOutcome {
         setup,
@@ -1289,7 +1319,7 @@ fn finish_text(outcome: RunOutcome, settings: &AppSettings) -> String {
     debug!("Output language evidence: {:?}", output_language);
     // Skip fuzzy correction if the model already got the custom words.
     post_process_transcription_text(
-        text,
+        strip_model_tags(text),
         settings,
         setup.custom_words_prompted(),
         &output_language,
@@ -2131,6 +2161,22 @@ mod tests {
 
     fn languages(codes: &[&str]) -> Vec<String> {
         codes.iter().map(|code| (*code).to_string()).collect()
+    }
+
+    #[test]
+    fn model_control_tokens_never_reach_the_text() {
+        // A confused model tagged its own output; the note must not show it.
+        assert_eq!(
+            strip_model_tags("Problems la coins hate satulen. <sl-SI>".into()),
+            "Problems la coins hate satulen."
+        );
+        assert_eq!(strip_model_tags("<|en|> Hei på deg".into()), "Hei på deg");
+        assert_eq!(
+            strip_model_tags("Budsjettet er <nb-NO> klart".into()),
+            "Budsjettet er klart"
+        );
+        // Ordinary text with a comparison sign is left alone.
+        assert_eq!(strip_model_tags("vi trenger < 5 dager".into()), "vi trenger < 5 dager");
     }
 
     #[test]

@@ -567,7 +567,7 @@ impl ShortcutAction for TranscribeAction {
             long_form: false,
         };
         if live_decode(expected_model, settings.long_form_chunking) != LiveDecode::None {
-            tm.start_stream();
+            tm.start_stream(false);
         }
         let plan_elapsed = plan_started.elapsed();
 

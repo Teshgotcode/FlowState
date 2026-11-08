@@ -308,8 +308,9 @@ impl TranscriptionJobManager {
         // merged into the transcript's timed segments. A meeting on a machine
         // without the model (or a run that failed) is a skip, not an error:
         // the transcript stands exactly as it was, without speakers.
+        let is_meeting = entry.source == Some(crate::managers::history::HistorySource::Meeting);
         let speaker_turns =
-            if entry.source == Some(crate::managers::history::HistorySource::Meeting) {
+            if is_meeting {
                 crate::managers::diarize::diarize_meeting(&self.app, &samples)
             } else {
                 None
@@ -318,7 +319,7 @@ impl TranscriptionJobManager {
             text,
             language,
             mut segments,
-        }) = tm.transcribe_in_chunks(samples, &control)?
+        }) = tm.transcribe_in_chunks(samples, &control, is_meeting)?
         else {
             return Ok(());
         };
@@ -402,7 +403,8 @@ impl TranscriptionJobManager {
             text,
             segments: mut system_segments,
             ..
-        }) = tm.transcribe_in_chunks(samples, &control)?
+        // Always a meeting's second track, so same restriction.
+        }) = tm.transcribe_in_chunks(samples, &control, true)?
         else {
             return Ok(());
         };
