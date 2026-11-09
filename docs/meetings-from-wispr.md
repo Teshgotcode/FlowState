@@ -27,7 +27,19 @@ Målt på denne maskinen: 117 møtemapper i
 - Språk: flere møter er tospråklige. Eksempel fra importen: en forelesning på
   engelsk med norsk gruppediskusjon i samme opptak.
 
-## Tre endringer dette peker mot
+## Hva som er gjort
+
+- **Komprimering.** Etter at et møte er transkribert, kodes WAV-en om til AAC
+  (48 kbps, mono, 16 kHz) med `/usr/bin/afconvert`, resultatet dekodes tilbake
+  og lengden sammenlignes før WAV-en slettes. Målt på en ekte oppføring: 532 KB
+  ble 105 KB, samme lengde. Feiler noe, blir WAV-en stående.
+- **Opprydding.** Samme sted kjøres en lokal-LLM-runde over transkripten med en
+  streng «rett bare åpenbare gjenkjenningsfeil»-prompt, og svaret lagres som
+  `post_processed_text`. En chunk som blir mye kortere eller lengre enn kilden
+  forkastes, så en oppsummering aldri erstatter det som ble sagt. Uten et
+  lokalt endepunkt gjør den ingenting.
+
+## Tre endringer dataen peker mot
 
 1. **Tospråklige møter.** Vi velger ett språk for hele møtet. Med en
    engelsk forelesning og norsk diskusjon blir halve opptaket feil. Neste steg

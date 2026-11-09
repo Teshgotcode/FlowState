@@ -1,10 +1,12 @@
 pub mod audio;
+pub mod compress_meeting;
 pub mod diarize;
 pub mod gguf_meta;
 pub mod history;
 pub mod meeting;
 pub mod meeting_ask;
 pub mod meeting_note;
+pub mod meeting_refine;
 pub mod model;
 pub mod model_capabilities;
 pub mod transcription;

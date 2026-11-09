@@ -42,6 +42,10 @@ static MIGRATIONS: &[M] = &[
 
 /// Nullable columns added outside [`MIGRATIONS`]; see
 /// [`HistoryManager::apply_migrations`].
+/// Marks a cleaned meeting transcript in `post_process_prompt`, so the
+/// windows can tell it apart from a dictation's post-processed text.
+pub const MEETING_REFINE_PROMPT: &str = "meeting-refine";
+
 const ADDED_COLUMNS: &[&str] = &[
     "source_name",
     "language",
@@ -708,6 +712,52 @@ impl HistoryManager {
         }
 
         Ok(entry)
+    }
+
+    /// Read the entry back and tell the windows it changed.
+    fn entry_and_announce(&self, id: i64) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let entry = conn.query_row(
+            &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+            params![id],
+            Self::map_history_entry,
+        )?;
+        if let Err(e) = (HistoryUpdatePayload::Updated {
+            entry: entry.clone(),
+        })
+        .emit(&self.app_handle)
+        {
+            error!("Failed to emit history-updated event: {}", e);
+        }
+        Ok(entry)
+    }
+
+    /// Keep the cleaned transcript beside the raw one. The transcription and
+    /// the segments are not touched: the window still shows what was heard.
+    pub fn save_cleaned_text(&self, id: i64, cleaned: &str) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let updated = conn.execute(
+            "UPDATE transcription_history SET post_processed_text = ?1, post_process_prompt = ?2 WHERE id = ?3",
+            params![cleaned, MEETING_REFINE_PROMPT, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        self.entry_and_announce(id)
+    }
+
+    /// Point an entry at the recording's new file name, after the WAV was
+    /// transcoded. Nothing else about the entry changes.
+    pub fn rename_audio_file(&self, id: i64, file_name: &str) -> Result<HistoryEntry> {
+        let conn = self.get_connection()?;
+        let updated = conn.execute(
+            "UPDATE transcription_history SET file_name = ?1 WHERE id = ?2",
+            params![file_name, id],
+        )?;
+        if updated == 0 {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        self.entry_and_announce(id)
     }
 
     /// An entry's metadata, empty when it has none. Read-only callers use

@@ -2,7 +2,7 @@
 //! a time in chunks that yield to dictation. Progress is kept in memory.
 
 use anyhow::{anyhow, Result};
-use log::{error, info, warn};
+use log::{debug, error, info, warn};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::cell::Cell;
@@ -291,8 +291,18 @@ impl TranscriptionJobManager {
         let tm = Arc::clone(&self.app.state::<Arc<TranscriptionManager>>());
         let entry = tauri::async_runtime::block_on(hm.get_entry_by_id(entry_id))?
             .ok_or_else(|| anyhow!("History entry {} not found", entry_id))?;
-        let samples = read_wav_samples(hm.get_audio_file_path(&entry.file_name))
-            .map_err(|e| anyhow!("Failed to load audio: {}", e))?;
+        // A compressed meeting is decoded from whatever format it is in; WAV
+        // keeps its direct reader so nothing changes for dictations.
+        let audio_path = hm.get_audio_file_path(&entry.file_name);
+        let samples = if entry.file_name.ends_with(".wav") {
+            read_wav_samples(audio_path).map_err(|e| anyhow!("Failed to load audio: {}", e))?
+        } else {
+            crate::audio_toolkit::audio::decode_audio_file(&audio_path)
+                .map_err(|e| anyhow!("Failed to load audio: {}", e))?
+        };
+        // Counted before the audio is handed to the transcriber: the encode is
+        // checked against it afterwards.
+        let wav_samples = samples.len();
         if samples.is_empty() {
             return Err(anyhow!("Recording has no audio samples"));
         }
@@ -367,6 +377,36 @@ impl TranscriptionJobManager {
                         "Entry {}'s system audio track was not transcribed: {}",
                         entry.id, e
                     );
+                }
+            }
+        }
+        // A finished meeting is done with its raw audio: the recording is
+        // transcoded to a twelfth of the size, and the transcript gets the
+        // cleanup pass the reference keeps beside its live text. Both are
+        // best-effort — a failure leaves the WAV and the raw text in place.
+        if is_meeting && !cancelled.load(Ordering::Acquire) {
+            match crate::managers::compress_meeting::compress_meeting_recording(
+                &self.app,
+                &hm,
+                entry.id,
+                &entry.file_name,
+                wav_samples,
+            ) {
+                Ok(new_name) => info!("Meeting {} recorded to {new_name}", entry.id),
+                Err(e) => warn!("Meeting {}'s recording was left as WAV: {e}", entry.id),
+            }
+            if let Ok(Some(current)) =
+                tauri::async_runtime::block_on(hm.get_entry_by_id(entry.id))
+            {
+                match crate::managers::meeting_refine::refine_meeting_transcript(
+                    &self.app,
+                    &hm,
+                    entry.id,
+                    &current.transcription_text,
+                ) {
+                    Ok(0) => debug!("Meeting {} had no cleaned transcript", entry.id),
+                    Ok(chunks) => info!("Meeting {} cleaned in {chunks} chunks", entry.id),
+                    Err(e) => warn!("Meeting {}'s transcript was not cleaned: {e}", entry.id),
                 }
             }
         }
