@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "請先輸入問題。",
         "failed": "無法回答這個問題。"
       },
-      "note": "便箋"
+      "note": "便箋",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "偵錯",

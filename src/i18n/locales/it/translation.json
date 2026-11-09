@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Scrivi prima una domanda.",
         "failed": "Non è stato possibile rispondere alla domanda."
       },
-      "note": "Nota"
+      "note": "Nota",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Debug",

@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Първо напишете въпрос.",
         "failed": "На въпроса не можа да се отговори."
       },
-      "note": "Бележка"
+      "note": "Бележка",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Отстраняване",

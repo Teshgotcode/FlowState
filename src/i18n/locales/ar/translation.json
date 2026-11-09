@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "اكتب سؤالًا أولًا.",
         "failed": "تعذّر الإجابة عن السؤال."
       },
-      "note": "ملاحظة"
+      "note": "ملاحظة",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "تصحيح الأخطاء",

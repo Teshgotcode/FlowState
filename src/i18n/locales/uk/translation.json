@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Спершу напишіть питання.",
         "failed": "Не вдалося відповісти на питання."
       },
-      "note": "Нотатка"
+      "note": "Нотатка",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Дебаг",

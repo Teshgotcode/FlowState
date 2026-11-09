@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Najpierw napisz pytanie.",
         "failed": "Na pytanie nie udało się odpowiedzieć."
       },
-      "note": "Notatka"
+      "note": "Notatka",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Debugowanie",

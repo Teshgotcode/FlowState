@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Nejdřív napište otázku.",
         "failed": "Na otázku se nepodařilo odpovědět."
       },
-      "note": "Poznámka"
+      "note": "Poznámka",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Ladění",

@@ -19,6 +19,7 @@ mod llm_client;
 mod managers;
 mod meeting_detect;
 mod meeting_live;
+mod meeting_names;
 mod memory;
 mod overlay;
 mod paste_tx;
@@ -285,6 +286,7 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::set_meeting_bar_expanded,
             commands::meeting::set_meeting_bar_nudge,
             commands::meeting::set_meeting_reminder_minutes,
+            commands::meeting::suggest_meeting_names,
             commands::meeting::set_current_meeting_notes,
             commands::meeting::get_current_meeting_notes,
             commands::meeting::set_meeting_user_notes,

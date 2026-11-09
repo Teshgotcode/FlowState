@@ -710,6 +710,12 @@ impl HistoryManager {
         Ok(entry)
     }
 
+    /// An entry's metadata, empty when it has none. Read-only callers use
+    /// this instead of opening the database themselves.
+    pub fn metadata_of(&self, id: i64) -> Result<HistoryMetadata> {
+        self.read_metadata(id)
+    }
+
     /// Label a meeting with the app it ran in; an empty name writes nothing.
     pub fn save_meeting_app(&self, id: i64, app: String) -> Result<HistoryEntry> {
         let mut metadata = self.read_metadata(id)?;

@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "पहिले एउटा प्रश्न लेख्नुहोस्।",
         "failed": "प्रश्नको उत्तर दिन सकिएन।"
       },
-      "note": "नोट"
+      "note": "नोट",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "डिबग",

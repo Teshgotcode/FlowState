@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "קודם כתבו שאלה.",
         "failed": "לא ניתן היה לענות על השאלה."
       },
-      "note": "פתק"
+      "note": "פתק",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "ניפוי שגיאות",

@@ -1473,6 +1473,15 @@ async setMeetingReminderMinutes(minutes: number | null) : Promise<void> {
     await TAURI_INVOKE("set_meeting_reminder_minutes", { minutes });
 },
 /**
+ * The people the meeting app's window names, offered to the transcript
+ * window as suggestions. Read once, on demand: an app that isn't running,
+ * a refused permission and a window without names all give an empty list,
+ * and nothing is assigned to a speaker automatically.
+ */
+async suggestMeetingNames(entryId: number) : Promise<string[]> {
+    return await TAURI_INVOKE("suggest_meeting_names", { entryId });
+},
+/**
  * The notes typed in the live window while this meeting runs. They live on
  * the session until it stops, then land on the finished entry's metadata.
  */

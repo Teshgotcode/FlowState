@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Escreve primeiro uma pergunta.",
         "failed": "Não foi possível responder à pergunta."
       },
-      "note": "Nota"
+      "note": "Nota",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Depuração",

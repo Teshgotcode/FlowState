@@ -110,6 +110,8 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
   // button is pressed, model download included.
   const [names, setNames] = useState<(string | null)[]>([]);
   const [findingSpeakers, setFindingSpeakers] = useState(false);
+  // Names the meeting app's window offered, read on demand when this opens.
+  const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const segments = useMemo(
     () => entry.metadata?.segments ?? [],
@@ -142,6 +144,19 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
   useEffect(() => {
     setNames((storedNames ?? []).slice());
   }, [storedNames]);
+
+  // One read of the meeting app's window per opening: no polling while the
+  // window stays open, and nothing on a dictation.
+  useEffect(() => {
+    if (!isMeeting) return;
+    let alive = true;
+    void commands.suggestMeetingNames(entry.id).then((list) => {
+      if (alive && Array.isArray(list)) setSuggestions(list);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [entry.id, isMeeting]);
 
   /** The label one segment's speaker shows: the name the user gave, or the
    * speaker's own number ("S2"). */
@@ -396,6 +411,31 @@ export const TranscriptDialog: React.FC<TranscriptDialogProps> = ({
               <span className="text-xs font-semibold text-ink-3">
                 {t("settings.history.speakers")}
               </span>
+              {suggestions.length > 0 && (
+                <div className="flex w-full flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-ink-3">
+                    {t("settings.history.speakerSuggestions")}
+                  </span>
+                  {suggestions
+                    .filter((name) => !names.includes(name))
+                    .map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        onClick={() => {
+                          // Fill the first speaker without a name; the save
+                          // still happens on blur, like a typed name.
+                          const free = names.findIndex((value) => !value);
+                          const target = free === -1 ? 0 : free;
+                          setNames(withName(names, target + 1, name));
+                        }}
+                        className="cursor-pointer rounded-full border border-line px-2 py-0.5 text-[11.5px] text-ink-2 transition-colors hover:bg-wash hover:text-text"
+                      >
+                        {name}
+                      </button>
+                    ))}
+                </div>
+              )}
               {speakerIds.map((id) => {
                 const placeholder = t(
                   "settings.history.speakerNamePlaceholder",

@@ -121,6 +121,24 @@ pub fn set_record_system_audio(app: AppHandle, enabled: bool) {
     write_settings(&app, settings);
 }
 
+/// The people the meeting app's window names, offered to the transcript
+/// window as suggestions. Read once, on demand: an app that isn't running,
+/// a refused permission and a window without names all give an empty list,
+/// and nothing is assigned to a speaker automatically.
+#[tauri::command]
+#[specta::specta]
+pub async fn suggest_meeting_names(app: AppHandle, entry_id: i64) -> Vec<String> {
+    let hm = app.state::<Arc<HistoryManager>>();
+    let Some(name) = hm
+        .metadata_of(entry_id)
+        .ok()
+        .and_then(|metadata| metadata.meeting_app)
+    else {
+        return Vec::new();
+    };
+    crate::meeting_names::suggested_names(&name)
+}
+
 /// The notes typed in the live window while this meeting runs. They live on
 /// the session until it stops, then land on the finished entry's metadata.
 #[tauri::command]

@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Schrijf eerst een vraag.",
         "failed": "De vraag kon niet beantwoord worden."
       },
-      "note": "Notitie"
+      "note": "Notitie",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Probleemoplossing",

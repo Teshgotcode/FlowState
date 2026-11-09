@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "まず質問を入力してください。",
         "failed": "質問に答えられませんでした。"
       },
-      "note": "メモ"
+      "note": "メモ",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "デバッグ",

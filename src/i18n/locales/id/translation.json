@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Tulis pertanyaan dulu.",
         "failed": "Pertanyaan tidak dapat dijawab."
       },
-      "note": "Catatan"
+      "note": "Catatan",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Debug",

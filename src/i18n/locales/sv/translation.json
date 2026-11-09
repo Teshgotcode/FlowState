@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Skriv en fråga först.",
         "failed": "Frågan kunde inte besvaras."
       },
-      "note": "Anteckning"
+      "note": "Anteckning",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Felsökning",

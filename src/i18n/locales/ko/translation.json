@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "먼저 질문을 입력하세요.",
         "failed": "질문에 답할 수 없습니다."
       },
-      "note": "메모"
+      "note": "메모",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "디버그",

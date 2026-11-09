@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "Hãy viết câu hỏi trước.",
         "failed": "Không thể trả lời câu hỏi."
       },
-      "note": "Ghi chú"
+      "note": "Ghi chú",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "Gỡ lỗi",

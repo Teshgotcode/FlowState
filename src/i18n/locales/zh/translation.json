@@ -961,7 +961,8 @@
         "failedEmptyQuestion": "请先输入问题。",
         "failed": "无法回答这个问题。"
       },
-      "note": "便笺"
+      "note": "便笺",
+      "speakerSuggestions": "Suggested names:"
     },
     "debug": {
       "title": "调试",
