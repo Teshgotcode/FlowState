@@ -49,12 +49,28 @@ pub struct MeetingActionItem {
     pub owner: String,
 }
 
+/// One headed group of the note: a short topic and the concrete points under
+/// it. The reference's note reads like this — a lead paragraph, then sections
+/// such as "Pricing" or "Customers and market" — instead of fixed buckets.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize, Type)]
+pub struct MeetingSection {
+    #[serde(default)]
+    pub heading: String,
+    #[serde(default)]
+    pub bullets: Vec<String>,
+}
+
 /// The generated meeting note: a draft the user must check, not a record of
 /// what was decided. `model` names the LLM that wrote it, and `generated_at`
 /// when, so the label in the transcript window can say both.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, Type)]
 pub struct MeetingNote {
     pub summary: String,
+    /// Topic sections, the shape the reference's overview uses. Notes written
+    /// before this field existed read as an empty list and fall back to the
+    /// fixed buckets below.
+    #[serde(default)]
+    pub sections: Vec<MeetingSection>,
     pub decisions: Vec<String>,
     pub action_items: Vec<MeetingActionItem>,
     pub open_questions: Vec<String>,
@@ -67,6 +83,7 @@ impl MeetingNote {
     fn from_fields(fields: NoteFields, model: String) -> Self {
         Self {
             summary: fields.summary,
+            sections: fields.sections,
             decisions: fields.decisions,
             action_items: fields.action_items,
             open_questions: fields.open_questions,
@@ -341,6 +358,26 @@ fn note_json_schema() -> serde_json::Value {
                 "type": "string",
                 "description": "A short summary of this part of the meeting, 2-4 sentences."
             },
+            "sections": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "heading": {
+                            "type": "string",
+                            "description": "A short topic heading in Title case, such as 'Pricing' or 'Customers and market'. Name the subject, never a bucket like 'Decisions' or 'Summary'."
+                        },
+                        "bullets": {
+                            "type": "array",
+                            "items": { "type": "string" },
+                            "description": "The concrete points on that topic: names, numbers, dates, status and what was said. One short sentence each. No sub-bullets."
+                        }
+                    },
+                    "required": ["heading", "bullets"],
+                    "additionalProperties": false
+                },
+                "description": "Two to six topic sections covering this part, each with the points that matter."
+            },
             "decisions": {
                 "type": "array",
                 "items": { "type": "string" },
@@ -370,20 +407,20 @@ fn note_json_schema() -> serde_json::Value {
                 "description": "Questions that were left open or need a follow-up, one short sentence each."
             }
         },
-        "required": ["summary", "decisions", "action_items", "open_questions"],
+        "required": ["summary", "sections", "decisions", "action_items", "open_questions"],
         "additionalProperties": false
     })
 }
 
 /// Instructions for extracting a partial note from one chunk.
-const EXTRACT_SYSTEM_PROMPT: &str = "You are a meeting assistant. You receive one part of a longer meeting transcript. Write a draft note for this part as JSON with the fields summary, decisions, action_items and open_questions. summary is 2-4 short sentences about what this part covers. decisions lists each concrete decision that was made, one short sentence each. action_items lists each task someone must do after the meeting, as {\"task\": string, \"owner\": string}; owner is the name of the person responsible, exactly as the transcript mentions it, or an empty string when no name is mentioned. open_questions lists each question that was left open or needs a follow-up. Use only what the transcript says: never invent names, dates, numbers or tasks. Keep every item short. Write in the same language as the transcript.";
+const EXTRACT_SYSTEM_PROMPT: &str = "You are a meeting assistant. You receive one part of a longer meeting transcript. Write a draft note for this part as JSON with the fields summary, sections, decisions, action_items and open_questions. summary is 2-3 short sentences about what this part covers. sections groups the part's substance by topic: each section has a short heading that names the subject (such as \"Pricing\" or \"Customers and market\", never \"Summary\" or \"Decisions\") and bullets with the concrete points under it — names, numbers, dates, status and what was said, one short sentence each. Two to six sections per part, and a point belongs to exactly one section. decisions lists each concrete decision that was made, one short sentence each. action_items lists each task someone must do after the meeting, as {\"task\": string, \"owner\": string}; owner is the name of the person responsible, exactly as the transcript mentions it, or an empty string when no name is mentioned. open_questions lists each question that was left open or needs a follow-up. Use only what the transcript says: never invent names, dates, numbers or tasks. Keep every item short. Write in the same language as the transcript.";
 
 /// Instructions for merging partial notes into one note.
-const MERGE_SYSTEM_PROMPT: &str = "You are a meeting assistant. You receive partial notes taken from consecutive parts of one meeting. Combine them into a single draft note as JSON with the fields summary, decisions, action_items and open_questions. The summary covers the whole meeting in 3-6 short sentences. Merge duplicate and near-duplicate items into one. Keep the owner of an action item when a name is given. Drop nothing that matters. Write in the same language as the notes.";
+const MERGE_SYSTEM_PROMPT: &str = "You are a meeting assistant. You receive partial notes taken from consecutive parts of one meeting. Combine them into a single draft note as JSON with the fields summary, sections, decisions, action_items and open_questions. The summary is one paragraph of 3-5 short sentences that says what the meeting was about, who took part when the transcript names them, and where it landed. sections is the body: merge sections that cover the same topic under one heading, keep the headings short and about the subject, and keep every concrete point as a bullet — names, numbers, dates, prices and status. Drop a point that a later part contradicts. Merge duplicate and near-duplicate items into one. Keep the owner of an action item when a name is given. Drop nothing that matters. Write in the same language as the notes.";
 
 /// Added to the prompt when an endpoint rejected structured output and the
 /// note falls back to a plain request: the answer must still be pure JSON.
-const JSON_ONLY_INSTRUCTIONS: &str = "Respond with only a JSON object with exactly the keys \"summary\" (string), \"decisions\" (array of strings), \"action_items\" (array of {\"task\": string, \"owner\": string}) and \"open_questions\" (array of strings). No other text.";
+const JSON_ONLY_INSTRUCTIONS: &str = "Respond with only a JSON object with exactly the keys \"summary\" (string), \"sections\" (array of {\"heading\": string, \"bullets\": array of strings}), \"decisions\" (array of strings), \"action_items\" (array of {\"task\": string, \"owner\": string}) and \"open_questions\" (array of strings). No other text.";
 
 /* ---------- reading the model's answer ----------------------------------- */
 
@@ -393,6 +430,8 @@ const JSON_ONLY_INSTRUCTIONS: &str = "Respond with only a JSON object with exact
 struct NoteFields {
     #[serde(default)]
     summary: String,
+    #[serde(default)]
+    sections: Vec<MeetingSection>,
     #[serde(default)]
     decisions: Vec<String>,
     #[serde(default)]
@@ -681,6 +720,21 @@ mod tests {
     use super::*;
     use std::time::{Duration, Instant};
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    #[test]
+    fn a_note_reads_topic_sections_and_older_notes_still_parse() {
+        let body = r#"{"summary":"Møtet handlet om prising.","sections":[{"heading":"Priser","bullets":["Fast pris per bil.","Volum styrer prisen."]}],"decisions":[],"action_items":[],"open_questions":[]}"#;
+        let parsed = parse_note_fields(body).expect("a note with sections parses");
+        assert_eq!(parsed.sections.len(), 1);
+        assert_eq!(parsed.sections[0].heading, "Priser");
+        assert_eq!(parsed.sections[0].bullets.len(), 2);
+
+        // A note written before the field existed has no sections at all.
+        let old = r#"{"summary":"Kort.","decisions":["Vi lanserer."],"action_items":[],"open_questions":[]}"#;
+        let parsed = parse_note_fields(old).expect("an older note still parses");
+        assert!(parsed.sections.is_empty());
+        assert_eq!(parsed.decisions.len(), 1);
+    }
 
     /* ---- the endpoint gate ---- */
 

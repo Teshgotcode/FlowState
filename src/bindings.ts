@@ -2084,7 +2084,13 @@ export type MeetingAskOutcome = { outcome: "answered"; answer: MeetingAnswer } |
  * what was decided. `model` names the LLM that wrote it, and `generated_at`
  * when, so the label in the transcript window can say both.
  */
-export type MeetingNote = { summary: string; decisions: string[]; action_items: MeetingActionItem[]; open_questions: string[]; model: string; 
+export type MeetingNote = { summary: string; 
+/**
+ * Topic sections, the shape the reference's overview uses. Notes written
+ * before this field existed read as an empty list and fall back to the
+ * fixed buckets below.
+ */
+sections?: MeetingSection[]; decisions: string[]; action_items: MeetingActionItem[]; open_questions: string[]; model: string; 
 /**
  * Unix seconds when the note was generated.
  */
@@ -2161,6 +2167,12 @@ export type MeetingRetentionPeriod =
  * Keep meetings until they are deleted by hand.
  */
 "forever" | "days_7" | "days_30" | "days_90"
+/**
+ * One headed group of the note: a short topic and the concrete points under
+ * it. The reference's note reads like this — a lead paragraph, then sections
+ * such as "Pricing" or "Customers and market" — instead of fixed buckets.
+ */
+export type MeetingSection = { heading?: string; bullets?: string[] }
 /**
  * One finished piece of a meeting's live transcript, emitted as the
  * `meeting-segment` event while the meeting records, so its window can show

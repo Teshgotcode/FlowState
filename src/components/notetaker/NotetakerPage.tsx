@@ -15,6 +15,7 @@ import {
 import { commands, type HistoryEntry } from "@/bindings";
 import { FAILURE_MESSAGE_KEYS } from "@/components/settings/history/MeetingAskPanel";
 import { TranscriptDialog } from "@/components/settings/history/TranscriptDialog";
+import { MeetingOverview } from "@/components/notetaker/MeetingOverview";
 import { Page, PageHeader } from "@/components/hub/Primitives";
 import { Spinner } from "@/components/ui/Spinner";
 import {
@@ -638,9 +639,7 @@ export const NotetakerPage: React.FC = () => {
                 <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
                   {t("notetaker.overview")}
                 </p>
-                <p className="mt-[8px] max-h-[42vh] overflow-y-auto whitespace-pre-wrap text-[12.5px] leading-[21px] text-text/85">
-                  {selected.post_processed_text || selected.transcription_text}
-                </p>
+                <MeetingOverview entry={selected} onGenerated={reload} />
               </div>
               <label className="mt-[20px] block text-[10.5px] font-[600] uppercase tracking-[0.08em] text-ink-3">
                 {t("notetaker.folder")}

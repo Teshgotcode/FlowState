@@ -1515,7 +1515,13 @@
     "myThoughts": "My thoughts",
     "myThoughtsPlaceholder": "Type what you think as the meeting runs. Only you see it.",
     "notesSaved": "Saved",
-    "notesFailed": "Couldn't save the notes."
+    "notesFailed": "Couldn't save the notes.",
+    "noNote": "No summary yet. It is written locally from the transcript.",
+    "makeNote": "Write a summary",
+    "noteFailed": "Couldn't write the summary.",
+    "noteDecisions": "Decisions",
+    "noteActions": "Tasks",
+    "noteQuestions": "Open questions"
   },
   "dictionary": {
     "subtitle": "Words and names the transcriber should spell your way.",

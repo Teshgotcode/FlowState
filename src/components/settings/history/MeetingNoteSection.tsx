@@ -257,15 +257,33 @@ export const MeetingNoteSection: React.FC<MeetingNoteSectionProps> = ({
             </p>
           </div>
 
-          <NoteList
-            label={t("settings.history.meetingNote.decisions")}
-            items={note.decisions}
-          />
-          <ActionItemList items={note.action_items} />
-          <NoteList
-            label={t("settings.history.meetingNote.openQuestions")}
-            items={note.open_questions}
-          />
+          {/* Topic sections when the note has them; the fixed buckets are
+              what notes written before sections existed fall back to. */}
+          {(note.sections ?? []).map((section) => (
+            <div key={section.heading}>
+              <h4 className="text-sm font-semibold">{section.heading}</h4>
+              <ul className="mt-0.5 list-disc space-y-0.5 ps-5 text-sm text-text select-text">
+                {(section.bullets ?? []).map((bullet) => (
+                  <li key={bullet} className="break-words">
+                    {bullet}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+          {(note.sections ?? []).length === 0 && (
+            <>
+              <NoteList
+                label={t("settings.history.meetingNote.decisions")}
+                items={note.decisions}
+              />
+              <ActionItemList items={note.action_items} />
+              <NoteList
+                label={t("settings.history.meetingNote.openQuestions")}
+                items={note.open_questions}
+              />
+            </>
+          )}
         </div>
       ) : (
         !generating && (

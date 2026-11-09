@@ -1712,6 +1712,7 @@ mod tests {
             meeting_app: None,
             meeting_note: Some(MeetingNote {
                 summary: "Møtet avgjorde lanseringen.".to_string(),
+                sections: Vec::new(),
                 decisions: vec!["Vi lanserer 1. mai.".to_string()],
                 action_items: vec![crate::managers::meeting_note::MeetingActionItem {
                     task: "Kari sender rapporten".to_string(),

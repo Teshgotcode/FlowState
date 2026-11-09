@@ -1515,7 +1515,13 @@
     "myThoughts": "Mine tanker",
     "myThoughtsPlaceholder": "Skriv det du tenker mens møtet går. Bare du ser det.",
     "notesSaved": "Lagret",
-    "notesFailed": "Kunne ikke lagre notatene."
+    "notesFailed": "Kunne ikke lagre notatene.",
+    "noNote": "Ingen oppsummering ennå. Den skrives lokalt fra transkripten.",
+    "makeNote": "Lag oppsummering",
+    "noteFailed": "Kunne ikke lage oppsummeringen.",
+    "noteDecisions": "Beslutninger",
+    "noteActions": "Oppgaver",
+    "noteQuestions": "Åpne spørsmål"
   },
   "dictionary": {
     "subtitle": "Ord og navn transkriberingen skal skrive som du vil.",
