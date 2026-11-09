@@ -232,6 +232,17 @@ const RecordingOverlay: React.FC = () => {
         // dictation state arriving later re-shows the card as before.
         if (!isDictationState(overlayState)) {
           setIsVisible(false);
+          // The bar's own states say which session it shows. Trusting only
+          // the meeting-state event left the window blank whenever that event
+          // arrived before this webview had its listener up.
+          if (
+            overlayState === "meeting-recording" ||
+            overlayState === "meeting-recording-nudge"
+          ) {
+            setMeetingSession("recording");
+          } else if (overlayState === "meeting-idle") {
+            setMeetingSession("idle");
+          }
           // A re-show of the recording pill re-applies the plain pill's
           // footprint; if the "still going?" prompt is up, ask for its wider
           // one again so it is never clipped.
@@ -349,6 +360,15 @@ const RecordingOverlay: React.FC = () => {
         },
       );
 
+      // The idle sliver opens when the pointer comes near it and closes when
+      // it leaves. The backend owns that decision — the sliver is 8 points
+      // wide, so the pointer never reliably entered it — and this only mirrors
+      // it into the view.
+      const unlistenHover = await listen<boolean>("meeting-bar-hover", (event) => {
+        if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
+        setDiscOpen(Boolean(event.payload));
+      });
+
       // The window moves when the placement setting changes; the bar is a
       // persistent view, so re-read the edge to re-anchor without waiting for
       // the next state change.
@@ -442,6 +462,7 @@ const RecordingOverlay: React.FC = () => {
         unlistenStream();
         unlistenPhase();
         unlistenMeeting();
+        unlistenHover();
         unlistenPosition();
         unlistenModel();
         clearTimeout(modelLoadTimerRef.current);

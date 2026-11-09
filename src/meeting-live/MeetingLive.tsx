@@ -75,7 +75,9 @@ const MeetingLive: React.FC<{ demo?: boolean }> = ({ demo = false }) => {
       );
     }).then(track);
 
-    listen<MeetingStateEvent>("meeting-state", (event) => {
+    // The event the backend emits for the session; the specta name carries
+    // the -event suffix.
+    listen<MeetingStateEvent>("meeting-state-event", (event) => {
       const status = event.payload.status;
       if (status.state === "recording") {
         setStartedAt(status.started_at);

@@ -709,6 +709,11 @@ fn apply_overlay_geometry_sized(
     size: (f64, f64),
 ) {
     let (width, height) = size;
+    // The hover poll reads the bar's frame from this cache; both footprints
+    // are recomputed here, on the thread that may talk to the window server.
+    if !is_dictation_state(state) {
+        remember_bar_frames(app_handle);
+    }
     #[cfg(not(target_os = "windows"))]
     {
         let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
@@ -1347,6 +1352,13 @@ fn hide_meeting_bar_window(app_handle: &AppHandle) {
 /// global-cursor-to-window-frame math lands a point off on a scaled display.
 #[cfg(target_os = "macos")]
 const DISC_HIT_MARGIN: f64 = 3.0;
+/// How close the pointer must come to the idle sliver before it opens. The
+/// sliver is 8 points wide, so aiming at it exactly was never going to work;
+/// the bar now opens when the pointer comes near and closes when it leaves.
+const DISC_HOVER_ENTER: f64 = 18.0;
+/// How far past the open row the pointer may wander before it closes again.
+/// Wider than the enter zone so the row does not flicker on a wobble.
+const DISC_HOVER_EXIT: f64 = 26.0;
 
 #[cfg(target_os = "macos")]
 const DISC_HIT_POLL_INTERVAL: Duration = Duration::from_millis(40);
@@ -1369,6 +1381,7 @@ fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
     let handle = app_handle.clone();
     std::thread::spawn(move || {
         let mut ignored = false;
+        let mut expanded = false;
         loop {
             std::thread::sleep(DISC_HIT_POLL_INTERVAL);
             if generation != DISC_HIT_POLL_GENERATION.load(Ordering::SeqCst) {
@@ -1387,8 +1400,34 @@ fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
                 break;
             }
 
-            // None (no cursor, no frame) means "can't tell" — stay clickable.
-            let hits_disc = disc_cursor_hits(&handle, &window).unwrap_or(true);
+            // None (no cursor, no frame) means "can't tell" — stay clickable
+            // and keep the row as it is.
+            let probe = bar_cursor_probe(&handle, expanded);
+            let (near, hits_disc) = match probe {
+                Some((_inside_row, distance)) => {
+                    let zone = if expanded {
+                        DISC_HOVER_EXIT
+                    } else {
+                        DISC_HOVER_ENTER
+                    };
+                    // The zone is an approach zone: being near is enough, the
+                    // pointer does not have to be inside the sliver.
+                    (distance <= zone, distance <= zone)
+                }
+                None => (expanded, expanded),
+            };
+
+            // The sliver is only 8 points wide: hovering it exactly was never
+            // realistic. Opening on approach and closing on departure is what
+            // the reference does, and it needs no transparent hit area that
+            // would swallow clicks meant for the app underneath.
+            if near != expanded {
+                expanded = near;
+                log::debug!("bar hover: {near}");
+                set_meeting_bar_expanded(&handle, near);
+                let _ = handle.emit("meeting-bar-hover", near);
+            }
+
             let want_ignore = !hits_disc;
             if want_ignore != ignored {
                 ignored = want_ignore;
@@ -1411,24 +1450,92 @@ fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
     });
 }
 
-/// Whether the global cursor sits on the disc's circle. Both the cursor
-/// (enigo reports points on macOS) and the window frame (physical, scaled
-/// down) land in the same global logical space.
+/// Where the pointer is, in the same logical, top-left space the bar's frame
+/// is computed in. enigo answers this too, but its reading has come back
+/// stale or missing after a relaunch; AppKit's is the one the window server
+/// itself uses.
 #[cfg(target_os = "macos")]
-fn disc_cursor_hits(
-    app_handle: &AppHandle,
-    window: &tauri::webview::WebviewWindow,
-) -> Option<bool> {
-    let (cursor_x, cursor_y) = input::get_cursor_position(app_handle)?;
-    let position = window.outer_position().ok()?;
-    let size = window.outer_size().ok()?;
-    let scale = window.scale_factor().ok()?;
-
-    let center_x = (position.x as f64 + size.width as f64 / 2.0) / scale;
-    let center_y = (position.y as f64 + size.height as f64 / 2.0) / scale;
-    let radius = size.width as f64 / scale / 2.0 + DISC_HIT_MARGIN;
-    Some((cursor_x as f64 - center_x).hypot(cursor_y as f64 - center_y) <= radius)
+fn cursor_location(_app_handle: &AppHandle, screen_height: f64) -> Option<(f64, f64)> {
+    use objc2_app_kit::NSEvent;
+    if screen_height <= 0.0 {
+        return None;
+    }
+    // AppKit counts up from the bottom of the main screen; the bar's frame
+    // counts down from the top.
+    let point = unsafe { NSEvent::mouseLocation() };
+    Some((point.x, screen_height - point.y))
 }
+
+#[cfg(not(target_os = "macos"))]
+fn cursor_location(app_handle: &AppHandle, _screen_height: f64) -> Option<(f64, f64)> {
+    input::get_cursor_position(app_handle)
+}
+
+/// The bar's logical frame, cached on the main thread: the window server
+/// cannot be queried from the hover poll's own thread. Both footprints are
+/// kept, because the row opens into a wider one.
+static BAR_FRAMES: Mutex<Option<BarFrames>> = Mutex::new(None);
+
+#[derive(Clone, Copy)]
+struct BarFrames {
+    idle: (f64, f64, f64, f64),
+    wide: (f64, f64, f64, f64),
+    /// The main screen's logical height, for flipping AppKit's bottom-up
+    /// cursor into the top-down space the frames use.
+    screen_height: f64,
+}
+
+fn remember_bar_frames(app_handle: &AppHandle) {
+    let idle = calculate_overlay_position(
+        app_handle,
+        MEETING_DISC_WIDTH,
+        MEETING_DISC_HEIGHT,
+        MEETING_BAR_IDLE,
+    )
+    .map(|(x, y)| (x, y, MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT));
+    let wide = calculate_overlay_position(
+        app_handle,
+        MEETING_DISC_WIDE,
+        MEETING_DISC_HEIGHT,
+        MEETING_BAR_IDLE,
+    )
+    .map(|(x, y)| (x, y, MEETING_DISC_WIDE, MEETING_DISC_HEIGHT));
+    let screen_height = app_handle
+        .primary_monitor()
+        .ok()
+        .flatten()
+        .map(|monitor| monitor.size().height as f64 / monitor.scale_factor())
+        .unwrap_or(0.0);
+    if let (Some(idle), Some(wide)) = (idle, wide) {
+        *BAR_FRAMES.lock().unwrap() = Some(BarFrames {
+            idle,
+            wide,
+            screen_height,
+        });
+    }
+}
+
+/// Where the cursor sits relative to the bar, computed from the same
+/// placement the window uses rather than read back from the window: the
+/// window's own frame is reported in a unit the cursor does not share, and
+/// `overlay_position_on_monitor` is the one source of truth for where the bar
+/// landed. Returns whether the cursor is inside `expanded`'s footprint and how
+/// far outside it is (0 when inside).
+fn bar_cursor_probe(app_handle: &AppHandle, expanded: bool) -> Option<(bool, f64)> {
+    let frames = (*BAR_FRAMES.lock().unwrap())?;
+    let (cursor_x, cursor_y) = cursor_location(app_handle, frames.screen_height)?;
+    let (left, top, width, height) = if expanded { frames.wide } else { frames.idle };
+    let right = left + width;
+    let bottom = top + height;
+
+    let x = cursor_x as f64;
+    let y = cursor_y as f64;
+    let dx = (left - x).max(x - right).max(0.0);
+    let dy = (top - y).max(y - bottom).max(0.0);
+    let distance = dx.hypot(dy);
+    Some((dx == 0.0 && dy == 0.0, distance))
+}
+
 
 // Cached "overlay is enabled" flag, kept in sync with overlay_style. Avoids
 // reading the Tauri store on every audio callback (~24 Hz during recording).
