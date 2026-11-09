@@ -593,6 +593,9 @@ export const NotetakerPage: React.FC = () => {
                 {dayFormat.format(new Date(selected.timestamp * 1000))} ·{" "}
                 {timeFormat.format(new Date(selected.timestamp * 1000))}
                 {durationOf(selected) ? ` · ${durationOf(selected)}` : ""}
+                {selected.metadata?.meeting_app
+                  ? ` · ${selected.metadata.meeting_app}`
+                  : ""}
               </p>
               <div className="mt-[12px] flex items-center gap-[8px]">
                 <button

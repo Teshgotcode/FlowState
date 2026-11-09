@@ -1894,6 +1894,12 @@ speaker_names?: (string | null)[] | null;
  */
 user_notes?: string | null; 
 /**
+ * The app the meeting ran in (Zoom, Teams, a browser), read from the
+ * frontmost app when the recording started. Shown beside the date so a
+ * day of meetings reads as more than timestamps.
+ */
+meeting_app?: string | null; 
+/**
  * The meeting's second track: the system audio (what the machine was
  * playing — a call's far end) captured beside the microphone (S-5),
  * when one was. Its transcript is merged into the segments by

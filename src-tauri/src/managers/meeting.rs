@@ -577,6 +577,9 @@ struct MeetingSession {
     /// here because the history entry does not exist until the stop; it is
     /// written onto that entry then. Cleared when a session starts.
     notes: String,
+    /// The app the meeting started in, read once at the start: the user has
+    /// usually switched away by the time it stops.
+    app: Option<String>,
 }
 
 /// Owns the meeting session for the whole app: the lifecycle commands
@@ -605,6 +608,7 @@ impl MeetingManager {
                 working: None,
                 system: None,
                 notes: String::new(),
+                app: None,
             }),
         })
     }
@@ -673,6 +677,14 @@ impl MeetingManager {
         let mut session = self.session.lock().unwrap();
         // The notes belong to one session: a new one starts empty.
         session.notes.clear();
+        // Read once, at the start: by the stop the user is usually elsewhere.
+        session.app = crate::style::frontmost_app()
+            .filter(|app| {
+                app.bundle_id
+                    .as_deref()
+                    .is_none_or(|id| !id.starts_with("com.teshgotcode.flowstate"))
+            })
+            .and_then(|app| app.name);
         session.state.start(
             started,
             started_unix,
@@ -807,6 +819,11 @@ impl MeetingManager {
                 decision.duration_secs,
                 system_info,
             )?;
+            if let Some(app) = session.app.take() {
+                if let Err(e) = hm.save_meeting_app(entry.id, app) {
+                    error!("Failed to label the meeting's app: {e}");
+                }
+            }
             // Notes typed during the meeting go onto its entry now that one
             // exists; an empty field writes nothing.
             if !session.notes.trim().is_empty() {

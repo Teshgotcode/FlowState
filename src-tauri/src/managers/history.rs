@@ -180,6 +180,11 @@ pub struct HistoryMetadata {
     /// rewritten from it, and it survives restarts and re-transcriptions.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub user_notes: Option<String>,
+    /// The app the meeting ran in (Zoom, Teams, a browser), read from the
+    /// frontmost app when the recording started. Shown beside the date so a
+    /// day of meetings reads as more than timestamps.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub meeting_app: Option<String>,
     /// The meeting's second track: the system audio (what the machine was
     /// playing — a call's far end) captured beside the microphone (S-5),
     /// when one was. Its transcript is merged into the segments by
@@ -225,6 +230,7 @@ fn fresh_metadata(segments: &[TranscriptSegment]) -> Option<HistoryMetadata> {
         meeting_note: None,
         speaker_names: None,
         user_notes: None,
+        meeting_app: None,
     })
 }
 
@@ -567,6 +573,7 @@ impl HistoryManager {
                 meeting_note: None,
                 speaker_names: None,
                 user_notes: None,
+                meeting_app: None,
                 system_audio,
             }),
         })?;
@@ -700,6 +707,16 @@ impl HistoryManager {
             error!("Failed to emit history-updated event: {}", e);
         }
 
+        Ok(entry)
+    }
+
+    /// Label a meeting with the app it ran in; an empty name writes nothing.
+    pub fn save_meeting_app(&self, id: i64, app: String) -> Result<HistoryEntry> {
+        let mut metadata = self.read_metadata(id)?;
+        let trimmed = app.trim();
+        metadata.meeting_app = (!trimmed.is_empty()).then(|| trimmed.to_string());
+        let entry = self.write_metadata(id, metadata)?;
+        self.announce(&entry);
         Ok(entry)
     }
 
@@ -1395,6 +1412,7 @@ mod tests {
         let old: HistoryMetadata =
             serde_json::from_str(r#"{"duration_secs":240}"#).expect("parse old metadata");
         assert_eq!(old.user_notes, None);
+        assert_eq!(old.meeting_app, None);
     }
 
     #[test]
@@ -1513,6 +1531,7 @@ mod tests {
             meeting_note: None,
             speaker_names: None,
             user_notes: None,
+            meeting_app: None,
             system_audio: None,
         };
         let stored = serde_json::to_string(&metadata).expect("store metadata");
@@ -1634,6 +1653,7 @@ mod tests {
             duration_secs: None,
             segments: None,
             user_notes: None,
+            meeting_app: None,
             meeting_note: Some(MeetingNote {
                 summary: "Møtet avgjorde lanseringen.".to_string(),
                 decisions: vec!["Vi lanserer 1. mai.".to_string()],
