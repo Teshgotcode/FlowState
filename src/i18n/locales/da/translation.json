@@ -3,6 +3,7 @@
     "settings": "Indstillinger...",
     "checkUpdates": "Tjek for opdateringer...",
     "copyLastTranscript": "Kopiér seneste transskription",
+    "pasteLastTranscript": "Indsæt seneste transskription",
     "unloadModel": "Frigør model",
     "model": "Model",
     "quit": "Afslut",
@@ -11,7 +12,13 @@
     "meetingBarHideForHour": "Skjul i 1 time",
     "scratchpadOpen": "Hurtignotat",
     "meeting_bar_start": "Start meeting",
-    "meeting_bar_note": "New note"
+    "meeting_bar_note": "New note",
+    "barLanguages": "Languages",
+    "barLanguageAuto": "Detect automatically",
+    "barMicrophone": "Microphone",
+    "barMicrophoneDefault": "System default",
+    "barHistory": "Transcript history",
+    "barStyle": "Style"
   },
   "sidebar": {
     "general": "Generelt",
@@ -24,6 +31,11 @@
     "integrations": "Integrations",
     "sync": "Sync",
     "mainNav": "Main navigation",
+    "groups": {
+      "capture": "Capture",
+      "words": "Your words",
+      "progress": "Progress"
+    },
     "home": "Dictation",
     "notes": "Noter",
     "insights": "Insights",
@@ -396,6 +408,10 @@
           "command": {
             "name": "Kommandogenvej",
             "description": "Genvejen der redigerer markeret tekst med en talt instruktion."
+          },
+          "paste_last_transcript": {
+            "name": "Indsæt seneste transskription",
+            "description": "Tastaturgenvejen, der indsætter den nyeste transskription igen ved markøren."
           }
         },
         "errors": {
@@ -617,6 +633,18 @@
             "left": "Venstre",
             "right": "Højre"
           }
+        },
+        "showBar": {
+          "label": "Show the bar at all times",
+          "description": "Keeps the small bar on screen between dictations. Off: it only shows while you dictate."
+        },
+        "scratchpadInBar": {
+          "label": "Scratchpad button on the bar",
+          "description": "Shows a Scratchpad button when you hover the bar."
+        },
+        "styleChip": {
+          "label": "Show the style while dictating",
+          "description": "Shows the active writing style next to the bar while you dictate."
         }
       },
       "pasteMethod": {
@@ -685,13 +713,21 @@
         "duplicate": "\"{{word}}\" findes allerede",
         "learnTitle": "Lær af rettelserne",
         "learnDescription": "Sammenligner transkriptioner med teksten, du retter, og foreslår ord, du må rette igen og igen. Alt forbliver på denne enhed.",
+        "autoAddTitle": "Tilføj lærte ord automatisk",
+        "autoAddDescription": "Ord, du må rette igen og igen, tilføjes til ordbogen af sig selv, uden forslag.",
         "suggestionsTitle": "Foreslåede ord",
         "suggestionsDescription": "Ord, du har rettet mindst to gange, som endnu ikke findes i ordbogen. Intet tilføjes automatisk.",
         "suggestionsEmpty": "Ingen forslag endnu. Ord, du retter to gange, havner her.",
         "suggestionAdd": "Tilføj {{word}}",
         "suggestionIgnore": "Ignorer {{word}}",
         "suggestionCount": "Rettet {{count}} gange",
-        "suggestionError": "Kunne ikke opdatere forslaget for \"{{word}}\""
+        "suggestionError": "Kunne ikke opdatere forslaget for \"{{word}}\"",
+        "countLabel": "words in the dictionary",
+        "sortAz": "A to Z",
+        "sortNewest": "Newest first",
+        "star": "Star {{word}}",
+        "unstar": "Remove star from {{word}}",
+        "learned": "learned"
       },
       "snippets": {
         "title": "Snippets",
@@ -1254,6 +1290,7 @@
     "cancel": "Cancel"
   },
   "errors": {
+    "settingSaveFailed": "Ændringen kunne ikke gemmes.",
     "loadDirectory": "Fejl ved indlæsning af mappe: {{error}}",
     "micPermissionDeniedTitle": "Mikrofonadgang nægtet",
     "micPermissionDenied": {
@@ -1284,18 +1321,20 @@
       "dark": "Mørk"
     },
     "accent": {
-      "title": "Accent",
-      "description": "Pick a colour for buttons, active rows and highlights.",
-      "bla": "Blue",
-      "rosa": "Pink",
-      "gronn": "Green",
-      "rod": "Red",
-      "gul": "Yellow-orange",
+      "title": "Colour theme",
+      "description": "A pastel tint for the window, buttons and highlights.",
+      "bla": "Sky",
+      "lilla": "Lavender",
+      "rosa": "Rose",
+      "rod": "Peach",
+      "gul": "Sand",
+      "gronn": "Sage",
       "egen": "Custom",
       "hue": "Hue"
     }
   },
   "overlay": {
+    "cancel": "Annuller",
     "transcribing": "Transskriberer...",
     "processing": "Writing",
     "loadingModel": "Indlæser model...",
@@ -1311,11 +1350,35 @@
     },
     "command": "Kommando",
     "commandFallback": "Ingen markering - almindelig diktering",
+    "noMicSound": "Ingen lyd fra mikrofonen",
+    "language": {
+      "menuTitle": "Sprog",
+      "auto": "Auto"
+    },
     "style": {
       "menuTitle": "Style",
       "chipTitle": "Dictation style - right-click to switch"
     },
-    "quickNote": "New note"
+    "quickNote": "New note",
+    "error": {
+      "no_model": "No model selected. Pick one in Settings.",
+      "model_failed": "The model could not load. Check Settings.",
+      "command_failed": "Command failed. Nothing was changed.",
+      "start_failed": "Could not start the microphone."
+    },
+    "finishAndPaste": "Finish and paste",
+    "bar": {
+      "dictate": "Dictate <key>{{key}}</key>",
+      "pressToFinish": "Press <key>{{key}}</key> to finish and paste",
+      "takeNotes": "Take notes",
+      "showNotepad": "Show Notepad",
+      "language": "Dictation language",
+      "hiddenTitle": "The bar is hidden for an hour",
+      "undo": "Undo",
+      "silentTitle": "We're not hearing anything",
+      "silentBody": "Check that the right microphone is selected.",
+      "selectMicrophone": "Select microphone"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokerer muligvis 1 genvej",
@@ -1476,12 +1539,19 @@
     "topHourCount_other": "{{count}} dictations",
     "voiceEmpty": "No languages picked up yet. The model catches them as you dictate.",
     "cardLastWeek": "Last 7 days",
-    "cardWordsToday": "Words today"
+    "cardWordsToday": "Words today",
+    "cardSpeed": "Words per minute",
+    "cardSpeedTakes": "Timed takes",
+    "cardSpeedPending": "Measured from your next dictation",
+    "cardFixes": "Words fixed",
+    "cardFixesHint": "Changed by post-processing"
   },
   "topbar": {
     "toggleSidebar": "Show or hide the sidebar"
   },
   "notetaker": {
+    "durationMinutes": "{{minutes}} min",
+    "durationHours": "{{hours}} t {{minutes}} min",
     "subtitle": "The meetings you recorded, with length and transcript.",
     "emptyTitle": "No meetings yet",
     "emptyBody": "Start one from the bead or the shortcut, and it lands here.",
@@ -1532,7 +1602,21 @@
     "importCount": "Add {{count}}"
   },
   "snippets": {
-    "subtitle": "Say a trigger, get a fixed block of text."
+    "subtitle": "Say a trigger, get a fixed block of text.",
+    "newTitle": "New snippet",
+    "listTitle": "Your snippets",
+    "search": "Search snippets",
+    "count_one": "{{count}} snippet",
+    "count_other": "{{count}} snippets",
+    "emptyTitle": "No snippets yet",
+    "emptyBody": "Make a snippet for what you type most, like a signature or an address. Say the trigger and the whole text lands instead.",
+    "emptyCta": "Make the first one",
+    "noHits": "No matches for \"{{query}}\"",
+    "edit": "Edit",
+    "done": "Done",
+    "removed": "Removed \"{{trigger}}\"",
+    "undo": "Undo",
+    "caseBadge": "Aa"
   },
   "style": {
     "subtitle": "Per-app writing rules the post-processor applies.",
@@ -1570,7 +1654,16 @@
         "description": "One short line per point, no markdown.",
         "sample": "// Fix the race in the sync loop when two calls land together"
       }
-    }
+    },
+    "autoCleanup": "Auto cleanup",
+    "contexts": {
+      "default": "Default",
+      "email": "Email",
+      "chat": "Chat",
+      "docs": "Docs",
+      "terminal": "Terminal"
+    },
+    "contextHint": "Used for apps without their own rule. A per-app rule below still wins."
   },
   "help": {
     "subtitle": "How to dictate, and where the rest lives.",

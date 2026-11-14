@@ -20,7 +20,7 @@ use crate::actions::process_transcription_output;
 use crate::audio_toolkit::{decode_audio_file, read_wav_samples, save_wav_file};
 use crate::managers::history::{HistoryEntry, HistoryManager};
 use crate::managers::transcription::{
-    panic_payload_message, ChunkControl, Transcription, TranscriptionManager,
+    panic_payload_message, ChunkControl, TranscriptSegment, Transcription, TranscriptionManager,
 };
 
 /// How often a waiting chunk checks whether dictation has finished.
@@ -132,7 +132,10 @@ impl TranscriptionJobManager {
 
         let hm = self.app.state::<Arc<HistoryManager>>();
         let file_name = format!("handy-file-{}.wav", chrono::Utc::now().timestamp_millis());
-        let recording = hm.get_audio_file_path(&file_name);
+        // The name is generated here, so it is always plain.
+        let recording = hm
+            .get_audio_file_path(&file_name)
+            .expect("a generated recording name is always plain");
         // Written aside and renamed, so a crash never leaves a partial one.
         let partial = recording.with_extension("wav.partial");
         if let Err(e) = save_wav_file(&partial, &samples)
@@ -292,8 +295,11 @@ impl TranscriptionJobManager {
         let entry = tauri::async_runtime::block_on(hm.get_entry_by_id(entry_id))?
             .ok_or_else(|| anyhow!("History entry {} not found", entry_id))?;
         // A compressed meeting is decoded from whatever format it is in; WAV
-        // keeps its direct reader so nothing changes for dictations.
-        let audio_path = hm.get_audio_file_path(&entry.file_name);
+        // keeps its direct reader so nothing changes for dictations. A name
+        // that would leave the recordings dir fails the job instead.
+        let audio_path = hm
+            .get_audio_file_path(&entry.file_name)
+            .ok_or_else(|| anyhow!("History entry {} has no usable recording file", entry_id))?;
         let samples = if entry.file_name.ends_with(".wav") {
             read_wav_samples(audio_path).map_err(|e| anyhow!("Failed to load audio: {}", e))?
         } else {
@@ -426,7 +432,9 @@ impl TranscriptionJobManager {
         system: &crate::managers::history::SystemAudioTrack,
         cancelled: &AtomicBool,
     ) -> Result<()> {
-        let path = hm.get_audio_file_path(&system.file_name);
+        let path = hm
+            .get_audio_file_path(&system.file_name)
+            .ok_or_else(|| anyhow!("the system track's name is unusable"))?;
         // decode_audio_file brings the track to the 16 kHz mono every
         // transcription reads, whatever rate the machine plays at.
         let samples = crate::audio_toolkit::audio::decode_audio_file(&path)?;
@@ -462,23 +470,44 @@ impl TranscriptionJobManager {
         }
         let entry = tauri::async_runtime::block_on(hm.get_entry_by_id(entry_id))?
             .ok_or_else(|| anyhow!("History entry {} not found", entry_id))?;
-        let mut merged = entry
+        let mic_segments = entry
             .metadata
             .as_ref()
             .and_then(|m| m.segments.clone())
             .unwrap_or_default();
-        merged.extend(system_segments);
-        // Stable, so at equal timestamps the mic's segment (with its
-        // diarized speakers) reads before the system's.
-        merged.sort_by_key(|segment| segment.t0_ms);
-        let text = merged
-            .iter()
-            .map(|segment| segment.text.as_str())
-            .collect::<Vec<_>>()
-            .join(" ");
+        let (text, merged) =
+            merge_transcripts(mic_segments, system_segments, &entry.transcription_text, &text);
         hm.save_merged_transcript(entry_id, text, merged)?;
         Ok(())
     }
+}
+
+/// Merge a meeting's mic and system-audio segments into one timeline and the
+/// text the entry keeps. Stable sort, so at equal timestamps the mic's
+/// segment (with its diarized speakers) reads before the system's. A mic
+/// take without timed segments keeps its transcript: rebuilding the text
+/// from the segments alone would replace it with the system track's words
+/// alone (J1), so its text is kept and the system text appended.
+fn merge_transcripts(
+    mic_segments: Vec<TranscriptSegment>,
+    mut system_segments: Vec<TranscriptSegment>,
+    mic_text: &str,
+    system_text: &str,
+) -> (String, Vec<TranscriptSegment>) {
+    let mic_had_segments = !mic_segments.is_empty();
+    let mut merged = mic_segments;
+    merged.append(&mut system_segments);
+    merged.sort_by_key(|segment| segment.t0_ms);
+    let text = if mic_had_segments {
+        merged
+            .iter()
+            .map(|segment| segment.text.as_str())
+            .collect::<Vec<_>>()
+            .join(" ")
+    } else {
+        format!("{} {}", mic_text.trim(), system_text.trim()).trim().to_string()
+    };
+    (text, merged)
 }
 
 /// Best-effort cleanup; the caller is already reporting the failure.
@@ -528,5 +557,59 @@ impl ChunkControl for Control<'_> {
         }
         self.manager
             .emit(self.entry_id, TranscriptionJobStatus::Running { percent });
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn segment(t0_ms: i64, text: &str) -> TranscriptSegment {
+        TranscriptSegment {
+            t0_ms,
+            t1_ms: t0_ms + 100,
+            text: text.to_string(),
+            speaker_id: None,
+        }
+    }
+
+    /// J1: a mic take without timed segments keeps its transcript; the
+    /// system track's words are appended, not swapped in alone.
+    #[test]
+    fn mic_without_segments_keeps_its_transcript() {
+        let (text, merged) = merge_transcripts(
+            Vec::new(),
+            vec![segment(0, "system says"), segment(2000, "hello")],
+            "the mic heard this",
+            "system says hello",
+        );
+        assert_eq!(text, "the mic heard this system says hello");
+        assert_eq!(merged.len(), 2);
+    }
+
+    #[test]
+    fn segments_merge_in_timeline_order() {
+        let (text, merged) = merge_transcripts(
+            vec![segment(1000, "mic two"), segment(0, "mic one")],
+            vec![segment(500, "sys half")],
+            "ignored when segments exist",
+            "ignored too",
+        );
+        assert_eq!(text, "mic one sys half mic two");
+        assert_eq!(
+            merged.iter().map(|s| s.t0_ms).collect::<Vec<_>>(),
+            vec![0, 500, 1000]
+        );
+    }
+
+    #[test]
+    fn equal_timestamps_keep_the_mic_segment_first() {
+        let (text, _) = merge_transcripts(
+            vec![segment(100, "mic")],
+            vec![segment(100, "sys")],
+            "",
+            "",
+        );
+        assert_eq!(text, "mic sys");
     }
 }

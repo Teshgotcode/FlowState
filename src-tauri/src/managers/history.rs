@@ -6,7 +6,7 @@ use rusqlite_migration::{MigrationDefinitionError, Migrations, M};
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::Arc;
 use std::thread;
 use std::time::Duration;
@@ -216,6 +216,22 @@ impl HistoryMetadata {
             && self.meeting_note.is_none()
             && self.speaker_names.is_none()
             && self.system_audio.is_none()
+    }
+}
+
+/// The one join from a DB-stored recording name onto the recordings dir:
+/// empty (an entry without audio) and anything that is not a plain file
+/// name are skipped, so no consumer can act outside the recordings dir.
+fn audio_file_path(recordings_dir: &Path, file_name: &str) -> Option<PathBuf> {
+    if file_name.is_empty() {
+        return None;
+    }
+    match crate::utils::plain_file_name(file_name) {
+        Ok(name) => Some(recordings_dir.join(name)),
+        Err(reason) => {
+            warn!("Skipping unusable recording name {reason}");
+            None
+        }
     }
 }
 
@@ -768,10 +784,21 @@ impl HistoryManager {
 
     /// Label a meeting with the app it ran in; an empty name writes nothing.
     pub fn save_meeting_app(&self, id: i64, app: String) -> Result<HistoryEntry> {
-        let mut metadata = self.read_metadata(id)?;
         let trimmed = app.trim();
-        metadata.meeting_app = (!trimmed.is_empty()).then(|| trimmed.to_string());
-        let entry = self.write_metadata(id, metadata)?;
+        let entry = self.update_metadata(id, |metadata| {
+            metadata.meeting_app = (!trimmed.is_empty()).then(|| trimmed.to_string());
+        })?;
+        self.announce(&entry);
+        Ok(entry)
+    }
+
+    /// How long the recording ran, in whole seconds, for a take that is not a
+    /// meeting. Zero writes nothing, so a silent blip is not recorded as a
+    /// zero-length take.
+    pub fn set_duration(&self, id: i64, duration_secs: u64) -> Result<HistoryEntry> {
+        let entry = self.update_metadata(id, |metadata| {
+            metadata.duration_secs = (duration_secs > 0).then_some(duration_secs);
+        })?;
         self.announce(&entry);
         Ok(entry)
     }
@@ -780,10 +807,10 @@ impl HistoryManager {
     /// field instead of storing a blank, so "no notes" reads the same as
     /// never having written any.
     pub fn save_user_notes(&self, id: i64, notes: String) -> Result<HistoryEntry> {
-        let mut metadata = self.read_metadata(id)?;
         let trimmed = notes.trim();
-        metadata.user_notes = (!trimmed.is_empty()).then(|| trimmed.to_string());
-        let entry = self.write_metadata(id, metadata)?;
+        let entry = self.update_metadata(id, |metadata| {
+            metadata.user_notes = (!trimmed.is_empty()).then(|| trimmed.to_string());
+        })?;
         self.announce(&entry);
         Ok(entry)
     }
@@ -805,9 +832,9 @@ impl HistoryManager {
                 (!trimmed.is_empty()).then_some(trimmed)
             })
             .collect();
-        let mut metadata = self.read_metadata(id)?;
-        metadata.speaker_names = names.iter().any(Option::is_some).then_some(names);
-        let entry = self.write_metadata(id, metadata)?;
+        let entry = self.update_metadata(id, |metadata| {
+            metadata.speaker_names = names.iter().any(Option::is_some).then_some(names.clone());
+        })?;
         self.announce(&entry);
         Ok(entry)
     }
@@ -823,9 +850,9 @@ impl HistoryManager {
         text: String,
         segments: Vec<TranscriptSegment>,
     ) -> Result<HistoryEntry> {
-        let mut metadata = self.read_metadata(id)?;
-        metadata.segments = (!segments.is_empty()).then_some(segments);
-        let entry = self.write_metadata(id, metadata)?;
+        self.update_metadata(id, |metadata| {
+            metadata.segments = (!segments.is_empty()).then_some(segments.clone());
+        })?;
         let conn = self.get_connection()?;
         conn.execute(
             "UPDATE transcription_history SET transcription_text = ?1 WHERE id = ?2",
@@ -848,9 +875,9 @@ impl HistoryManager {
         id: i64,
         segments: Vec<TranscriptSegment>,
     ) -> Result<HistoryEntry> {
-        let mut metadata = self.read_metadata(id)?;
-        metadata.segments = (!segments.is_empty()).then_some(segments);
-        let entry = self.write_metadata(id, metadata)?;
+        let entry = self.update_metadata(id, |metadata| {
+            metadata.segments = (!segments.is_empty()).then_some(segments);
+        })?;
         self.announce(&entry);
         Ok(entry)
     }
@@ -883,18 +910,42 @@ impl HistoryManager {
     }
 
     /// Write an entry's metadata back, keeping every other column as it is.
-    fn write_metadata(&self, id: i64, metadata: HistoryMetadata) -> Result<HistoryEntry> {
+    ///
+    /// Read, change and write happen as one atomic step on a single
+    /// connection inside a transaction (H2): the read sees the metadata
+    /// other writers committed, and no other writer can slip in before the
+    /// commit, so a background job and a user edit can no longer silently
+    /// revert each other. A failure drops the connection and SQLite rolls
+    /// the transaction back.
+    fn update_metadata(
+        &self,
+        id: i64,
+        update: impl FnOnce(&mut HistoryMetadata),
+    ) -> Result<HistoryEntry> {
         let conn = self.get_connection()?;
+        conn.execute("BEGIN IMMEDIATE", [])?;
+        let existing = conn
+            .query_row(
+                &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
+                params![id],
+                Self::map_history_entry,
+            )
+            .optional()?;
+        if existing.is_none() {
+            return Err(anyhow!("History entry {} not found", id));
+        }
+        let mut metadata = existing
+            .and_then(|entry| entry.metadata)
+            .unwrap_or_default();
+        update(&mut metadata);
         let metadata_json = (!metadata.is_empty())
             .then(|| serde_json::to_string(&metadata))
             .and_then(Result::ok);
-        let updated = conn.execute(
+        conn.execute(
             "UPDATE transcription_history SET metadata = ?1 WHERE id = ?2",
             params![metadata_json, id],
         )?;
-        if updated == 0 {
-            return Err(anyhow!("History entry {} not found", id));
-        }
+        conn.execute("COMMIT", [])?;
         conn.query_row(
             &format!("SELECT {ENTRY_COLUMNS} FROM transcription_history WHERE id = ?1"),
             params![id],
@@ -1076,6 +1127,28 @@ impl HistoryManager {
         Ok(entries)
     }
 
+    /// Delete one recording file, logging (never failing) when it cannot.
+    /// The database row goes even when the file is stuck, so the two never
+    /// diverge.
+    fn remove_recording_file(&self, file_name: &str) -> bool {
+        let Some(file_path) = self.get_audio_file_path(file_name) else {
+            return false;
+        };
+        if !file_path.exists() {
+            return false;
+        }
+        match fs::remove_file(&file_path) {
+            Ok(()) => {
+                debug!("Deleted recording file: {}", file_name);
+                true
+            }
+            Err(e) => {
+                error!("Failed to delete recording file {}: {}", file_name, e);
+                false
+            }
+        }
+    }
+
     fn delete_entries_and_files(&self, entries: &[(i64, String)]) -> Result<usize> {
         if entries.is_empty() {
             return Ok(0);
@@ -1085,19 +1158,24 @@ impl HistoryManager {
         let mut deleted_count = 0;
 
         for (id, file_name) in entries {
+            // The row's metadata names the meeting's system-audio track; read
+            // it before the row goes, so that file is deleted with the mic WAV.
+            let system_audio = self
+                .read_metadata(*id)
+                .ok()
+                .and_then(|metadata| metadata.system_audio);
+
             // Delete database entry
             conn.execute(
                 "DELETE FROM transcription_history WHERE id = ?1",
                 params![id],
             )?;
 
-            // Delete WAV file
-            let file_path = self.recordings_dir.join(file_name);
-            if file_path.exists() {
-                if let Err(e) = fs::remove_file(&file_path) {
-                    error!("Failed to delete WAV file {}: {}", file_name, e);
-                } else {
-                    debug!("Deleted old WAV file: {}", file_name);
+            if self.remove_recording_file(file_name) {
+                deleted_count += 1;
+            }
+            if let Some(track) = system_audio {
+                if self.remove_recording_file(&track.file_name) {
                     deleted_count += 1;
                 }
             }
@@ -1107,6 +1185,11 @@ impl HistoryManager {
     }
 
     fn cleanup_by_count(&self, limit: usize) -> Result<()> {
+        // A stored limit of 0 (only possible from an older build that accepted
+        // it) must not mean "keep nothing": no count-based cleanup runs.
+        if limit == 0 {
+            return Ok(());
+        }
         let conn = self.get_connection()?;
 
         // Unsaved dictations, newest first. Transcribed files are only ever
@@ -1351,8 +1434,15 @@ impl HistoryManager {
         Ok(())
     }
 
-    pub fn get_audio_file_path(&self, file_name: &str) -> PathBuf {
-        self.recordings_dir.join(file_name)
+    /// The recordings dir joined with a file name from the database. The
+    /// name is untrusted (a pre-fix import or a hand-edited history.db can
+    /// hold a traversal path), so it must pass `plain_file_name`: this is
+    /// the one join every delete, retention, transcription and sync path
+    /// goes through, and none of them may act outside the recordings
+    /// directory. An empty name (an entry without audio) is skipped; an
+    /// invalid one is logged and skipped.
+    pub fn get_audio_file_path(&self, file_name: &str) -> Option<PathBuf> {
+        audio_file_path(&self.recordings_dir, file_name)
     }
 
     pub async fn get_entry_by_id(&self, id: i64) -> Result<Option<HistoryEntry>> {
@@ -1373,13 +1463,17 @@ impl HistoryManager {
 
         // Get the entry to find the file name
         if let Some(entry) = self.get_entry_by_id(id).await? {
-            // Delete the audio file first
-            let file_path = self.get_audio_file_path(&entry.file_name);
-            if file_path.exists() {
-                if let Err(e) = fs::remove_file(&file_path) {
-                    error!("Failed to delete audio file {}: {}", entry.file_name, e);
-                    // Continue with database deletion even if file deletion fails
-                }
+            // Delete the audio files first: the mic WAV and, for a meeting,
+            // the system-audio track its metadata points at (S-5), so nothing
+            // outlives the entry. The database deletion continues even when
+            // a file cannot be removed.
+            self.remove_recording_file(&entry.file_name);
+            if let Some(track) = entry
+                .metadata
+                .as_ref()
+                .and_then(|metadata| metadata.system_audio.as_ref())
+            {
+                self.remove_recording_file(&track.file_name);
             }
         }
 
@@ -1452,6 +1546,24 @@ mod tests {
     fn user_version(conn: &Connection) -> i32 {
         conn.pragma_query_value(None, "user_version", |row| row.get(0))
             .expect("read user_version")
+    }
+
+    #[test]
+    fn db_recording_names_only_join_inside_the_recordings_dir() {
+        let recordings = PathBuf::from("/recordings");
+        // A plain name lands inside the recordings dir.
+        assert_eq!(
+            audio_file_path(&recordings, "take.wav").as_deref(),
+            Some(PathBuf::from("/recordings/take.wav").as_path())
+        );
+        // An entry without audio, and every name a tampered row could
+        // carry, are skipped: the join can never point outside the dir.
+        for unusable in ["", "..", "../x", "/etc/passwd", "a/b", ".", "./x"] {
+            assert!(
+                audio_file_path(&recordings, unusable).is_none(),
+                "{unusable:?} should be skipped"
+            );
+        }
     }
 
     #[test]

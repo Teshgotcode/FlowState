@@ -5,10 +5,12 @@ import { commands, type HistoryEntry } from "@/bindings";
 import {
   activityByDay,
   activityByHour,
+  corrections,
   dayKey,
   entryText,
   peakHour,
   sourceCounts,
+  speechSpeed,
   summarize,
   weekdayActivity,
   wordCount,
@@ -25,13 +27,14 @@ const TABS: { id: Tab; key: string }[] = [
   { id: "top", key: "insights.tabTop" },
 ];
 
-/** 0 = nothing, 1..4 = growing logo-primary fills. */
+/** 0 = nothing, 1..4 = the chart tone growing. One tone at rising alpha,
+ * so the ramp runs the same way in light and dark. */
 const HEAT_CELLS = [
-  "bg-text/[0.06]",
-  "bg-logo-primary/20",
-  "bg-logo-primary/40",
-  "bg-logo-primary/65",
-  "bg-logo-primary/90",
+  "bg-text/[0.05]",
+  "bg-chart/25",
+  "bg-chart/45",
+  "bg-chart/70",
+  "bg-chart",
 ] as const;
 
 const heatLevel = (words: number, max: number) =>
@@ -62,7 +65,7 @@ const StatCard: React.FC<{
     <p className="font-ui text-[30px] font-[560] leading-none tracking-[-0.02em] tabular-nums text-text">
       {value}
     </p>
-    <p className="mt-[7px] font-ui text-[11px] font-semibold uppercase tracking-[0.08em] text-ink-3">
+    <p className="mt-[7px] font-ui text-[11px] font-semibold tracking-[-0.005em] text-ink-3">
       {label}
     </p>
     {children}
@@ -86,7 +89,7 @@ const BarRow: React.FC<{
     </span>
     <div className="h-[6px] min-w-0 flex-1 overflow-hidden rounded-full bg-line">
       <div
-        className="h-full rounded-full bg-logo-primary/60"
+        className="h-full rounded-full bg-chart"
         style={{ width: `${Math.max(2, widthPercent)}%` }}
       />
     </div>
@@ -128,6 +131,8 @@ export const InsightsPage: React.FC<{
   }, []);
 
   const stats = useMemo(() => summarize(entries), [entries]);
+  const speed = useMemo(() => speechSpeed(entries), [entries]);
+  const fixed = useMemo(() => corrections(entries), [entries]);
   const weekday = useMemo(() => weekdayActivity(entries), [entries]);
   const languages = useMemo(() => wordsByLanguage(entries), [entries]);
   const split = useMemo(() => sourceCounts(entries), [entries]);
@@ -228,7 +233,7 @@ export const InsightsPage: React.FC<{
               <button
                 type="button"
                 onClick={onStartDictating}
-                className="cursor-pointer rounded-control border border-logo-primary bg-background-ui px-3.5 py-2 text-[12.5px] font-medium text-on-accent"
+                className="cursor-pointer rounded-control border border-logo-primary/25 bg-background-ui px-3.5 py-2 text-[12.5px] font-medium text-on-accent"
               >
                 {t("insights.emptyCta")}
               </button>
@@ -297,23 +302,57 @@ export const InsightsPage: React.FC<{
           label={t("insights.cardWordsTotal")}
           value={formatNumber(stats.words)}
         >
-          <div className="mt-4 flex h-[18px] overflow-hidden rounded-full bg-logo-primary/30">
+          <div className="mt-4 flex h-[18px] overflow-hidden rounded-full bg-chart/25">
             <div
-              className="h-full rounded-l-full bg-logo-primary"
+              className="h-full rounded-l-full bg-chart"
               style={{ width: `${meetingShare}%` }}
             />
           </div>
           <div className="mt-2.5 flex gap-4 font-ui text-[11px] text-ink-2">
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-logo-primary" />
+              <span className="h-2 w-2 rounded-full bg-chart" />
               {t("insights.sourceMeeting")} {meetingShare}%
             </span>
             <span className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-full bg-logo-primary/30" />
+              <span className="h-2 w-2 rounded-full bg-chart/25" />
               {t("insights.sourceDictation")} {100 - meetingShare}%
             </span>
           </div>
         </StatCard>
+      </div>
+
+      <div className="flex gap-4">
+        <div className="flex flex-[2]">
+          <StatCard
+            label={t("insights.cardSpeed")}
+            value={formatNumber(speed.wpm ?? 0)}
+          >
+            <div className="mt-4 flex items-baseline justify-between gap-3 text-[12px] text-ink-2">
+              <span>
+                {speed.timed > 0
+                  ? t("insights.cardSpeedTakes")
+                  : t("insights.cardSpeedPending")}
+              </span>
+              {speed.timed > 0 && (
+                <span className="font-medium tabular-nums text-text">
+                  {formatNumber(speed.timed)}
+                </span>
+              )}
+            </div>
+          </StatCard>
+        </div>
+        <div className="flex flex-1">
+          <StatCard label={t("insights.cardFixes")} value={formatNumber(fixed)}>
+            <div className="mt-4 flex items-baseline justify-between gap-3 text-[12px] text-ink-2">
+              <span>{t("insights.cardFixesHint")}</span>
+              <span className="font-medium tabular-nums text-text">
+                {stats.words > 0
+                  ? `${Math.round((fixed / stats.words) * 100)}%`
+                  : "0%"}
+              </span>
+            </div>
+          </StatCard>
+        </div>
       </div>
 
       <div className="flex gap-4">
@@ -322,7 +361,7 @@ export const InsightsPage: React.FC<{
             <h2 className="font-display text-[17px] font-semibold tracking-[-0.005em] text-text">
               {t("insights.activityCard")}
             </h2>
-            <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+            <p className="font-ui text-[11px] font-semibold tracking-[-0.005em] text-ink-3">
               {t("insights.cardDictations")} · {formatNumber(stats.dictations)}
             </p>
           </div>
@@ -331,7 +370,7 @@ export const InsightsPage: React.FC<{
               <BarRow
                 key={days[i]}
                 label={
-                  <span className="text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+                  <span className="text-[11px] font-semibold tracking-[-0.005em] text-ink-3">
                     {days[i]}
                   </span>
                 }
@@ -352,7 +391,7 @@ export const InsightsPage: React.FC<{
             <h2 className="font-display text-[17px] font-semibold tracking-[-0.005em] text-text">
               {t("insights.cardStreak")}
             </h2>
-            <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+            <p className="font-ui text-[11px] font-semibold tracking-[-0.005em] text-ink-3">
               {t("insights.cardStreakHint", {
                 longest: formatNumber(stats.longest),
               })}
@@ -420,7 +459,7 @@ export const InsightsPage: React.FC<{
             {t("insights.cardLanguages")}
           </h2>
           {languages.length > 0 && (
-            <p className="font-ui text-[11px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+            <p className="font-ui text-[11px] font-semibold tracking-[-0.005em] text-ink-3">
               {t("insights.cardWordsTotal")} ·{" "}
               {formatNumber(totalLanguageWords)}
             </p>

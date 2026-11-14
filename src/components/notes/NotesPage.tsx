@@ -263,7 +263,7 @@ export const NotesPage: React.FC = () => {
           {/* "Siste" section header */}
           <div className="mt-6">
             <div className="flex h-[52px] items-center justify-between gap-4">
-              <span className="font-ui text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+              <span className="font-ui text-[12px] font-semibold tracking-[-0.005em] text-ink-3">
                 {t("notes.latest")}
               </span>
               <div className="flex items-center gap-1">

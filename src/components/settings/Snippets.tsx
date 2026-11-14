@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { open, save } from "@tauri-apps/plugin-dialog";
-import { readFile } from "@tauri-apps/plugin-fs";
 import type { Snippet } from "@/bindings";
-import { commands } from "@/bindings";
+import {
+  normalizeTrigger,
+  parseSnippetsError,
+  parseSnippetsFile,
+  pickSnippetsExportPath,
+  pickSnippetsFile,
+  readSnippetsFile,
+  writeSnippetsFile,
+} from "@/lib/snippets/io";
 import { useSettings } from "../../hooks/useSettings";
 import { Input } from "../ui/Input";
 import { Textarea } from "../ui/Textarea";
@@ -16,85 +22,6 @@ interface SnippetsProps {
   descriptionMode?: "inline" | "tooltip";
   grouped?: boolean;
 }
-
-const normalizeTrigger = (trigger: string) =>
-  trigger.replace(/\s+/g, " ").trim();
-
-/**
- * Parses a snippets JSON file. Returns a machine-readable error instead of
- * throwing so an invalid file never crashes the settings window; the caller
- * turns it into a clear, localized message.
- */
-type SnippetsParseError =
-  | { kind: "invalidJson" }
-  | { kind: "notSnippets" }
-  | { kind: "badEntry"; index: number; reason: string };
-
-const parseSnippetsFile = (
-  raw: string,
-): { snippets: Snippet[]; error?: SnippetsParseError } => {
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return { snippets: [], error: { kind: "invalidJson" } };
-  }
-
-  // Accept both a bare array and a `{ "snippets": [...] }` wrapper.
-  const list = Array.isArray(parsed)
-    ? parsed
-    : typeof parsed === "object" &&
-        parsed !== null &&
-        Array.isArray((parsed as { snippets?: unknown }).snippets)
-      ? (parsed as { snippets: unknown[] }).snippets
-      : null;
-  if (!list) {
-    return { snippets: [], error: { kind: "notSnippets" } };
-  }
-
-  const snippets: Snippet[] = [];
-  for (const [index, entry] of list.entries()) {
-    const record = entry as Record<string, unknown> | null;
-    if (
-      typeof record?.trigger !== "string" ||
-      !normalizeTrigger(record.trigger)
-    ) {
-      return {
-        snippets: [],
-        error: { kind: "badEntry", index: index + 1, reason: "trigger" },
-      };
-    }
-    if (typeof record.expansion !== "string") {
-      return {
-        snippets: [],
-        error: { kind: "badEntry", index: index + 1, reason: "expansion" },
-      };
-    }
-    snippets.push({
-      trigger: normalizeTrigger(record.trigger),
-      expansion: record.expansion,
-      case_sensitive: record.case_sensitive === true,
-    });
-  }
-  return { snippets };
-};
-
-const parseErrorMessage = (
-  error: SnippetsParseError,
-  t: (key: string, options?: Record<string, unknown>) => string,
-): string => {
-  switch (error.kind) {
-    case "invalidJson":
-      return t("settings.advanced.snippets.invalidJson");
-    case "notSnippets":
-      return t("settings.advanced.snippets.notSnippets");
-    case "badEntry":
-      return t("settings.advanced.snippets.badEntry", {
-        index: error.index,
-        field: error.reason,
-      });
-  }
-};
 
 export const Snippets: React.FC<SnippetsProps> = React.memo(
   ({ descriptionMode = "tooltip", grouped = false }) => {
@@ -160,17 +87,9 @@ export const Snippets: React.FC<SnippetsProps> = React.memo(
 
     const handleExport = async () => {
       try {
-        // The user picks the destination; nothing leaves the machine.
-        const path = await save({
-          defaultPath: "flowstate-snippets.json",
-          filters: [{ name: "JSON", extensions: ["json"] }],
-        });
+        const path = await pickSnippetsExportPath();
         if (!path) return;
-        const result = await commands.exportTextFile(
-          path,
-          JSON.stringify(snippets, null, 2),
-        );
-        if (result.status === "ok") {
+        if (await writeSnippetsFile(path, snippets)) {
           toast.success(t("settings.advanced.snippets.exportSaved"));
         } else {
           toast.error(t("settings.advanced.snippets.exportFailed"));
@@ -183,17 +102,13 @@ export const Snippets: React.FC<SnippetsProps> = React.memo(
 
     const handleImport = async () => {
       try {
-        const path = await open({
-          multiple: false,
-          directory: false,
-          filters: [{ name: "JSON", extensions: ["json"] }],
-        });
+        const path = await pickSnippetsFile();
         if (!path) return;
-        const data = await readFile(path);
-        const raw = new TextDecoder("utf-8").decode(new Uint8Array(data));
-        const { snippets: imported, error } = parseSnippetsFile(raw);
+        const { snippets: imported, error } = parseSnippetsFile(
+          await readSnippetsFile(path),
+        );
         if (error) {
-          toast.error(parseErrorMessage(error, t));
+          toast.error(parseSnippetsError(error, t));
           return;
         }
         if (imported.length === 0) {

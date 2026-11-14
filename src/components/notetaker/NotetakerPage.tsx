@@ -1,5 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TFunction } from "i18next";
 import { toast } from "sonner";
 import {
   FileText,
@@ -12,7 +13,12 @@ import {
   X,
 } from "lucide-react";
 
-import { commands, type HistoryEntry } from "@/bindings";
+import {
+  commands,
+  events,
+  type HistoryEntry,
+  type HistoryUpdatePayload,
+} from "@/bindings";
 import { FAILURE_MESSAGE_KEYS } from "@/components/settings/history/MeetingAskPanel";
 import { TranscriptDialog } from "@/components/settings/history/TranscriptDialog";
 import { MeetingOverview } from "@/components/notetaker/MeetingOverview";
@@ -29,18 +35,122 @@ import {
 
 type Tab = "notes" | "folders";
 
-/** A meeting has no name of its own, so the first sentence stands in. */
-const durationOf = (entry: HistoryEntry) => {
+/** The row's length, in the app's language: units are translated, not baked in. */
+const durationOf = (entry: HistoryEntry, t: TFunction) => {
   const seconds = entry.metadata?.duration_secs;
   if (!seconds) return null;
-  const minutes = Math.round(seconds / 60);
-  return minutes < 60 ? `${minutes} min` : `${Math.floor(minutes / 60)} t ${minutes % 60} min`;
+  // A 20-second note is not "0 min"; the shortest readable length is 1.
+  const minutes = Math.max(1, Math.round(seconds / 60));
+  return minutes < 60
+    ? t("notetaker.durationMinutes", { minutes })
+    : t("notetaker.durationHours", {
+        hours: Math.floor(minutes / 60),
+        minutes: minutes % 60,
+      });
 };
 
 const titleOf = (entry: HistoryEntry) => {
   const text = (entry.post_processed_text || entry.transcription_text || "").trim();
   const first = text.split(/(?<=[.!?])\s/)[0] ?? text;
   return first.length > 64 ? `${first.slice(0, 61).trimEnd()}...` : first;
+};
+
+/**
+ * The row's folder control. An icon at rest, a named chip once the note is
+ * filed: a native select could not do that, since it always renders its
+ * selected label, which turned every row into a column of "Add to folder".
+ */
+const FolderPicker: React.FC<{
+  folders: Folder[];
+  value: string | null;
+  label: string;
+  emptyLabel: string;
+  onPick: (id: string | null) => void;
+}> = ({ folders, value, label, emptyLabel, onPick }) => {
+  const [open, setOpen] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onDown = (event: MouseEvent) => {
+      if (box.current && !box.current.contains(event.target as Node)) {
+        setOpen(false);
+      }
+    };
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.stopPropagation();
+      setOpen(false);
+      trigger.current?.focus();
+    };
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [open]);
+
+  const current = folders.find((folder) => folder.id === value) ?? null;
+
+  return (
+    <div className="relative shrink-0" ref={box}>
+      <button
+        ref={trigger}
+        type="button"
+        aria-label={label}
+        aria-expanded={open}
+        title={current?.name ?? label}
+        onClick={(event) => {
+          event.stopPropagation();
+          setOpen((wasOpen) => !wasOpen);
+        }}
+        className={`flex h-[26px] cursor-pointer items-center gap-[5px] rounded-[7px] border border-line bg-surface text-[11.5px] transition-colors hover:border-line-strong hover:bg-wash ${
+          current ? "px-[8px] text-text" : "w-[26px] justify-center text-ink-3"
+        }`}
+      >
+        <FolderIcon size={12} />
+        {current && (
+          <span className="max-w-[92px] truncate">{current.name}</span>
+        )}
+      </button>
+
+      {open && (
+        <div className="absolute end-0 top-full z-40 mt-1 w-[176px] overflow-hidden rounded-[8px] border border-line-strong bg-background py-1 shadow-lg">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              onPick(null);
+              setOpen(false);
+            }}
+            className={`block w-full px-2.5 py-1.5 text-start text-[12px] hover:bg-wash ${
+              value ? "text-ink-2" : "font-semibold text-text"
+            }`}
+          >
+            {emptyLabel}
+          </button>
+          {folders.map((folder) => (
+            <button
+              key={folder.id}
+              type="button"
+              onClick={(event) => {
+                event.stopPropagation();
+                onPick(folder.id);
+                setOpen(false);
+              }}
+              className={`block w-full truncate px-2.5 py-1.5 text-start text-[12px] hover:bg-wash ${
+                folder.id === value ? "font-semibold text-text" : "text-ink-2"
+              }`}
+            >
+              {folder.name}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 /**
@@ -92,6 +202,37 @@ export const NotetakerPage: React.FC = () => {
     reload();
   }, [reload]);
 
+  // Follow the session and the history wherever they change, like
+  // HistorySettings: a meeting started here or stopped from the overlay or
+  // tray appears without a manual refresh. The stop's history entry is in
+  // place by the time the meeting goes idle, so that transition refetches.
+  useEffect(() => {
+    const unlistenMeeting = events.meetingStateEvent.listen(({ payload }) => {
+      if (payload.status.state !== "recording") reload();
+    });
+    const unlistenHistory = events.historyUpdatePayload.listen((event) => {
+      const payload: HistoryUpdatePayload = event.payload;
+      if (payload.action === "deleted" || payload.action === "toggled") return;
+      if (payload.entry.source !== "meeting") return;
+      if (payload.action === "added") {
+        setMeetings((prev) => [
+          payload.entry,
+          ...prev.filter((entry) => entry.id !== payload.entry.id),
+        ]);
+      } else {
+        setMeetings((prev) =>
+          prev.map((entry) =>
+            entry.id === payload.entry.id ? payload.entry : entry,
+          ),
+        );
+      }
+    });
+    return () => {
+      unlistenMeeting.then((fn) => fn());
+      unlistenHistory.then((fn) => fn());
+    };
+  }, [reload]);
+
   /** Delete a meeting and everything that belongs to it: audio, segments,
    * note and its folder assignment. */
   const removeMeeting = async (entry: HistoryEntry) => {
@@ -138,23 +279,33 @@ export const NotetakerPage: React.FC = () => {
       return;
     }
     setAsking(true);
-    const result = await commands.askMeetingTranscript(best.entry.id, question);
-    setAsking(false);
-    if (result.status !== "ok" || result.data.outcome === "failed") {
-      const reason =
-        result.status === "ok" && result.data.outcome === "failed"
-          ? result.data.reason
-          : null;
-      toast.error(
-        reason ? t(FAILURE_MESSAGE_KEYS[reason]) : t("notetaker.askFailed"),
+    try {
+      const result = await commands.askMeetingTranscript(
+        best.entry.id,
+        question,
       );
-      return;
+      if (result.status !== "ok" || result.data.outcome === "failed") {
+        const reason =
+          result.status === "ok" && result.data.outcome === "failed"
+            ? result.data.reason
+            : null;
+        toast.error(
+          reason ? t(FAILURE_MESSAGE_KEYS[reason]) : t("notetaker.askFailed"),
+        );
+        return;
+      }
+      setAskResult({
+        question,
+        answer: result.data.answer.answer,
+        source: titleOf(best.entry),
+      });
+    } catch (error) {
+      // A rejected IPC call must not leave the Ask button disabled.
+      console.error("Failed to ask across meetings:", error);
+      toast.error(t("notetaker.askFailed"));
+    } finally {
+      setAsking(false);
     }
-    setAskResult({
-      question,
-      answer: result.data.answer.answer,
-      source: titleOf(best.entry),
-    });
   };
 
   /** Save the field on blur; an unchanged field writes nothing. */
@@ -341,7 +492,7 @@ export const NotetakerPage: React.FC = () => {
         <div className="min-w-0 flex-1">
           <section className="rounded-[12px] border border-line px-[20px] py-[16px]">
             <div className="flex items-center justify-between">
-              <p className="text-[12px] font-[600] uppercase tracking-[0.06em] text-ink-3">
+              <p className="text-[12px] font-[600] tracking-[-0.005em] text-ink-3">
                 {t("notetaker.today")}
               </p>
               <button
@@ -515,7 +666,7 @@ export const NotetakerPage: React.FC = () => {
             <div className="mt-[12px] flex flex-col gap-[16px]">
               {groups.map(([day, entries]) => (
                 <div key={day}>
-                  <p className="mb-[8px] text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
+                  <p className="mb-[8px] text-[11px] font-[600] tracking-[-0.005em] text-ink-3">
                     {dayFormat.format(new Date(entries[0].timestamp * 1000))}
                   </p>
                   <div className="overflow-hidden rounded-[12px] border border-line bg-surface">
@@ -547,34 +698,25 @@ export const NotetakerPage: React.FC = () => {
                           </span>
                           <span className="mt-[2px] block text-[12px] text-ink-3">
                             {timeFormat.format(new Date(entry.timestamp * 1000))}
+                            {durationOf(entry, t) ? ` · ${durationOf(entry, t)}` : ""}
                           </span>
                         </span>
                         {/* Folder assignment on the row itself, the reference's
-                            "Add to folder". */}
-                        <select
-                          value={assignments[String(entry.id)] ?? ""}
-                          onClick={(event) => event.stopPropagation()}
-                          onChange={(event) => {
-                            const value = event.target.value;
+                            "Add to folder": an icon at rest that becomes a
+                            named chip once the note is filed. */}
+                        <FolderPicker
+                          folders={folders}
+                          value={assignments[String(entry.id)] ?? null}
+                          label={t("notetaker.addToFolder")}
+                          emptyLabel={t("notetaker.noFolder")}
+                          onPick={(id) => {
                             const next = { ...assignments };
-                            if (value) next[String(entry.id)] = value;
+                            if (id) next[String(entry.id)] = id;
                             else delete next[String(entry.id)];
                             setAssignments(next);
                             saveAssignments(next);
                           }}
-                          aria-label={t("notetaker.addToFolder")}
-                          title={t("notetaker.addToFolder")}
-                          className={`h-[24px] max-w-[120px] cursor-pointer rounded-[6px] border border-line bg-surface px-[4px] text-[11.5px] text-ink-3 opacity-0 outline-none transition-opacity focus:opacity-100 group-hover:opacity-100 ${
-                            assignments[String(entry.id)] ? "opacity-100" : ""
-                          }`}
-                        >
-                          <option value="">{t("notetaker.addToFolder")}</option>
-                          {folders.map((folder) => (
-                            <option key={folder.id} value={folder.id}>
-                              {folder.name}
-                            </option>
-                          ))}
-                        </select>
+                        />
                       </div>
                     ))}
                   </div>
@@ -593,7 +735,7 @@ export const NotetakerPage: React.FC = () => {
               <p className="mt-[5px] text-[11.5px] text-ink-3">
                 {dayFormat.format(new Date(selected.timestamp * 1000))} ·{" "}
                 {timeFormat.format(new Date(selected.timestamp * 1000))}
-                {durationOf(selected) ? ` · ${durationOf(selected)}` : ""}
+                {durationOf(selected, t) ? ` · ${durationOf(selected, t)}` : ""}
                 {selected.metadata?.meeting_app
                   ? ` · ${selected.metadata.meeting_app}`
                   : ""}
@@ -618,7 +760,7 @@ export const NotetakerPage: React.FC = () => {
                 </button>
               </div>
               <div className="mt-[16px] border-t border-line pt-[16px]">
-                <p className="flex items-center gap-[8px] text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
+                <p className="flex items-center gap-[8px] text-[11px] font-[600] tracking-[-0.005em] text-ink-3">
                   {t("notetaker.myThoughts")}
                   {notesSaved && (
                     <span className="text-[10.5px] normal-case tracking-normal text-ink-3">
@@ -636,12 +778,12 @@ export const NotetakerPage: React.FC = () => {
                 />
               </div>
               <div className="mt-[16px] border-t border-line pt-[16px]">
-                <p className="text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
+                <p className="text-[11px] font-[600] tracking-[-0.005em] text-ink-3">
                   {t("notetaker.overview")}
                 </p>
                 <MeetingOverview entry={selected} onGenerated={reload} />
               </div>
-              <label className="mt-[20px] block text-[10.5px] font-[600] uppercase tracking-[0.08em] text-ink-3">
+              <label className="mt-[20px] block text-[10.5px] font-[600] tracking-[-0.005em] text-ink-3">
                 {t("notetaker.folder")}
               </label>
               <select

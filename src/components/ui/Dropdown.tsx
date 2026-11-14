@@ -52,9 +52,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const hover =
-    tone === "neutral" ? "hover:bg-wash" : "hover:bg-logo-primary/10";
-  const selected = tone === "neutral" ? "bg-line" : "bg-logo-primary/20";
+  const hover = "hover:bg-wash";
+  const selected = tone === "neutral" ? "bg-text/[0.07]" : "bg-accent-wash";
 
   const selectedOption = options.find(
     (option) => option.value === selectedValue,
@@ -75,10 +74,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
     <div className={`relative ${className}`} ref={dropdownRef}>
       <button
         type="button"
-        className={`px-2 py-[5px] text-sm font-semibold bg-wash border border-line-strong rounded-md min-w-[200px] w-full text-start grid grid-cols-[1fr_auto] gap-2 items-center transition-all duration-150 ${
+        className={`px-2.5 py-[5px] text-sm font-[500] bg-surface border border-line-strong rounded-[var(--flow-radius-control)] shadow-[var(--flow-shadow-control)] min-w-[200px] w-full text-start grid grid-cols-[1fr_auto] gap-2 items-center transition-all duration-150 ${
           disabled
             ? "opacity-50 cursor-not-allowed"
-            : `${hover} cursor-pointer ${tone === "neutral" ? "hover:border-ink-3" : "hover:border-logo-primary"}`
+            : `${hover} cursor-pointer hover:border-ink-4`
         }`}
         onClick={handleToggle}
         disabled={disabled}
@@ -101,7 +100,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
       </button>
       {isOpen && !disabled && (
         <div
-          className={`absolute ${placement === "above" ? "bottom-full mb-1" : "top-full mt-1"} bg-background border border-line-strong rounded-md shadow-lg z-50 max-h-60 overflow-y-auto ${
+          className={`absolute ${placement === "above" ? "bottom-full mb-1" : "top-full mt-1"} bg-surface border border-line rounded-[var(--flow-radius-control)] p-1 shadow-[var(--flow-shadow-pop)] z-50 max-h-60 overflow-y-auto ${
             menuClassName ?? "left-0 right-0"
           }`}
         >

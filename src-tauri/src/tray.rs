@@ -522,6 +522,13 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         true,
         None::<&str>,
     )?;
+    let paste_last_transcript_i = MenuItem::with_id(
+        app,
+        "paste_last_transcript",
+        &strings.paste_last_transcript,
+        true,
+        None::<&str>,
+    )?;
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
     let separator = || PredefinedMenuItem::separator(app);
 
@@ -535,6 +542,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
                 &cancel_i,
                 &separator()?,
                 &copy_last_transcript_i,
+                &paste_last_transcript_i,
                 &separator()?,
                 &settings_i,
                 &check_updates_i,
@@ -574,6 +582,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
                 &version_i,
                 &separator()?,
                 &copy_last_transcript_i,
+                &paste_last_transcript_i,
                 &separator()?,
                 &model_submenu,
                 &unload_model_i,
@@ -616,7 +625,11 @@ fn last_transcript_text(entry: &HistoryEntry) -> &str {
 }
 
 pub fn set_tray_visibility(app: &AppHandle, visible: bool) {
-    let tray = app.state::<TrayIcon>();
+    let Some(tray) = app.try_state::<TrayIcon>() else {
+        // No tray was built (failed or unsupported); nothing to show or hide.
+        warn!("Cannot set tray visibility: no tray icon exists");
+        return;
+    };
     if let Err(e) = tray.set_visible(visible) {
         error!("Failed to set tray visibility: {}", e);
     } else {
@@ -650,34 +663,61 @@ pub fn recreate_tray_icon(app: &AppHandle) {
 }
 
 pub fn copy_last_transcript(app: &AppHandle) {
+    let Some(text) = latest_transcript_text(app) else {
+        return;
+    };
+
+    if let Err(err) = app.clipboard().write_text(&text) {
+        error!("Failed to copy last transcript to clipboard: {}", err);
+        return;
+    }
+
+    info!("Copied last transcript to clipboard via tray.");
+}
+
+/// Final text of the newest completed history entry, or `None` when there is
+/// no usable entry. Callers only log on the `None` path: a silent no-op is
+/// the agreed behavior when history is empty.
+fn latest_transcript_text(app: &AppHandle) -> Option<String> {
     let history_manager = app.state::<Arc<HistoryManager>>();
     let entry = match history_manager.get_latest_completed_entry() {
         Ok(Some(entry)) => entry,
         Ok(None) => {
-            warn!("No completed transcription history entries available for tray copy.");
-            return;
+            warn!("No completed transcription history entries available.");
+            return None;
         }
         Err(err) => {
             error!(
                 "Failed to fetch last completed transcription entry: {}",
                 err
             );
-            return;
+            return None;
         }
     };
 
-    let text = last_transcript_text(&entry);
+    let text = last_transcript_text(&entry).to_string();
     if text.trim().is_empty() {
-        warn!("Last completed transcription is empty; skipping tray copy.");
-        return;
+        warn!("Last completed transcription is empty; skipping.");
+        return None;
     }
 
-    if let Err(err) = app.clipboard().write_text(text) {
-        error!("Failed to copy last transcript to clipboard: {}", err);
-        return;
-    }
+    Some(text)
+}
 
-    info!("Copied last transcript to clipboard via tray.");
+/// Pastes the newest transcript again through the regular paste path.
+/// `clipboard::paste` sleeps between steps, so it runs off the main thread;
+/// the tray handler and the shortcut action both arrive on the main thread.
+pub fn paste_last_transcript(app: &AppHandle) {
+    let Some(text) = latest_transcript_text(app) else {
+        return;
+    };
+
+    let app = app.clone();
+    std::thread::spawn(move || {
+        if let Err(err) = crate::clipboard::paste(text, app) {
+            error!("Failed to paste last transcript: {}", err);
+        }
+    });
 }
 
 #[cfg(test)]

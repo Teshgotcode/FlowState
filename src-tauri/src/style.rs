@@ -7,7 +7,7 @@
 //! fall back to the Neutral preset. With no rules at all, the globally
 //! selected prompt is used, as before.
 
-use crate::settings::{get_settings, write_settings, AppSettings, LLMPrompt};
+use crate::settings::{get_settings, update_settings, AppSettings, LLMPrompt};
 use serde::Serialize;
 use specta::Type;
 
@@ -90,6 +90,26 @@ pub fn resolve_style_id_for(
                 }
             }
         }
+    }
+
+    // A per-app rule has already had its say; next comes the writing context
+    // (mail, chat, docs, terminal), which is coarser but works for every app
+    // the user did not name individually.
+    if let Some(app) = frontmost {
+        if let Some(context) = context_for(app) {
+            if let Some(style_id) = settings.post_process_context_prompts.get(context) {
+                if settings
+                    .post_process_prompts
+                    .iter()
+                    .any(|p| &p.id == style_id)
+                {
+                    return (Some(style_id.clone()), None);
+                }
+            }
+        }
+    }
+
+    if !settings.post_process_app_rules.is_empty() {
         // Unknown (or undetectable) app falls back to the Neutral style for
         // as long as that preset exists; otherwise the global pick stands.
         if settings
@@ -102,6 +122,53 @@ pub fn resolve_style_id_for(
     }
     (settings.post_process_selected_prompt_id.clone(), None)
 }
+
+/// Which writing context an app belongs to. Coarse on purpose: the user binds
+/// one prompt per context, and anything unlisted simply keeps the global pick.
+pub fn context_for(app: &FrontmostAppInfo) -> Option<&'static str> {
+    let haystack = format!(
+        "{} {}",
+        app.bundle_id.as_deref().unwrap_or(""),
+        app.name.as_deref().unwrap_or("")
+    )
+    .to_lowercase();
+    if haystack.trim().is_empty() {
+        return None;
+    }
+    CONTEXT_NEEDLES
+        .iter()
+        .find(|(_, needles)| needles.iter().any(|needle| haystack.contains(needle)))
+        .map(|(context, _)| *context)
+}
+
+/// The contexts the Style page can bind a prompt to, with the substrings that
+/// put an app in one. Order matters only between overlapping names.
+const CONTEXT_NEEDLES: [(&str, &[&str]); 4] = [
+    (
+        "email",
+        &["mail", "outlook", "spark", "airmail", "thunderbird"],
+    ),
+    (
+        "chat",
+        &[
+            "slack",
+            "discord",
+            "messages",
+            "imessage",
+            "telegram",
+            "whatsapp",
+            "teams",
+        ],
+    ),
+    (
+        "docs",
+        &["word", "pages", "notion", "obsidian", "bear", "docs", "ulysses"],
+    ),
+    (
+        "terminal",
+        &["terminal", "iterm", "warp", "ghostty", "code", "cursor", "zed"],
+    ),
+];
 
 #[tauri::command]
 #[specta::specta]
@@ -136,30 +203,32 @@ pub fn set_app_style_rule(
     app_key: String,
     style_id: Option<String>,
 ) -> Result<(), String> {
-    let mut settings = get_settings(&app);
     let app_key = app_key.trim().to_string();
-
-    match style_id {
+    let mut error: Option<String> = None;
+    // One read-modify-write step: another settings write (the frontend
+    // replaces whole lists) cannot slip in between the read and the write.
+    update_settings(&app, |settings| match style_id {
         Some(style_id) => {
             if app_key.is_empty() {
-                return Err("App cannot be empty".to_string());
-            }
-            if !settings
+                error = Some("App cannot be empty".to_string());
+            } else if !settings
                 .post_process_prompts
                 .iter()
                 .any(|p| p.id == style_id)
             {
-                return Err(format!("Prompt with id '{}' not found", style_id));
+                error = Some(format!("Prompt with id '{}' not found", style_id));
+            } else {
+                settings.post_process_app_rules.insert(app_key, style_id);
             }
-            settings.post_process_app_rules.insert(app_key, style_id);
         }
         None => {
             settings.post_process_app_rules.remove(&app_key);
         }
+    });
+    match error {
+        Some(error) => Err(error),
+        None => Ok(()),
     }
-
-    write_settings(&app, settings);
-    Ok(())
 }
 
 #[cfg(test)]
@@ -172,6 +241,48 @@ mod tests {
             bundle_id: Some(bundle.to_string()),
             name: Some(name.to_string()),
         }
+    }
+
+    #[test]
+    fn a_context_prompt_wins_only_after_per_app_rules() {
+        let mut settings = AppSettings::default();
+        settings.post_process_selected_prompt_id = Some("style_formal".to_string());
+        settings
+            .post_process_context_prompts
+            .insert("email".to_string(), "style_email".to_string());
+
+        let mail = frontmost("com.apple.mail", "Mail");
+        // The context decides, because nothing names Mail specifically.
+        assert_eq!(
+            resolve_style_id_for(&settings, Some(&mail)).0.as_deref(),
+            Some("style_email")
+        );
+
+        // An explicit rule for that app still beats its context.
+        settings
+            .post_process_app_rules
+            .insert("com.apple.mail".to_string(), "style_formal".to_string());
+        assert_eq!(
+            resolve_style_id_for(&settings, Some(&mail)).0.as_deref(),
+            Some("style_formal")
+        );
+
+        // An app outside every context keeps the global pick.
+        let calc = frontmost("com.apple.calculator", "Calculator");
+        settings.post_process_app_rules.clear();
+        settings.post_process_selected_prompt_id = Some("style_short".to_string());
+        assert_eq!(
+            resolve_style_id_for(&settings, Some(&calc)).0.as_deref(),
+            Some("style_short")
+        );
+    }
+
+    #[test]
+    fn apps_land_in_their_writing_context() {
+        assert_eq!(context_for(&frontmost("com.apple.mail", "Mail")), Some("email"));
+        assert_eq!(context_for(&frontmost("com.tinyspeck.slackmacgap", "Slack")), Some("chat"));
+        assert_eq!(context_for(&frontmost("com.microsoft.VSCode", "Visual Studio Code")), Some("terminal"));
+        assert_eq!(context_for(&frontmost("com.apple.calculator", "Calculator")), None);
     }
 
     #[test]

@@ -34,7 +34,9 @@ export const useDictationStream = (): DictationStream => {
     listen<RecordingStateEvent>("recording-state-event", (event) => {
       const phase = event.payload.phase;
       if (phase === "started" || phase === "locked") {
-        startedAt.current = startedAt.current ?? Date.now();
+        // Unix seconds, the unit useMeetingClock subtracts (the overlay's
+        // backend start time is seconds too).
+        startedAt.current = startedAt.current ?? Math.floor(Date.now() / 1000);
         setState({
           recording: true,
           locked: phase === "locked",

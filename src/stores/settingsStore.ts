@@ -14,6 +14,7 @@ import type {
   Snippet,
 } from "@/bindings";
 import { commands } from "@/bindings";
+import i18n from "@/i18n";
 import { toast } from "sonner";
 
 interface SettingsStore {
@@ -27,6 +28,9 @@ interface SettingsStore {
   postProcessModelOptions: Record<string, string[]>;
   // null until loadUpdateChecksLocked() resolves
   updateChecksLocked: boolean | null;
+  // Set synchronously by initialize(): every useSettings() consumer calls it,
+  // so without the guard each one registers its own duplicate listeners.
+  initialized: boolean;
 
   // Actions
   initialize: () => Promise<void>;
@@ -181,6 +185,13 @@ const settingUpdaters: {
     commands.changePostProcessEnabledSetting(value as boolean),
   post_process_selected_prompt_id: (value) =>
     commands.setPostProcessSelectedPrompt(value as string),
+  post_process_context_prompts: (value) =>
+    commands.updatePostProcessContextPrompts(
+      value as Record<string, string>,
+    ),
+  starred_words: (value) => commands.updateStarredWords(value as string[]),
+  learned_words: (value) => commands.updateLearnedWords(value as string[]),
+  dictionary_sort: (value) => commands.setDictionarySort(value as string),
   mute_while_recording: (value) =>
     commands.changeMuteWhileRecordingSetting(value as boolean),
   append_trailing_space: (value) =>
@@ -193,6 +204,12 @@ const settingUpdaters: {
   lazy_stream_close: (value) =>
     commands.changeLazyStreamCloseSetting(value as boolean),
   overlay_style: (value) => commands.changeOverlayStyleSetting(value as string),
+  show_bar_at_all_times: (value) =>
+    commands.changeShowBarAtAllTimesSetting(value as boolean),
+  scratchpad_in_flow_bar: (value) =>
+    commands.changeScratchpadInFlowBarSetting(value as boolean),
+  flow_bar_style_chip: (value) =>
+    commands.changeFlowBarStyleChipSetting(value as boolean),
   vad_enabled: (value) => commands.changeVadEnabledSetting(value as boolean),
   long_form_chunking: (value) =>
     commands.changeLongFormChunkingSetting(value as boolean),
@@ -238,6 +255,7 @@ export const useSettingsStore = create<SettingsStore>()(
     customSounds: { start: false, stop: false },
     postProcessModelOptions: {},
     updateChecksLocked: null,
+    initialized: false,
 
     // Internal setters
     setSettings: (settings) => set({ settings }),
@@ -364,9 +382,17 @@ export const useSettingsStore = create<SettingsStore>()(
         }
       } catch (error) {
         console.error(`Failed to update setting ${String(key)}:`, error);
+        // Roll back only the failed key, from the live state: the call-time
+        // snapshot would also revert other keys optimistically changed while
+        // this write was in flight.
         if (settings) {
-          set({ settings: { ...settings, [key]: originalValue } });
+          set((state) => ({
+            settings: state.settings
+              ? { ...state.settings, [key]: originalValue }
+              : null,
+          }));
         }
+        toast.error(i18n.t("errors.settingSaveFailed"));
       } finally {
         setUpdating(updateKey, false);
       }
@@ -690,6 +716,11 @@ export const useSettingsStore = create<SettingsStore>()(
 
     // Initialize everything
     initialize: async () => {
+      // Synchronous, like the other stores: several components call this in
+      // the same commit, and each would otherwise add its own listeners below.
+      if (get().initialized) return;
+      set({ initialized: true });
+
       const {
         refreshSettings,
         checkCustomSounds,

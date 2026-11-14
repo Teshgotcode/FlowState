@@ -2,22 +2,28 @@
 //!
 //! Two machines that never see each other on a network (NTNU-eduroam runs
 //! client isolation, so LAN discovery is a dead end) still need the same
-//! dictionary, snippets and history. Everything here is plain file copy
-//! through a folder the user picks: iCloud Drive, Dropbox, OneDrive or a USB
-//! stick. Nothing in this module opens a socket, and no history or audio is
-//! ever deleted by sync.
+//! dictionary and history. Everything here is plain file copy through a
+//! folder the user picks: iCloud Drive, Dropbox, OneDrive or a USB stick.
+//! Nothing in this module opens a socket, and no history or audio is ever
+//! deleted by sync.
 //!
 //! The protocol is deliberately boring: each device publishes a small JSON
 //! document per item type (words, snippets) with a per-entry `updated_at`
 //! timestamp into `<shared folder>/FlowState Sync/devices/<device_id>.json`,
 //! together with tombstones for deletions. Merging is last-writer-wins per
 //! entry against a per-peer snapshot of what we last saw, so a change only
-//! travels when it actually changed. When both sides changed the same entry
-//! since the last sync, *both* versions survive: the newer one stays live,
-//! the other is kept as a live copy (snippets) or in the conflict log
-//! (words), and every collision is appended to `conflicts.jsonl` in the
-//! shared folder — nothing is ever silently dropped. Edits always beat
-//! deletions, so sync can never wipe a concurrent edit.
+//! travels when it actually changed. When both sides changed the same word
+//! since the last sync, *both* versions survive: the newer one stays live
+//! and the other is recorded in the conflict log, appended to
+//! `conflicts.jsonl` in the shared folder — nothing is ever silently
+//! dropped. Edits always beat deletions, so sync can never wipe a
+//! concurrent edit.
+//!
+//! Snippets sync one way only: out. A snippet auto-types text into any app,
+//! so one arriving from a peer's document or an imported bundle would be
+//! code execution handed to another machine's data. Inbound snippet
+//! changes (additions, edits, deletions) are refused wholesale; the local
+//! snippets stay exactly as they are.
 
 pub mod bundle;
 
@@ -233,16 +239,6 @@ fn word_side(set: &ItemSet, key: &str) -> Side {
     if let Some(item) = set.words.get(key) {
         Side::Live(item.updated_at)
     } else if let Some(t) = set.word_tombstones.get(key) {
-        Side::Dead(*t)
-    } else {
-        Side::Absent
-    }
-}
-
-fn snippet_side(set: &ItemSet, key: &str) -> Side {
-    if let Some(item) = set.snippets.get(key) {
-        Side::Live(item.updated_at)
-    } else if let Some(t) = set.snippet_tombstones.get(key) {
         Side::Dead(*t)
     } else {
         Side::Absent
@@ -626,10 +622,6 @@ pub fn run_sync(
     })
 }
 
-/// Marker appended to the trigger of a snippet that lost a conflict, so both
-/// versions stay live and visible instead of one vanishing.
-pub const CONFLICT_TRIGGER_SUFFIX: &str = " (conflict)";
-
 fn word_version(item: Option<&WordItem>) -> Option<ConflictVersion> {
     item.map(|i| ConflictVersion {
         trigger_or_word: i.word.clone(),
@@ -639,19 +631,17 @@ fn word_version(item: Option<&WordItem>) -> Option<ConflictVersion> {
     })
 }
 
-fn snippet_version(item: Option<&SnippetItem>) -> Option<ConflictVersion> {
-    item.map(|i| ConflictVersion {
-        trigger_or_word: i.snippet.trigger.clone(),
-        expansion: Some(i.snippet.expansion.clone()),
-        case_sensitive: i.snippet.case_sensitive,
-        updated_at: i.updated_at,
-    })
-}
-
 /// Three-way merge of one peer's items into ours. `base` is what we last saw
 /// from that peer. Unchanged sides never overwrite anything; a change on one
 /// side wins outright; changes on both sides keep both versions and log the
 /// collision. A deletion never beats a concurrent edit.
+///
+/// Snippets are deliberately not merged: a snippet auto-types text into any
+/// app, so one arriving from a peer's document or an imported bundle would
+/// be code execution handed to another machine's data. Inbound snippet
+/// changes (additions, edits, deletions) are refused wholesale — the local
+/// snippets and their tombstones stay exactly as they are, and only this
+/// machine's own snippet changes keep publishing outbound.
 pub(crate) fn merge_peer(
     local: ItemSet,
     remote: &ItemSet,
@@ -661,7 +651,6 @@ pub(crate) fn merge_peer(
 ) -> (ItemSet, Vec<ConflictRecord>) {
     let mut conflicts = Vec::new();
     let local = merge_words(local, remote, base, remote_device, now, &mut conflicts);
-    let local = merge_snippets(local, remote, base, remote_device, now, &mut conflicts);
     (local, conflicts)
 }
 
@@ -794,142 +783,6 @@ fn merge_words(
     local
 }
 
-fn merge_snippets(
-    mut local: ItemSet,
-    remote: &ItemSet,
-    base: &ItemSet,
-    remote_device: &str,
-    now: Timestamp,
-    conflicts: &mut Vec<ConflictRecord>,
-) -> ItemSet {
-    let mut keys: Vec<String> = local
-        .snippets
-        .keys()
-        .chain(local.snippet_tombstones.keys())
-        .chain(remote.snippets.keys())
-        .chain(remote.snippet_tombstones.keys())
-        .chain(base.snippets.keys())
-        .chain(base.snippet_tombstones.keys())
-        .cloned()
-        .collect();
-    keys.sort();
-    keys.dedup();
-    for key in keys {
-        let l = snippet_side(&local, &key);
-        let r = snippet_side(remote, &key);
-        let b = snippet_side(base, &key);
-        let l_changed = l.ts() > b.ts();
-        let r_changed = r.ts() > b.ts();
-        if !l_changed && !r_changed || l_changed && !r_changed {
-            continue;
-        }
-        match (l, r) {
-            (Side::Absent, Side::Live(rt)) => {
-                if let Some(item) = remote.snippets.get(&key) {
-                    let mut item = item.clone();
-                    item.updated_at = rt;
-                    local.snippets.insert(key.clone(), item);
-                }
-            }
-            (Side::Dead(_), Side::Live(rt)) if l_changed => {
-                if let Some(item) = remote.snippets.get(&key) {
-                    let mut item = item.clone();
-                    item.updated_at = rt;
-                    local.snippet_tombstones.remove(&key);
-                    local.snippets.insert(key.clone(), item);
-                    conflicts.push(ConflictRecord {
-                        at: now,
-                        kind: "snippet".into(),
-                        key: key.clone(),
-                        local_version: None,
-                        remote_version: snippet_version(remote.snippets.get(&key)),
-                        remote_device: remote_device.into(),
-                        resolution: "a deletion collided with an edit; kept the edited snippet"
-                            .into(),
-                    });
-                }
-            }
-            (Side::Dead(_), Side::Live(rt)) => {
-                if let Some(item) = remote.snippets.get(&key) {
-                    let mut item = item.clone();
-                    item.updated_at = rt;
-                    local.snippet_tombstones.remove(&key);
-                    local.snippets.insert(key.clone(), item);
-                }
-            }
-            (Side::Live(_), Side::Dead(rt)) if !l_changed => {
-                local.snippets.remove(&key);
-                local.snippet_tombstones.insert(key.clone(), rt);
-            }
-            (Side::Live(_), Side::Dead(_)) => {
-                conflicts.push(ConflictRecord {
-                    at: now,
-                    kind: "snippet".into(),
-                    key: key.clone(),
-                    local_version: snippet_version(local.snippets.get(&key)),
-                    remote_version: None,
-                    remote_device: remote_device.into(),
-                    resolution: "a deletion collided with an edit; kept the edited snippet".into(),
-                });
-            }
-            (Side::Live(lt), Side::Live(rt)) => {
-                let same = match (local.snippets.get(&key), remote.snippets.get(&key)) {
-                    (Some(li), Some(ri)) => li.snippet == ri.snippet,
-                    _ => false,
-                };
-                if same {
-                    let newer = lt.max(rt);
-                    if let Some(item) = local.snippets.get_mut(&key) {
-                        item.updated_at = newer;
-                    }
-                    continue;
-                }
-                // Both machines changed the same snippet differently. The
-                // newer one stays live under the original trigger; the other
-                // survives as its own "(conflict)" snippet — both versions
-                // stay usable, nothing is dropped.
-                let local_item = local.snippets.get(&key).cloned();
-                let remote_item = remote.snippets.get(&key).cloned();
-                let keep_remote = rt > lt;
-                let winner = if keep_remote {
-                    remote_item.clone()
-                } else {
-                    local_item.clone()
-                };
-                let loser = if keep_remote {
-                    local_item.clone()
-                } else {
-                    remote_item.clone()
-                };
-                if let Some(w) = winner {
-                    local.snippets.insert(key.clone(), w);
-                }
-                if let Some(mut lo) = loser {
-                    let mut candidate = format!("{}{}", key, CONFLICT_TRIGGER_SUFFIX);
-                    let mut n = 1;
-                    while local.snippets.contains_key(&candidate) {
-                        n += 1;
-                        candidate = format!("{} (conflict {n})", key);
-                    }
-                    lo.snippet.trigger = candidate;
-                    lo.updated_at = now;
-                    local.snippets.insert(lo.snippet.trigger.clone(), lo);
-                }
-                conflicts.push(ConflictRecord {
-                    at: now,
-                    kind: "snippet".into(),
-                    key: key.clone(),
-                    local_version: snippet_version(local_item.as_ref()),
-                    remote_version: snippet_version(remote_item.as_ref()),
-                    remote_device: remote_device.into(),
-                    resolution: "both machines changed this snippet; kept the newer one live and saved the other as a separate '(conflict)' snippet".into(),
-                });
-            }
-            _ => {}
-        }
-    }
-    local
-}
 
 #[cfg(test)]
 mod tests {
@@ -1011,10 +864,12 @@ mod tests {
         state
     }
 
-    /// Two app-data dirs ("profiles") converge through one shared folder,
-    /// exactly how two Macs behave — or two profiles on the same Mac.
+    /// Two app-data dirs ("profiles") converge on words through one shared
+    /// folder, exactly how two Macs behave — or two profiles on the same
+    /// Mac. A peer's snippets never arrive: a snippet types text into any
+    /// app, so inbound ones stay refused.
     #[test]
-    fn two_profiles_sync_dictionary_and_snippets_via_shared_folder() {
+    fn two_profiles_sync_words_but_snippets_stay_local() {
         let shared = temp_dir("shared");
         let dir_a = temp_dir("a");
         let dir_b = temp_dir("b");
@@ -1037,12 +892,18 @@ mod tests {
         let out_b = sync(&dir_b, &shared, "b", items_b.clone());
         assert!(merged_words(&out_b.merged).contains(&"Kasper".to_string()));
         assert!(merged_words(&out_b.merged).contains(&"odda".to_string()));
-        assert_eq!(out_b.merged.snippets.len(), 2);
 
-        // A pulls B's additions without a network round trip — pure files.
+        // Each machine keeps exactly its own snippet; neither peer's
+        // arrives, no matter who published first.
+        assert_eq!(out_b.merged.snippets.len(), 1);
+        assert!(out_b.merged.snippets.contains_key("møtereferat"));
+
+        // A pulls B's words without a network round trip — pure files —
+        // and still only its own snippet.
         let out_a2 = sync(&dir_a, &shared, "a", out_a.merged.clone());
         assert!(merged_words(&out_a2.merged).contains(&"odda".to_string()));
-        assert_eq!(out_a2.merged.snippets.len(), 2);
+        assert_eq!(out_a2.merged.snippets.len(), 1);
+        assert!(out_a2.merged.snippets.contains_key("signatur"));
         assert!(out_a2.conflicts.is_empty());
 
         // Both devices published a document in the shared folder.
@@ -1051,42 +912,49 @@ mod tests {
         assert_eq!(count, 2);
     }
 
-    /// A same-entry collision keeps both versions and writes a conflict log
-    /// line in the shared folder — never a silent loss.
+    /// A peer's snippet changes — an edit, an addition, a deletion — never
+    /// land on this machine, and the local snippet survives all three
+    /// untouched. This is the guard against a shared folder or a bundle
+    /// injecting auto-expanding text.
     #[test]
-    fn concurrent_edits_keep_both_versions_and_log_the_conflict() {
-        let shared = temp_dir("conflict");
-        let dir_a = temp_dir("ca");
-        let dir_b = temp_dir("cb");
+    fn peer_snippet_changes_never_land_locally() {
+        let shared = temp_dir("snippet-guard");
+        let dir_a = temp_dir("ga");
+        let dir_b = temp_dir("gb");
 
-        let base = snippet_set(&[snippet("signatur", "v1", 1000)]);
-        let _ = sync(&dir_a, &shared, "a", base.clone());
-        let out_b = sync(&dir_b, &shared, "b", ItemSet::default());
-        assert_eq!(out_b.merged.snippets["signatur"].snippet.expansion, "v1");
+        // B starts with one local snippet.
+        let local = snippet_set(&[snippet("signatur", "v1", 1000)]);
+        let out_b = sync(&dir_b, &shared, "b", local);
+        assert_eq!(out_b.merged.snippets.len(), 1);
 
-        // A and B both edit the same snippet between syncs.
-        let a_edited = snippet_set(&[snippet("signatur", "v2 fra A", 2000)]);
-        let b_edited = snippet_set(&[snippet("signatur", "v3 fra B", 3000)]);
-        let _ = sync(&dir_a, &shared, "a", a_edited);
-        let out_b = sync(&dir_b, &shared, "b", b_edited);
-
-        // The newer version stays live under the real trigger...
+        // A publishes a newer edit of the same trigger plus an extra
+        // snippet. Neither may reach B.
+        let mut peer = snippet_set(&[snippet("signatur", "v2 fra A", 2000)]);
+        peer.snippets
+            .insert("evil".into(), snippet("evil", "kjør dette", 2000));
+        let _ = sync(&dir_a, &shared, "a", peer);
+        let out_b = sync(&dir_b, &shared, "b", out_b.merged.clone());
         assert_eq!(
             out_b.merged.snippets["signatur"].snippet.expansion,
-            "v3 fra B"
+            "v1",
+            "a peer's edit must not change the local snippet"
         );
-        // ...and the loser survives as its own snippet, not a quiet overwrite.
-        let suffixed = format!("signatur{CONFLICT_TRIGGER_SUFFIX}");
+        assert!(
+            !out_b.merged.snippets.contains_key("evil"),
+            "a peer's snippet must not arrive"
+        );
+
+        // A deletes its snippet: B's stays.
+        let mut a_deleted = ItemSet::default();
+        a_deleted.snippet_tombstones.insert("signatur".into(), 3000);
+        let _ = sync(&dir_a, &shared, "a", a_deleted);
+        let out_b = sync(&dir_b, &shared, "b", out_b.merged.clone());
+        assert_eq!(out_b.merged.snippets.len(), 1);
         assert_eq!(
-            out_b.merged.snippets[&suffixed].snippet.expansion,
-            "v2 fra A"
+            out_b.merged.snippets["signatur"].snippet.expansion,
+            "v1",
+            "a peer's deletion must not remove the local snippet"
         );
-        // And the collision is logged where both machines can read it.
-        assert_eq!(out_b.conflicts.len(), 1);
-        assert_eq!(out_b.conflicts[0].kind, "snippet");
-        let log = std::fs::read_to_string(shared_root(&shared).join(CONFLICTS_LOG)).unwrap();
-        assert_eq!(log.lines().count(), 1);
-        assert!(log.contains("signatur"));
     }
 
     /// Deletions travel (last writer wins per entry), but a deletion never

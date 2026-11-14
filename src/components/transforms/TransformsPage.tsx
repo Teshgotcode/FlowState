@@ -92,7 +92,7 @@ export const TransformsPage: React.FC = () => {
       />
 
       <div className="mt-[24px] flex items-center justify-between">
-        <p className="text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+        <p className="text-[12px] font-semibold tracking-[-0.005em] text-ink-3">
           {t("transforms.library")}
         </p>
         <button

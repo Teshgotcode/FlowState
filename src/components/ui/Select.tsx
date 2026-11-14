@@ -39,27 +39,26 @@ type NonCreatableProps = {
 
 export type SelectProps = BaseProps & (CreatableProps | NonCreatableProps);
 
-const baseBackground = "var(--color-wash)";
-const hoverBackground =
-  "color-mix(in srgb, var(--color-logo-primary) 10%, transparent)";
-const focusBackground =
-  "color-mix(in srgb, var(--color-logo-primary) 20%, transparent)";
+const baseBackground = "var(--color-surface)";
+const hoverBackground = "var(--color-wash)";
+const focusBackground = "var(--color-accent-wash)";
 const neutralBorder = "var(--color-line-strong)";
 
 const selectStyles: StylesConfig<SelectOption, false> = {
   control: (base, state) => ({
     ...base,
     minHeight: 40,
-    borderRadius: 6,
-    borderColor: state.isFocused ? "var(--color-logo-primary)" : neutralBorder,
-    boxShadow: state.isFocused ? "0 0 0 1px var(--color-logo-primary)" : "none",
-    backgroundColor: state.isFocused ? focusBackground : baseBackground,
+    borderRadius: "var(--flow-radius-control)",
+    borderColor: state.isFocused ? "var(--color-focus)" : neutralBorder,
+    boxShadow: state.isFocused
+      ? "0 0 0 1px var(--color-focus)"
+      : "var(--flow-shadow-control)",
+    backgroundColor: baseBackground,
     fontSize: "0.875rem",
     color: "var(--color-text)",
     transition: "all 150ms ease",
     ":hover": {
-      borderColor: "var(--color-logo-primary)",
-      backgroundColor: hoverBackground,
+      borderColor: "var(--color-ink-4)",
     },
   }),
   valueContainer: (base) => ({
@@ -92,10 +91,11 @@ const selectStyles: StylesConfig<SelectOption, false> = {
   menu: (provided) => ({
     ...provided,
     zIndex: 30,
-    backgroundColor: "var(--color-background)",
+    backgroundColor: "var(--color-surface)",
     color: "var(--color-text)",
     border: "1px solid var(--color-line)",
-    boxShadow: "0 10px 30px rgba(15, 15, 15, 0.2)",
+    borderRadius: "var(--flow-radius-control)",
+    boxShadow: "var(--flow-shadow-pop)",
   }),
   option: (base, state) => ({
     ...base,

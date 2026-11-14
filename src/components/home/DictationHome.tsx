@@ -14,6 +14,7 @@ import {
   Mic,
   Play,
   Search,
+  Sparkles,
   Trash2,
   X,
 } from "lucide-react";
@@ -25,6 +26,7 @@ import { useMeetingClock } from "@/hooks/useMeetingClock";
 import { useOsType } from "@/hooks/useOsType";
 import { useSettings } from "@/hooks/useSettings";
 import { activityByDay, entryText, summarize } from "@/lib/insights/stats";
+import { formatDurationClock } from "@/lib/utils/format";
 import { copyToClipboard } from "@/components/settings/history/clipboard";
 import { useNumberFormat } from "@/components/hub/Primitives";
 import { Keycaps } from "@/components/shared/Keycaps";
@@ -128,6 +130,10 @@ const DictationRow: React.FC<{
     void audio.play();
   };
 
+  // Pause whatever is playing when the row goes away, so navigating back to
+  // Home mid-playback does not leave the audio running in the background.
+  useEffect(() => () => playing?.pause(), [playing]);
+
   const remove = async () => {
     setMenuOpen(false);
     const result = await commands.deleteHistoryEntry(entry.id);
@@ -141,8 +147,8 @@ const DictationRow: React.FC<{
   return (
     <div
       onClick={onSelect}
-      className={`group flex cursor-pointer items-stretch border-t border-line first:border-t-0 hover:bg-surface-soft/40 ${
-        selected ? "bg-surface-soft/60" : ""
+      className={`group flex cursor-pointer items-stretch rounded-[10px] transition-colors duration-[var(--flow-dur-quick)] hover:bg-text/[0.035] ${
+        selected ? "bg-text/[0.05]" : ""
       }`}
     >
       <div className="flex w-[98px] shrink-0 items-center p-[16px] font-ui text-[12px] leading-[20px] text-ink-2">
@@ -155,7 +161,7 @@ const DictationRow: React.FC<{
         {selected && hasPolished && (
           <span
             onClick={(event) => event.stopPropagation()}
-            className="mt-[10px] inline-flex rounded-[7px] border border-line bg-surface p-[2px] shadow-[0_1px_2px_rgba(0,0,0,0.06)]"
+            className="mt-[10px] inline-flex rounded-[7px] border border-line bg-surface p-[2px] shadow-[var(--flow-shadow-control)]"
           >
             {(["raw", "polished"] as Mode[]).map((option) => (
               <button
@@ -176,7 +182,7 @@ const DictationRow: React.FC<{
       </div>
       <div
         onClick={(event) => event.stopPropagation()}
-        className="relative flex w-[138px] shrink-0 items-center gap-[6px] pe-[8px]"
+        className="relative flex w-[138px] shrink-0 items-center gap-[6px] pe-[8px] opacity-0 transition-opacity duration-[var(--flow-dur-quick)] focus-within:opacity-100 group-hover:opacity-100"
       >
         <ActionButton label={t("home.play")} onClick={play}>
           <Play size={16} />
@@ -338,11 +344,28 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
       {/* 1044 = 770 + 24 + 250, the reference's exact column split. */}
       <div className="mt-[24px] flex w-[1044px] items-start gap-[24px]">
         <div className="min-w-0 flex-1">
-          {/* The banner is the only serif surface in the app. */}
+          {/* A tip, not a promo: one icon, two lines, a text link, and a
+              dismiss. It must not out-shout the mic field below it. */}
           <section
             hidden={bannerHidden}
-            className="relative overflow-hidden rounded-[16px] border border-line bg-surface-soft px-[32px] py-[32px]"
+            className="relative flex items-start gap-[11px] rounded-[var(--flow-radius-card)] bg-text/[0.035] px-[16px] py-[13px]"
           >
+            <Sparkles size={15} strokeWidth={1.8} className="mt-[2px] shrink-0 text-logo-primary/80" />
+            <div className="min-w-0 flex-1 pe-[22px]">
+              <p className="text-[13.5px] font-[590] leading-[19px] tracking-[-0.01em] text-text">
+                {t("home.bannerTitle")}
+              </p>
+              <p className="mt-[2px] text-[12.5px] leading-[18px] text-ink-2">
+                {t("home.bannerBody")}
+              </p>
+              <button
+                type="button"
+                onClick={onOpenShortcuts}
+                className="mt-[6px] cursor-pointer rounded-[6px] text-[12.5px] font-[560] text-logo-primary hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus"
+              >
+                {t("home.bannerCta")}
+              </button>
+            </div>
             <button
               type="button"
               onClick={() => {
@@ -355,41 +378,18 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
               }}
               aria-label={t("home.dismiss")}
               title={t("home.dismiss")}
-              className="absolute end-[16px] top-[16px] z-10 flex h-[24px] w-[24px] cursor-pointer items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-wash hover:text-text"
+              className="absolute end-[10px] top-[10px] flex h-[22px] w-[22px] cursor-pointer items-center justify-center rounded-[6px] text-ink-3 transition-colors hover:bg-wash hover:text-text"
             >
-              <X size={14} />
-            </button>
-            <div
-              aria-hidden="true"
-              className="pointer-events-none absolute inset-0"
-              style={{
-                background:
-                  "radial-gradient(120% 160% at 100% 0%, color-mix(in srgb, var(--color-background-ui) 55%, transparent) 0%, transparent 68%)",
-              }}
-            />
-            <div className="relative max-w-[600px]">
-              <h2 className="font-display text-[28px] leading-[28px] font-normal tracking-[-0.01em] text-text">
-                {t("home.bannerTitle")}
-              </h2>
-              <p className="mt-[12px] text-[14px] leading-[20px] text-text/85">
-                {t("home.bannerBody")}
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={onOpenShortcuts}
-              className="relative mt-[16px] h-[36px] cursor-pointer rounded-[8px] border border-logo-primary bg-background-ui px-[16px] text-[14px] font-semibold text-on-accent transition-opacity hover:opacity-90"
-            >
-              {t("home.bannerCta")}
+              <X size={13} />
             </button>
           </section>
 
           {/* The live dictation, where the text lands: same stream as the
               overlay, with the words as they commit and the one in flight. */}
           <div
-            className={`mt-[20px] rounded-[12px] border px-[16px] py-[13px] transition-colors ${
+            className={`mt-[18px] rounded-[var(--flow-radius-card)] border px-[16px] py-[13px] transition-colors ${
               stream.recording
-                ? "border-logo-primary/60 bg-wash shadow-[0_0_0_3px_var(--color-wash)]"
+                ? "border-logo-primary/45 bg-accent-wash shadow-[0_0_0_3px_var(--color-accent-wash)]"
                 : "border-line bg-surface-soft"
             }`}
           >
@@ -407,7 +407,7 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
                 <span className="text-[12.5px] text-ink-2">
                   {t("diktering.recording")}{" "}
                   <b className="tabular-nums font-semibold text-logo-primary">
-                    {`0:${String(seconds % 60).padStart(2, "0")}`}
+                    {formatDurationClock(seconds)}
                   </b>
                 </span>
               ) : (
@@ -446,7 +446,7 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
               {t("home.loading")}
             </div>
           ) : visible.length === 0 ? (
-            <div className="mt-[24px] rounded-[16px] border border-line px-[24px] py-[64px] text-center">
+            <div className="mt-[24px] rounded-[var(--flow-radius-card)] border border-line px-[24px] py-[64px] text-center">
               <Mic size={26} className="mx-auto text-ink-3" />
               <p className="mt-3 text-[14px] font-medium text-text">
                 {query ? t("home.noResults") : t("home.emptyTitle")}
@@ -464,7 +464,7 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
           ) : (
             <>
               <div className="flex h-[52px] items-center justify-between gap-[16px] pt-[4px]">
-                <span className="font-ui text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+                <span className="font-ui text-[12px] font-semibold tracking-[-0.005em] text-ink-3">
                   {groups[0]?.label ?? t("home.historyHeading")}
                 </span>
                 {searchOpen || query ? (
@@ -520,11 +520,11 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
                   className={index > 0 ? "mt-6" : undefined}
                 >
                   {index > 0 && (
-                    <div className="mb-2 font-ui text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+                    <div className="mb-2 font-ui text-[12px] font-semibold tracking-[-0.005em] text-ink-3">
                       {group.label}
                     </div>
                   )}
-                  <div className="overflow-hidden rounded-[16px] border border-line">
+                  <div className="overflow-hidden rounded-[var(--flow-radius-card)] border border-line">
                     {group.entries.map((entry) => (
                       <DictationRow
                         key={entry.id}
@@ -570,44 +570,44 @@ export const DictationHome: React.FC<{ onOpenShortcuts: () => void }> = ({
         {/* Right rail: one 250px card, two sections that abut, numbers 28/400
             with 16px labels on a 44px rhythm. Measured off the reference. */}
         <aside className="w-[250px] shrink-0">
-          <div className="overflow-hidden rounded-[16px] bg-surface-soft">
-            <div className="flex flex-col gap-[16px] p-[24px]">
+          <div className="overflow-hidden rounded-[var(--flow-radius-card)] border border-line/50 bg-surface/70">
+            <div className="flex flex-col gap-[18px] p-[22px]">
               <p className="flex items-baseline gap-[8px]">
-                <span className="font-ui text-[28px] leading-[28px] text-text">
+                <span className="font-ui text-[26px] font-[590] leading-[26px] tracking-[-0.02em] tabular-nums text-text">
                   {formatNumber(stats.words)}
                 </span>
-                <span className="text-[16px] leading-[20px] text-text/70">
+                <span className="text-[13px] leading-[18px] text-ink-2">
                   {t("home.railWords")}
                 </span>
               </p>
               <p className="flex items-baseline gap-[8px]">
-                <span className="font-ui text-[28px] leading-[28px] text-text">
+                <span className="font-ui text-[26px] font-[590] leading-[26px] tracking-[-0.02em] tabular-nums text-text">
                   {formatNumber(stats.dictations)}
                 </span>
-                <span className="text-[16px] leading-[20px] text-text/70">
+                <span className="text-[13px] leading-[18px] text-ink-2">
                   {t("home.railDictations")}
                 </span>
               </p>
               <p className="flex items-baseline gap-[8px]">
-                <span className="font-ui text-[28px] leading-[28px] text-text">
+                <span className="font-ui text-[26px] font-[590] leading-[26px] tracking-[-0.02em] tabular-nums text-text">
                   {formatNumber(stats.streak)}
                 </span>
-                <span className="text-[16px] leading-[20px] text-text/70">
+                <span className="text-[13px] leading-[18px] text-ink-2">
                   {t("home.railStreak")}
                 </span>
               </p>
             </div>
 
-            <div className="p-[24px]">
-              <p className="text-[16px] font-semibold leading-[24px] text-text">
+            <div className="border-t border-line/60 p-[22px]">
+              <p className="text-[14px] font-[590] leading-[20px] tracking-[-0.01em] text-text">
                 {t("home.voiceTitle")}
               </p>
-              <p className="mt-[4px] text-[12px] leading-[20px] text-text/70">
+              <p className="mt-[3px] text-[12.5px] leading-[18px] text-ink-2">
                 {t("home.voiceBody")}
               </p>
-              <div className="mt-[8px] h-[18px] overflow-hidden rounded-[9px] bg-text/10">
+              <div className="mt-[10px] h-[6px] overflow-hidden rounded-full bg-text/[0.08]">
                 <div
-                  className="h-full rounded-[9px] bg-background-ui"
+                  className="h-full rounded-full bg-logo-primary/70"
                   style={{
                     width: `${Math.min(100, (days.filter((d) => d.count > 0).length / 30) * 100)}%`,
                   }}

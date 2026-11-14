@@ -71,6 +71,12 @@ const MEETINGS = [
 
 const entries: HistoryEntry[] = ROWS.map((row) => {
   const timestamp = now - row.minutesAgo * MINUTE;
+  // A plausible speaking time, ~150 words a minute, so the speed card has a
+  // real number to show instead of a zero.
+  const spokenSecs = Math.max(
+    1,
+    Math.round(row.text.trim().split(/\s+/).length / 2.5),
+  );
   return {
     id: row.id,
     file_name: "",
@@ -85,7 +91,7 @@ const entries: HistoryEntry[] = ROWS.map((row) => {
     language: row.language ?? null,
     language_source: "detected",
     source: row.source ?? null,
-    metadata: null,
+    metadata: { duration_secs: spokenSecs },
   };
 });
 
@@ -110,6 +116,10 @@ entries.push(
     };
   }),
 );
+
+// The real command returns newest first; an unsorted fixture makes the
+// day groups look scrambled, which then reads as a layout bug.
+entries.sort((a, b) => b.timestamp - a.timestamp);
 
 const NOTE_SEED = [
   {
@@ -156,10 +166,30 @@ const settings = {
     { id: "style_neutral", name: "Nøytral", prompt: "Rydd skrivefeil og fyllord." },
     { id: "style_formal", name: "Formell", prompt: "Formelt bokmål, uten slang." },
     { id: "style_email", name: "E-post", prompt: "Lag en ferdig e-post." },
+    { id: "style_short", name: "Kort", prompt: "Bare kjernebudskapet." },
+    { id: "style_note", name: "Notat", prompt: "Sammendrag og kulepunkter." },
     {
-      id: "p1",
-      name: "Kulepunkter",
-      prompt: "Gjør teksten om til korte kulepunkter. Behold alle fakta og navn.",
+      id: "style_code_comment",
+      name: "Kodekommentar",
+      prompt: "Kort kommentar i kodestil.",
+    },
+  ],
+  snippets: [
+    {
+      trigger: "signatur",
+      expansion:
+        "Med vennlig hilsen\nTejas Sharma\nStudent, NTNU Entreprenørskolen",
+      case_sensitive: false,
+    },
+    {
+      trigger: "adresse",
+      expansion: "Klæbuveien 72, 7030 Trondheim",
+      case_sensitive: false,
+    },
+    {
+      trigger: "møtetid",
+      expansion: "Passer det å møtes på torsdag klokka 12?",
+      case_sensitive: true,
     },
   ],
   post_process_selected_prompt_id: "style_neutral",

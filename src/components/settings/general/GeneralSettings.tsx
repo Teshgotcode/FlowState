@@ -38,6 +38,8 @@ export const GeneralSettings: React.FC = () => {
         {!isLinux && <ShortcutInput shortcutId="cancel" grouped={true} />}
         {/* Command Mode: edits the selected text with a spoken instruction. */}
         <ShortcutInput shortcutId="command" grouped={true} />
+        {/* Paste last transcript: recovery when a paste missed its target. */}
+        <ShortcutInput shortcutId="paste_last_transcript" grouped={true} />
       </SettingsGroup>
       <SettingsGroup title={t("settings.languages.title")}>
         <PreferredLanguages descriptionMode="tooltip" grouped={true} />

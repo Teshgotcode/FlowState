@@ -24,15 +24,15 @@ export const PageHeader: React.FC<{
   <header className="mb-[22px] flex items-start justify-between gap-[24px]">
     <div className="min-w-0">
       {overline && (
-        <p className="mb-[6px] font-ui text-[10.5px] font-semibold uppercase tracking-[0.10em] text-ink-3">
+        <p className="mb-[6px] font-ui text-[10.5px] font-semibold tracking-[-0.005em] text-ink-3">
           {overline}
         </p>
       )}
-      <h1 className="font-display text-[27px] font-semibold leading-[34px] tracking-[-0.01em] text-text">
+      <h1 className="font-display text-[26px] font-semibold leading-[33px] tracking-[-0.02em] text-text">
         {title}
       </h1>
       {subtitle && (
-        <p className="mt-[5px] max-w-[56ch] text-[12.5px] leading-[19px] text-ink-2">
+        <p className="mt-[6px] max-w-[58ch] text-[13px] leading-[19.5px] text-ink-2">
           {subtitle}
         </p>
       )}
@@ -46,7 +46,7 @@ export const Card: React.FC<
 > = ({ children, className = "", as: Tag = "div", ...rest }) => (
   <Tag
     {...rest}
-    className={`rounded-[12px] border border-line bg-surface ${className}`}
+    className={`rounded-[var(--flow-radius-card)] border border-line/70 bg-surface shadow-[var(--flow-shadow-card)] ${className}`}
   >
     {children}
   </Tag>
@@ -55,7 +55,7 @@ export const Card: React.FC<
 export const SectionLabel: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => (
-  <p className="font-ui text-[12px] font-semibold uppercase tracking-[0.06em] text-ink-3">
+  <p className="font-ui text-[12px] font-[560] tracking-[-0.005em] text-ink-2">
     {children}
   </p>
 );
@@ -72,7 +72,7 @@ export const StatTile: React.FC<{
   <div className="flex flex-col gap-[2px] border-line/80 px-[2px] py-[2px]">
     <div className="flex items-center gap-1.5 text-ink-2">
       {icon}
-      <span className="truncate font-ui text-[10.5px] font-semibold uppercase tracking-[0.1em]">
+      <span className="truncate font-ui text-[10.5px] font-semibold tracking-[-0.005em]">
         {label}
       </span>
     </div>

@@ -45,7 +45,12 @@ pub fn get_app_dir_path(app: AppHandle) -> Result<String, String> {
 #[tauri::command]
 #[specta::specta]
 pub fn get_app_settings(app: AppHandle) -> Result<AppSettings, String> {
-    Ok(get_settings(&app))
+    let mut settings = get_settings(&app);
+    // API keys never cross into the webview: the settings UI only needs to
+    // know whether a key is set (the field is a password input), so every
+    // set key travels as the masked placeholder.
+    settings.post_process_api_keys = settings.post_process_api_keys.masked();
+    Ok(settings)
 }
 
 #[tauri::command]

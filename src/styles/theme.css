@@ -28,30 +28,47 @@
   /* FlowState type + elevation scale (see replica/design-parity.md).
      --flow-font-ui/display are the stacks every window shares; the two
      bundled families load only for latin scripts. */
+  /* Type: the system stack first, so macOS renders SF Pro and the app feels
+     native; Figtree stays as the fallback where no system UI face exists.
+     Display keeps a serif, but prefers New York (Apple's) before EB Garamond,
+     because organic here means "the face the OS would pick". */
   --flow-font-ui:
-    "Figtree", system-ui, -apple-system, "Segoe UI Variable Text", "Segoe UI",
-    Roboto, "Noto Sans", sans-serif;
+    -apple-system, BlinkMacSystemFont, "Figtree", system-ui, "Segoe UI Variable Text",
+    "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  /* Display is the same system face, heavier: a macOS pane does not switch to
+     a serif for its title. EB Garamond stays bundled for the wordmark only. */
   --flow-font-display:
-    "EB Garamond", "Iowan Old Style", "Times New Roman", serif;
+    -apple-system, BlinkMacSystemFont, "Figtree", system-ui, "Segoe UI Variable Text",
+    "Segoe UI", Roboto, "Noto Sans", sans-serif;
 
-  /* FlowState rounding scale — rounder than the reference's 8-12px, and
-     one step per job rather than per component. */
-  --flow-radius-panel: 20px;
-  --flow-radius-card: 14px;
-  --flow-radius-control: 10px;
-  --flow-radius-chip: 7px;
+  /* FlowState rounding scale — one step per job rather than per component. */
+  --flow-radius-panel: 26px;
+  --flow-radius-card: 16px;
+  --flow-radius-control: 11px;
+  --flow-radius-chip: 8px;
 
-  /* FlowState elevation scale — ink-tinted, soft-edged (never a hard black
-     drop shadow). One shadow per layer: card sits, panel lifts, pop floats. */
+  /* Motion. One spring for anything that moves under the pointer, one gentle
+     ease for things that appear; nothing bounces. */
+  --flow-ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
+  --flow-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --flow-dur-quick: 130ms;
+  --flow-dur-base: 190ms;
+
+  /* Elevation — light comes from above and slightly behind, so shadows are
+     wide, low-opacity and never black: they take the theme's own shadow tint
+     (--color-shadow, set per theme by lib/utils/accent.ts). Cards barely
+     lift; panels float; only popovers get a real shadow. */
+  --flow-shadow-control: 0 1px 1px
+    color-mix(in srgb, var(--color-shadow) 6%, transparent);
   --flow-shadow-card:
-    0 1px 2px color-mix(in srgb, var(--flow-ink) 8%, transparent),
-    0 4px 14px -8px color-mix(in srgb, var(--flow-ink) 20%, transparent);
+    0 1px 1px color-mix(in srgb, var(--color-shadow) 4%, transparent),
+    0 4px 14px -10px color-mix(in srgb, var(--color-shadow) 14%, transparent);
   --flow-shadow-panel:
-    0 1px 2px color-mix(in srgb, var(--flow-ink) 8%, transparent),
-    0 12px 32px -12px color-mix(in srgb, var(--flow-ink) 24%, transparent);
+    0 1px 2px color-mix(in srgb, var(--color-shadow) 4%, transparent),
+    0 14px 40px -22px color-mix(in srgb, var(--color-shadow) 20%, transparent);
   --flow-shadow-pop:
-    0 2px 4px color-mix(in srgb, var(--flow-ink) 10%, transparent),
-    0 24px 48px -16px color-mix(in srgb, var(--flow-ink) 32%, transparent);
+    0 2px 6px color-mix(in srgb, var(--color-shadow) 7%, transparent),
+    0 24px 56px -20px color-mix(in srgb, var(--color-shadow) 28%, transparent);
 
   /* Brand palette — the only FlowState hex values (see the brand brief).
      Derived tints use color-mix() from these, never a fifth brand hue.
@@ -67,46 +84,81 @@
   --flow-marigold: #b7791f;
 
   /* Semantic light/dark pairs. The active tokens below and the `data-theme`
-     overrides in App.css reference these, so a value lives in exactly one
-     place; hexes that are brand colors resolve through the palette above. */
-  --light-color-text: var(--flow-ink);
-  --light-color-background: var(--flow-paper);
-  /* Cards and inputs sit on the paper, not in it: one step lighter in light
-     mode, one step lighter than the canvas in dark. */
-  --light-color-surface: #fffdf8;
-  --light-color-surface-soft: #efece2;
-  --dark-color-surface: #121b18;
-  --dark-color-surface-soft: #18241f;
-  /* Text drawn on the pastel fill (see lib/utils/accent.ts). Pastel fills carry
-     dark text, so this is the canvas tone rather than white. */
-  --light-color-on-accent: var(--flow-ink);
-  --dark-color-on-accent: #0a1210;
-  /* Grey steps derive from mid-gray, so it is tinted per accent and per mode. */
-  --light-color-mid-gray: #71807a;
-  --dark-color-mid-gray: #71807a;
-  --light-color-logo-primary: var(--flow-jade);
-  --light-color-logo-stroke: var(--flow-ink);
-  --light-color-background-ui: var(--flow-jade);
+     overrides reference these, so a value lives in exactly one place.
+     lib/utils/accent.ts repaints every per-theme pair at boot from one OKLCH
+     table (same lightness per role in every theme, only the hue moves); the
+     values here are the default sky theme, so a window that never runs it
+     still matches.
 
-  --dark-color-text: #e9efea;
-  --dark-color-background: #0a1210;
-  --dark-color-logo-primary: #3fbfa2;
-  --dark-color-logo-stroke: #e9efea;
-  /* Deep enough that white label text stays AA on the fill (5.2:1) while the
-     fill itself clears 3:1 against the near-black canvas. */
-  --dark-color-background-ui: #177a66;
+     Weight hierarchy, quietest to loudest:
+       surfaces  canvas (sidebar) < panel/cards; inset groups one step under
+                 the panel; hover = ink at ~5%; selection = ink at 7%.
+       edges     line (hairline, ~1.2:1) for dividers; line-strong (~1.5:1)
+                 for control edges. Never heavier than the text they hold.
+       ink       text >= 12:1, ink-2 >= 6:1, ink-3 >= 4.5:1 on the panel,
+                 ink-4 for disabled only.
+       accent    pastel fill (background-ui) with dark on-accent text; the
+                 strong tone (logo-primary) for accent text, icons, focus;
+                 accent-wash for a soft tinted background. */
+  --light-color-text: #18212b;
+  --light-color-background: #e9f2fc;
+  /* The content panel and cards sit on the canvas: lighter in light mode,
+     one step lighter than the canvas in dark too. */
+  --light-color-surface: #fbfdff;
+  --light-color-surface-soft: #f0f7ff;
+  --dark-color-surface: #192028;
+  --dark-color-surface-soft: #1f2730;
+  /* Text drawn on the pastel fill. Pastel fills carry dark text in both
+     modes, never white. */
+  --light-color-on-accent: #142332;
+  --dark-color-on-accent: #121e2b;
+  /* Ink tiers: secondary, tertiary, disabled. mid-gray is the old name of
+     ink-3 and stays as an alias. */
+  --light-color-ink-2: #485460;
+  --light-color-ink-3: #64707c;
+  --light-color-ink-4: #9da6ae;
+  --light-color-mid-gray: #64707c;
+  --dark-color-ink-2: #b6bfc8;
+  --dark-color-ink-3: #939ca6;
+  --dark-color-ink-4: #626a72;
+  --dark-color-mid-gray: #939ca6;
+  /* Edges and hover: the primary ink at low alpha, so they sit on any
+     surface. */
+  --light-color-line: #18212b16;
+  --light-color-line-strong: #18212b29;
+  --light-color-wash: #18212b0b;
+  --dark-color-line: #e8edf31a;
+  --dark-color-line-strong: #e8edf32e;
+  --dark-color-wash: #e8edf30f;
+  --light-color-chart: #73a9e1;
+  --dark-color-chart: #93bce6;
+  --light-color-accent-wash: #e1efff;
+  --dark-color-accent-wash: #1f3143;
+  --light-color-shadow: #202f3f;
+  --dark-color-shadow: #03060a;
+  --light-color-logo-primary: #2666a2;
+  --light-color-logo-stroke: var(--light-color-text);
+  --light-color-background-ui: #aed5ff;
 
-  /* Semantic status colors. Each has a -wash tint below; both keep AA
-     (>= 4.5:1) against their theme's background. */
-  --light-color-warning: #b45309;
-  --light-color-error: #c81e1e;
-  --dark-color-warning: #fbbf24;
-  --dark-color-error: #f87171;
+  --dark-color-text: #e8edf3;
+  --dark-color-background: #10161c;
+  --dark-color-logo-primary: #a6cffa;
+  --dark-color-logo-stroke: #e8edf3;
+  --dark-color-background-ui: #9cc2ea;
+
+  /* Semantic status colours, shared by every theme. OKLCH: light text tones
+     at L 0.50-0.52, dark at L 0.78-0.84; washes are pastel tints at L 0.955
+     (light) / 0.30 (dark). Each tone clears 4.5:1 on its own wash and on
+     every theme's panel (see the contrast table in the audit). */
+  --light-color-warning: #935a11;
+  --light-color-error: #b33736;
+  --dark-color-warning: #edc47d;
+  --dark-color-error: #f69b94;
 
   /* Success. The recording accent already means "recording", so it gets its
      own hue. */
-  --light-color-moss: #2f7d5b;
-  --dark-color-moss: #86c9a4;
+  --light-color-moss: #2b7440;
+  --dark-color-moss: #9ad5a5;
 
   /* Plum: the ink for keycaps and picked items. */
   --light-color-plum: var(--light-color-logo-stroke);
@@ -172,36 +224,12 @@
     0 10px 26px -10px rgba(0, 0, 0, 0.6);
 
   /* Status tints for the box behind a status color. */
-  --light-color-moss-wash: color-mix(
-    in srgb,
-    var(--light-color-moss) 12%,
-    var(--light-color-background)
-  );
-  --dark-color-moss-wash: color-mix(
-    in srgb,
-    var(--dark-color-moss) 14%,
-    var(--dark-color-background)
-  );
-  --light-color-warning-wash: color-mix(
-    in srgb,
-    var(--light-color-warning) 12%,
-    var(--light-color-background)
-  );
-  --dark-color-warning-wash: color-mix(
-    in srgb,
-    var(--dark-color-warning) 14%,
-    var(--dark-color-background)
-  );
-  --light-color-error-wash: color-mix(
-    in srgb,
-    var(--light-color-error) 12%,
-    var(--light-color-background)
-  );
-  --dark-color-error-wash: color-mix(
-    in srgb,
-    var(--dark-color-error) 14%,
-    var(--dark-color-background)
-  );
+  --light-color-moss-wash: #e3f6e6;
+  --dark-color-moss-wash: #1c3422;
+  --light-color-warning-wash: #ffeddc;
+  --dark-color-warning-wash: #3a2b11;
+  --light-color-error-wash: #ffebe9;
+  --dark-color-error-wash: #422522;
 
   /* Tokens that do not change between light and dark. text-stroke uses the
      palette's cool paper tone so stroked text reads on navy/action fills in
@@ -237,17 +265,19 @@
   --color-moss-wash: var(--light-color-moss-wash);
   --color-warning-wash: var(--light-color-warning-wash);
   --color-error-wash: var(--light-color-error-wash);
+  --color-ink-2: var(--light-color-ink-2);
+  --color-ink-3: var(--light-color-ink-3);
+  --color-ink-4: var(--light-color-ink-4);
+  --color-line: var(--light-color-line);
+  --color-line-strong: var(--light-color-line-strong);
+  --color-wash: var(--light-color-wash);
+  --color-accent-wash: var(--light-color-accent-wash);
+  --color-chart: var(--light-color-chart);
+  --color-shadow: var(--light-color-shadow);
 
-  /* Grey steps: secondary text, hints/icons, control edges, dividers, hover fill. */
-  --color-ink-2: color-mix(in srgb, var(--color-text) 60%, transparent);
-  --color-ink-3: var(--color-mid-gray);
-  --color-line-strong: color-mix(
-    in srgb,
-    var(--color-mid-gray) 80%,
-    transparent
-  );
-  --color-line: color-mix(in srgb, var(--color-mid-gray) 28%, transparent);
-  --color-wash: color-mix(in srgb, var(--color-mid-gray) 10%, transparent);
+  /* Focus ring: the strong accent at 75%, the lowest alpha that keeps 3:1
+     against the canvas and the panel in every theme. Use it at 2px. */
+  --color-focus: color-mix(in srgb, var(--color-logo-primary) 75%, transparent);
   /* Edge of a picked card or option. */
   --color-plum-pick: color-mix(in srgb, var(--color-plum) 60%, transparent);
   /* The far end of a capture slot's breathing edge (KeySlot). */
@@ -281,6 +311,15 @@
     --color-moss-wash: var(--dark-color-moss-wash);
     --color-warning-wash: var(--dark-color-warning-wash);
     --color-error-wash: var(--dark-color-error-wash);
+    --color-ink-2: var(--dark-color-ink-2);
+    --color-ink-3: var(--dark-color-ink-3);
+    --color-ink-4: var(--dark-color-ink-4);
+    --color-line: var(--dark-color-line);
+    --color-line-strong: var(--dark-color-line-strong);
+    --color-wash: var(--dark-color-wash);
+    --color-accent-wash: var(--dark-color-accent-wash);
+    --color-chart: var(--dark-color-chart);
+    --color-shadow: var(--dark-color-shadow);
   }
 }
 
@@ -320,6 +359,15 @@
   --color-moss-wash: var(--light-color-moss-wash);
   --color-warning-wash: var(--light-color-warning-wash);
   --color-error-wash: var(--light-color-error-wash);
+  --color-ink-2: var(--light-color-ink-2);
+  --color-ink-3: var(--light-color-ink-3);
+  --color-ink-4: var(--light-color-ink-4);
+  --color-line: var(--light-color-line);
+  --color-line-strong: var(--light-color-line-strong);
+  --color-wash: var(--light-color-wash);
+  --color-accent-wash: var(--light-color-accent-wash);
+  --color-chart: var(--light-color-chart);
+  --color-shadow: var(--light-color-shadow);
 }
 
 :root[data-theme="dark"] {
@@ -348,4 +396,13 @@
   --color-moss-wash: var(--dark-color-moss-wash);
   --color-warning-wash: var(--dark-color-warning-wash);
   --color-error-wash: var(--dark-color-error-wash);
+  --color-ink-2: var(--dark-color-ink-2);
+  --color-ink-3: var(--dark-color-ink-3);
+  --color-ink-4: var(--dark-color-ink-4);
+  --color-line: var(--dark-color-line);
+  --color-line-strong: var(--dark-color-line-strong);
+  --color-wash: var(--dark-color-wash);
+  --color-accent-wash: var(--dark-color-accent-wash);
+  --color-chart: var(--dark-color-chart);
+  --color-shadow: var(--dark-color-shadow);
 }

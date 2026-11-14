@@ -39,15 +39,17 @@ pub fn accept_word_suggestion(
         return Err(format!("Invalid word: {word}"));
     }
     learner.accept(&word);
-    let mut settings = settings::get_settings(&app);
-    let already_known = settings
-        .custom_words
-        .iter()
-        .any(|existing| existing.eq_ignore_ascii_case(&word));
-    if !already_known {
-        settings.custom_words.push(word);
-        settings::write_settings(&app, settings);
-    }
+    // One read-modify-write step, so a concurrent list replacement (the
+    // dictionary window saving the whole word list) cannot drop the word.
+    settings::update_settings(&app, |s| {
+        let already_known = s
+            .custom_words
+            .iter()
+            .any(|existing| existing.eq_ignore_ascii_case(&word));
+        if !already_known {
+            s.custom_words.push(word);
+        }
+    });
     Ok(())
 }
 
@@ -90,6 +92,9 @@ pub async fn correct_history_entry(
     let settings = settings::get_settings(&app);
     if settings.learn_from_corrections {
         learner.record_correction(&old_text, &text, &settings.custom_words);
+        // Auto-learn (opt-in): threshold-reaching words go straight into the
+        // dictionary instead of the suggestion list.
+        crate::managers::word_suggestions::auto_learn_if_enabled(&app, &learner);
     }
     Ok(updated)
 }

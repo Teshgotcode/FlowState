@@ -58,7 +58,12 @@ pub async fn get_audio_file_path(
     history_manager: State<'_, Arc<HistoryManager>>,
     file_name: String,
 ) -> Result<String, String> {
-    let path = history_manager.get_audio_file_path(&file_name);
+    // The name arrives from the frontend: only a plain file name may be
+    // joined onto the recordings dir, or the path points outside it.
+    let file_name = crate::utils::plain_file_name(&file_name)?;
+    let path = history_manager
+        .get_audio_file_path(&file_name)
+        .ok_or_else(|| "Invalid file path".to_string())?;
     path.to_str()
         .ok_or_else(|| "Invalid file path".to_string())
         .map(|s| s.to_string())
@@ -118,6 +123,9 @@ pub async fn update_history_limit(
     history_manager: State<'_, Arc<HistoryManager>>,
     limit: usize,
 ) -> Result<(), String> {
+    // A limit of 0 would erase every dictation right after it is saved; the
+    // smallest real limit keeps one.
+    let limit = limit.max(1);
     let mut settings = crate::settings::get_settings(&app);
     settings.history_limit = limit;
     crate::settings::write_settings(&app, settings);

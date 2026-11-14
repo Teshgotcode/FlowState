@@ -35,7 +35,9 @@ pub fn compress_meeting_recording(
     file_name: &str,
     wav_samples: usize,
 ) -> Result<String> {
-    let source: PathBuf = history.get_audio_file_path(file_name);
+    let source: PathBuf = history
+        .get_audio_file_path(file_name)
+        .ok_or_else(|| anyhow!("the recording's name is unusable"))?;
     if !source.exists() {
         return Err(anyhow!("the recording is already gone"));
     }

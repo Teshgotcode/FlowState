@@ -76,11 +76,34 @@ fn empty_outcome(input_silent: bool) -> TranscriptionOutcome {
     }
 }
 
+/// A dictation take's WAV name. Milliseconds, not whole seconds: two takes
+/// that stop inside the same second must not overwrite each other's audio.
+/// Readers treat the name as opaque; only the `flowstate-<number>.wav`
+/// shape must hold.
+fn take_wav_file_name(now_ms: i64) -> String {
+    format!("flowstate-{now_ms}.wav")
+}
+
 const CANCELLATION_POLL_INTERVAL: Duration = Duration::from_millis(25);
 
 /// Bumped per recording session, so a late paste from an earlier session
 /// doesn't reset the tray or hide the overlay of a newer one.
 static RECORDING_SESSION: AtomicU64 = AtomicU64::new(0);
+
+/// End the dictation UI (overlay + tray) of the take identified by `session`.
+/// A take that finishes after a newer one started must leave the UI alone:
+/// the overlay and tray belong to the newer session now. Returns whether the
+/// UI was still this take's, so callers that want to show something (the
+/// Command Mode failure pill) can stay quiet when it is not.
+fn teardown_take_ui(app: &AppHandle, session: u64) -> bool {
+    if RECORDING_SESSION.load(Ordering::SeqCst) != session {
+        debug!("Skipping dictation UI teardown: a newer session owns the UI");
+        return false;
+    }
+    utils::hide_recording_overlay(app);
+    set_tray_state(app, TrayIconState::Idle);
+    true
+}
 
 #[derive(Clone, serde::Serialize)]
 struct RecordingErrorEvent {
@@ -211,6 +234,25 @@ where
 
 fn should_use_streaming_overlay(style: OverlayStyle, is_streaming: bool) -> bool {
     style == OverlayStyle::Live && is_streaming
+}
+
+/// The cleaned transcription from a structured-output response, or `None`
+/// when the model ignored the schema (missing `transcription` field, a
+/// wrongly typed one, or JSON wrapped in prose or a fence). `None` makes the
+/// caller keep the raw dictation, which is safer to paste than the model's
+/// wire format.
+fn transcription_from_structured(content: &str) -> Option<String> {
+    let content = strip_think_block(content);
+    match serde_json::from_str::<serde_json::Value>(content) {
+        Ok(json) => json
+            .get(TRANSCRIPTION_FIELD)
+            .and_then(|value| value.as_str())
+            .map(|text| strip_invisible_chars(text)),
+        Err(e) => {
+            error!("Structured output response was not usable JSON: {e}");
+            None
+        }
+    }
 }
 
 async fn post_process_transcription(settings: &AppSettings, transcription: &str) -> Option<String> {
@@ -363,31 +405,23 @@ async fn post_process_transcription(settings: &AppSettings, transcription: &str)
         .await
         {
             Ok(Some(content)) => {
-                // Parse the JSON response to extract the transcription field
-                let content = strip_think_block(&content);
-                match serde_json::from_str::<serde_json::Value>(content) {
-                    Ok(json) => {
-                        if let Some(transcription_value) =
-                            json.get(TRANSCRIPTION_FIELD).and_then(|t| t.as_str())
-                        {
-                            let result = strip_invisible_chars(transcription_value);
-                            debug!(
-                                "Structured output post-processing succeeded for provider '{}'. Output length: {} chars",
-                                provider.id,
-                                result.len()
-                            );
-                            return Some(result);
-                        } else {
-                            error!("Structured output response missing 'transcription' field");
-                            return Some(strip_invisible_chars(content));
-                        }
-                    }
-                    Err(e) => {
-                        error!(
-                            "Failed to parse structured output JSON: {}. Returning raw content.",
-                            e
+                match transcription_from_structured(&content) {
+                    Some(result) => {
+                        debug!(
+                            "Structured output post-processing succeeded for provider '{}'. Output length: {} chars",
+                            provider.id,
+                            result.len()
                         );
-                        return Some(strip_invisible_chars(content));
+                        return Some(result);
+                    }
+                    None => {
+                        // Missing field or unparseable JSON: keep the raw
+                        // dictation rather than paste the model's wire format.
+                        error!(
+                            "Structured output response for provider '{}' ignored the schema; keeping the raw transcription",
+                            provider.id
+                        );
+                        return None;
                     }
                 }
             }
@@ -473,6 +507,9 @@ pub(crate) async fn process_transcription_output(
                         &processed_text,
                         &settings.custom_words,
                     );
+                    // Auto-learn (opt-in): threshold-reaching words go straight
+                    // into the dictionary instead of the suggestion list.
+                    crate::managers::word_suggestions::auto_learn_if_enabled(app, &learner);
                 }
             }
             post_processed_text = Some(processed_text.clone());
@@ -698,6 +735,11 @@ impl ShortcutAction for TranscribeAction {
     }
 
     fn stop(&self, app: &AppHandle, binding_id: &str, _shortcut_str: &str) {
+        // The take this stop belongs to, read once before any long work: a
+        // transcription that finishes after a newer session started must not
+        // touch the newer take's overlay or tray.
+        let session = RECORDING_SESSION.load(Ordering::SeqCst);
+
         // Prevent a slow microphone from emitting a ready event or start chime
         // after the user has already requested stop.
         app.state::<Arc<AudioRecordingManager>>()
@@ -767,8 +809,7 @@ impl ShortcutAction for TranscribeAction {
                 if rm.was_cancelled_since(cancel_generation) {
                     debug!("Transcription operation cancelled after recording stop");
                     tm.cancel_stream();
-                    utils::hide_recording_overlay(&ah);
-                    set_tray_state(&ah, TrayIconState::Idle);
+                    teardown_take_ui(&ah, session);
                     return;
                 }
 
@@ -777,13 +818,12 @@ impl ShortcutAction for TranscribeAction {
                     // Tear down any streaming worker so its channel doesn't leak
                     // and block the next start_stream.
                     tm.cancel_stream();
-                    utils::hide_recording_overlay(&ah);
-                    set_tray_state(&ah, TrayIconState::Idle);
+                    teardown_take_ui(&ah, session);
                     emit_transcription_complete(&ah, empty_outcome(input_silent), 0, stop_time);
                 } else {
                     // Save WAV concurrently with transcription
                     let sample_count = samples.len();
-                    let file_name = format!("flowstate-{}.wav", chrono::Utc::now().timestamp());
+                    let file_name = take_wav_file_name(chrono::Utc::now().timestamp_millis());
                     let wav_path = hm.recordings_dir().join(&file_name);
                     let wav_path_for_verify = wav_path.clone();
                     let samples_for_wav = samples.clone();
@@ -824,8 +864,7 @@ impl ShortcutAction for TranscribeAction {
 
                     if rm.was_cancelled_since(cancel_generation) {
                         debug!("Transcription operation cancelled before output handling");
-                        utils::hide_recording_overlay(&ah);
-                        set_tray_state(&ah, TrayIconState::Idle);
+                        teardown_take_ui(&ah, session);
                         return;
                     }
 
@@ -852,31 +891,36 @@ impl ShortcutAction for TranscribeAction {
                             // instruction; apply it to the selected text.
                             // Everything else goes through the normal
                             // (post-)processing pipeline.
+                            // `None` from apply_instruction means the edit failed
+                            // (no provider, LLM error, empty answer); the empty
+                            // result is marked and surfaced as an error below,
+                            // not silently reported as "nothing heard".
+                            let mut command_edit_failed = false;
                             let processed_result = if let Some(selection) = command_selection {
                                 complete_unless_cancelled(
-                                    async {
-                                        crate::command_mode::apply_instruction(
-                                            &get_settings(&ah),
-                                            &selection,
-                                            &transcription,
-                                        )
-                                        .await
-                                        .map(|text| ProcessedTranscription {
-                                            final_text: text,
-                                            post_processed_text: None,
-                                            post_process_prompt: None,
-                                        })
-                                        .unwrap_or(
-                                            ProcessedTranscription {
-                                                final_text: String::new(),
-                                                post_processed_text: None,
-                                                post_process_prompt: None,
-                                            },
-                                        )
-                                    },
+                                    crate::command_mode::apply_instruction(
+                                        &get_settings(&ah),
+                                        &selection,
+                                        &transcription,
+                                    ),
                                     || rm.was_cancelled_since(cancel_generation),
                                 )
                                 .await
+                                .map(|edited| match edited {
+                                    Some(final_text) => ProcessedTranscription {
+                                        final_text,
+                                        post_processed_text: None,
+                                        post_process_prompt: None,
+                                    },
+                                    None => {
+                                        command_edit_failed = true;
+                                        ProcessedTranscription {
+                                            final_text: String::new(),
+                                            post_processed_text: None,
+                                            post_process_prompt: None,
+                                        }
+                                    }
+                                })
                             } else {
                                 complete_unless_cancelled(
                                     process_transcription_output(&ah, &transcription, post_process),
@@ -886,15 +930,13 @@ impl ShortcutAction for TranscribeAction {
                             };
                             let Some(processed) = processed_result else {
                                 debug!("Transcription operation cancelled during output handling");
-                                utils::hide_recording_overlay(&ah);
-                                set_tray_state(&ah, TrayIconState::Idle);
+                                teardown_take_ui(&ah, session);
                                 return;
                             };
 
                             if rm.was_cancelled_since(cancel_generation) {
                                 debug!("Transcription operation cancelled before paste");
-                                utils::hide_recording_overlay(&ah);
-                                set_tray_state(&ah, TrayIconState::Idle);
+                                teardown_take_ui(&ah, session);
                                 return;
                             }
 
@@ -927,14 +969,48 @@ impl ShortcutAction for TranscribeAction {
                                         segments,
                                     )
                                 };
-                                if let Err(err) = save_result {
-                                    error!("Failed to save history entry: {}", err);
+                                match save_result {
+                                    Err(err) => {
+                                        error!("Failed to save history entry: {}", err)
+                                    }
+                                    // The clip's own length, not wall clock: it
+                                    // leaves out paused takes, and Insights reads
+                                    // it back for words per minute.
+                                    Ok(entry) => {
+                                        let secs = (sample_count / 16_000) as u64;
+                                        if secs > 0 {
+                                            if let Err(err) = hm.set_duration(entry.id, secs) {
+                                                error!("Failed to record take length: {}", err);
+                                            }
+                                        }
+                                    }
                                 }
                             }
 
-                            if processed.final_text.is_empty() {
-                                utils::hide_recording_overlay(&ah);
-                                set_tray_state(&ah, TrayIconState::Idle);
+                            if command_edit_failed {
+                                // The instruction is kept in History, but
+                                // nothing is pasted: a failed edit has to be
+                                // visible, not reported as "nothing heard".
+                                error!(
+                                    "Command Mode: applying the instruction failed; nothing pasted"
+                                );
+                                if teardown_take_ui(&ah, session) {
+                                    // After the teardown, so the pending hide
+                                    // cannot reclaim the window; the pill
+                                    // dismisses itself.
+                                    crate::overlay::show_error_overlay(
+                                        &ah,
+                                        crate::overlay::ERROR_COMMAND_FAILED,
+                                    );
+                                }
+                                emit_transcription_complete(
+                                    &ah,
+                                    TranscriptionOutcome::Failed,
+                                    sample_count,
+                                    stop_time,
+                                );
+                            } else if processed.final_text.is_empty() {
+                                teardown_take_ui(&ah, session);
                                 emit_transcription_complete(
                                     &ah,
                                     empty_outcome(input_silent),
@@ -952,8 +1028,7 @@ impl ShortcutAction for TranscribeAction {
                                 ) {
                                     error!("Failed to deliver the take to the Scratchpad: {}", err);
                                 }
-                                utils::hide_recording_overlay(&ah);
-                                set_tray_state(&ah, TrayIconState::Idle);
+                                teardown_take_ui(&ah, session);
                                 emit_transcription_complete(
                                     &ah,
                                     TranscriptionOutcome::Typed,
@@ -965,9 +1040,6 @@ impl ShortcutAction for TranscribeAction {
                                 let paste_time = Instant::now();
                                 let final_text = processed.final_text;
                                 let rm_for_paste = Arc::clone(&rm);
-                                // Taken before the paste thread exists, and so
-                                // before the next session can start.
-                                let session = RECORDING_SESSION.load(Ordering::SeqCst);
                                 // Off the main thread: paste sleeps between steps, and a
                                 // paste into FlowState's own windows needs the main thread free.
                                 std::thread::Builder::new()
@@ -977,8 +1049,7 @@ impl ShortcutAction for TranscribeAction {
                                             debug!(
                                                 "Transcription operation cancelled before paste"
                                             );
-                                            utils::hide_recording_overlay(&ah_clone);
-                                            set_tray_state(&ah_clone, TrayIconState::Idle);
+                                            teardown_take_ui(&ah_clone, session);
                                             return;
                                         }
 
@@ -999,10 +1070,7 @@ impl ShortcutAction for TranscribeAction {
                                             };
                                         // A new session may have started while
                                         // this paste ran; the UI is now its.
-                                        if RECORDING_SESSION.load(Ordering::SeqCst) == session {
-                                            utils::hide_recording_overlay(&ah_clone);
-                                            set_tray_state(&ah_clone, TrayIconState::Idle);
-                                        }
+                                        teardown_take_ui(&ah_clone, session);
                                         emit_transcription_complete(
                                             &ah_clone,
                                             outcome,
@@ -1013,8 +1081,7 @@ impl ShortcutAction for TranscribeAction {
                                     .map(|_| ())
                                     .unwrap_or_else(|e| {
                                         error!("Failed to start the paste thread: {:?}", e);
-                                        utils::hide_recording_overlay(&ah);
-                                        set_tray_state(&ah, TrayIconState::Idle);
+                                        teardown_take_ui(&ah, session);
                                         emit_transcription_complete(
                                             &ah,
                                             TranscriptionOutcome::Failed,
@@ -1029,8 +1096,7 @@ impl ShortcutAction for TranscribeAction {
                                 debug!(
                                     "Transcription operation cancelled after transcription error"
                                 );
-                                utils::hide_recording_overlay(&ah);
-                                set_tray_state(&ah, TrayIconState::Idle);
+                                teardown_take_ui(&ah, session);
                                 return;
                             }
 
@@ -1052,8 +1118,7 @@ impl ShortcutAction for TranscribeAction {
                                     error!("Failed to save failed history entry: {}", save_err);
                                 }
                             }
-                            utils::hide_recording_overlay(&ah);
-                            set_tray_state(&ah, TrayIconState::Idle);
+                            teardown_take_ui(&ah, session);
                             emit_transcription_complete(
                                 &ah,
                                 TranscriptionOutcome::Failed,
@@ -1067,8 +1132,7 @@ impl ShortcutAction for TranscribeAction {
                 debug!("No samples retrieved from recording stop");
                 // Tear down any streaming worker so its channel doesn't leak.
                 tm.cancel_stream();
-                utils::hide_recording_overlay(&ah);
-                set_tray_state(&ah, TrayIconState::Idle);
+                teardown_take_ui(&ah, session);
                 if !rm.was_cancelled_since(cancel_generation) {
                     emit_transcription_complete(&ah, TranscriptionOutcome::Empty, 0, stop_time);
                 }
@@ -1097,6 +1161,19 @@ impl ShortcutAction for CancelAction {
 
 // Test Action
 struct TestAction;
+
+// Paste Last Transcript Action
+struct PasteLastAction;
+
+impl ShortcutAction for PasteLastAction {
+    fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        crate::tray::paste_last_transcript(app);
+    }
+
+    fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        // One-shot action; nothing to do on release
+    }
+}
 
 impl ShortcutAction for TestAction {
     fn start(&self, app: &AppHandle, binding_id: &str, shortcut_str: &str) {
@@ -1156,6 +1233,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
+        "paste_last_transcript".to_string(),
+        Arc::new(PasteLastAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
         "test".to_string(),
         Arc::new(TestAction) as Arc<dyn ShortcutAction>,
     );
@@ -1166,7 +1247,7 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
 mod tests {
     use super::{
         complete_unless_cancelled, is_blank_transcription, should_use_streaming_overlay,
-        strip_think_block,
+        strip_think_block, take_wav_file_name, transcription_from_structured,
     };
     use crate::settings::OverlayStyle;
     use std::future;
@@ -1248,5 +1329,50 @@ mod tests {
         assert!(!should_use_streaming_overlay(OverlayStyle::Live, false));
         assert!(!should_use_streaming_overlay(OverlayStyle::Minimal, true));
         assert!(!should_use_streaming_overlay(OverlayStyle::None, true));
+    }
+
+    #[test]
+    fn take_wav_names_stay_unique_within_the_same_second() {
+        let second_ms = 1_761_000_123_000;
+        let first = take_wav_file_name(second_ms + 400);
+        let second = take_wav_file_name(second_ms + 900);
+        assert_ne!(first, second);
+        for name in [first.as_str(), second.as_str()] {
+            assert!(name.starts_with("flowstate-"));
+            assert!(name.ends_with(".wav"));
+        }
+    }
+
+    #[test]
+    fn structured_output_extracts_the_transcription_field() {
+        assert_eq!(
+            transcription_from_structured(r#"{"transcription": "cleaned text"}"#),
+            Some("cleaned text".to_string())
+        );
+        // Invisible characters the model may insert are stripped.
+        assert_eq!(
+            transcription_from_structured(r#"{"transcription": "a\u200bb"}"#),
+            Some("ab".to_string())
+        );
+    }
+
+    #[test]
+    fn structured_output_missing_or_wrongly_typed_field_falls_back() {
+        assert_eq!(transcription_from_structured(r#"{"result": "x"}"#), None);
+        assert_eq!(
+            transcription_from_structured(r#"{"transcription": 42}"#),
+            None
+        );
+        assert_eq!(transcription_from_structured(r#"{}"#), None);
+    }
+
+    #[test]
+    fn structured_output_unparseable_content_falls_back() {
+        // Prose or a markdown fence around the JSON: not a bare object.
+        assert_eq!(transcription_from_structured("Sure! Here it is:"), None);
+        assert_eq!(
+            transcription_from_structured("```json\n{\"transcription\": \"x\"}\n```"),
+            None
+        );
     }
 }

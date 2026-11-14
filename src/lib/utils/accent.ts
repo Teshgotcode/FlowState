@@ -1,176 +1,80 @@
 /**
- * Accent themes: five pastels plus a custom hue, applied as CSS variables on
+ * Colour themes: six pastels plus a custom hue, applied as CSS variables on
  * the document root. `theme.ts` still owns light/dark; this only repaints the
  * palette underneath it.
  *
- * The rule the values follow (and `accent.test.ts` enforces): a pastel fill
- * carries dark text, never white. A deeper tone of the same hue carries accent
- * text, icons and control borders, because a pastel alone has too little
- * contrast against a white panel to read as a button.
+ * Every theme comes out of one generator (`pastelTheme`) working in OKLCH:
+ * each role has a fixed lightness and chroma, the same in every theme, and
+ * only the hue (plus a small chroma trim for the quieter hues) changes. That
+ * keeps the themes siblings, and it keeps contrast the same in all of them:
+ * pastel lives on the surfaces and tints, the ink stays dark (or light, in
+ * dark mode). `accent.test.ts` enforces the contrast floor.
+ *
+ * Ids are the stored values from earlier releases and never change; the
+ * labels can. `rod` is the peach theme and `gul` the sand theme.
  */
 
-export type AccentId = "bla" | "rosa" | "gronn" | "rod" | "gul" | "egen";
+export type AccentId =
+  | "bla"
+  | "lilla"
+  | "rosa"
+  | "rod"
+  | "gul"
+  | "gronn"
+  | "egen";
 
 export interface Palettes {
-  /** Canvas. */
+  /** Canvas: window background, sidebar. */
   bg: string;
-  /** Cards and inputs. */
+  /** Content panel, cards, inputs. */
   surface: string;
-  /** Inset rows, hover fills. */
+  /** Inset groups and quiet fills inside the panel. */
   surfaceSoft: string;
-  /** Body text. */
+  /** Primary ink: body text, headings. */
   text: string;
-  /** Pastel fill: primary actions, active states, chart bars. */
-  accent: string;
-  /** Text-safe tone: accent text, icons, focus rings, control borders. */
-  deep: string;
-  /** Banner and wash behind accent content. */
+  /** Secondary ink: descriptions, labels, inactive rows. */
+  ink2: string;
+  /** Tertiary ink: captions, timestamps, hints, idle icons. */
+  ink3: string;
+  /** Disabled ink. Decorative only; no contrast promise. */
+  ink4: string;
+  /** Hairline divider (alpha, sits on any surface). */
+  line: string;
+  /** Control edges: inputs, selects, secondary buttons (alpha). */
+  lineStrong: string;
+  /** Hover fill (alpha). */
   wash: string;
+  /** Pastel fill: primary actions, toggles on, chart bars. */
+  accent: string;
+  /** Soft accent tint behind accent content (banners, active fields). */
+  accentWash: string;
+  /** Strong accent: accent text, icons, focus rings, links. */
+  deep: string;
+  /** Data marks: chart bars and heatmap cells (used with alpha steps). */
+  chart: string;
   /** Text drawn on top of `accent`. */
   onAccent: string;
-  /** Grey steps (ink-3, line, wash) derive from this. */
-  mid: string;
+  /** Tint for shadows, so they are never pure black. */
+  shadow: string;
 }
 
 export const ACCENT_OPTIONS: AccentId[] = [
   "bla",
+  "lilla",
   "rosa",
-  "gronn",
   "rod",
   "gul",
+  "gronn",
   "egen",
 ];
 
 const ACCENT_STORAGE_KEY = "flowstate.accent";
 const HUE_STORAGE_KEY = "flowstate.accentHue";
 
-interface AccentTheme {
+export interface AccentTheme {
   light: Palettes;
   dark: Palettes;
 }
-
-export const ACCENTS: Record<Exclude<AccentId, "egen">, AccentTheme> = {
-  bla: {
-    light: {
-      bg: "#f6f7fb",
-      surface: "#ffffff",
-      surfaceSoft: "#e6ebf6",
-      text: "#16192b",
-      accent: "#b9c8fa",
-      deep: "#3b5bdb",
-      wash: "#eef2ff",
-      onAccent: "#16192b",
-      mid: "#6b6d7a",
-    },
-    dark: {
-      bg: "#0e1018",
-      surface: "#141824",
-      surfaceSoft: "#232a3b",
-      text: "#e8ecf7",
-      accent: "#a9bcf7",
-      deep: "#c7d4fb",
-      wash: "#1a2033",
-      onAccent: "#0e1018",
-      mid: "#7b7e88",
-    },
-  },
-  rosa: {
-    light: {
-      bg: "#fbf6f8",
-      surface: "#fffdfe",
-      surfaceSoft: "#f6e7ee",
-      text: "#241820",
-      accent: "#f7bcd9",
-      deep: "#be185d",
-      wash: "#fff0f6",
-      onAccent: "#241820",
-      mid: "#766c72",
-    },
-    dark: {
-      bg: "#140f13",
-      surface: "#1b151a",
-      surfaceSoft: "#2c222a",
-      text: "#f4e9ef",
-      accent: "#f4b6cf",
-      deep: "#f9cfe1",
-      wash: "#2a1c24",
-      onAccent: "#140f13",
-      mid: "#847c81",
-    },
-  },
-  gronn: {
-    light: {
-      bg: "#f5f8f5",
-      surface: "#fdfefd",
-      surfaceSoft: "#e6f0e8",
-      text: "#16211a",
-      accent: "#a7dfb8",
-      deep: "#237032",
-      wash: "#ebfbee",
-      onAccent: "#16211a",
-      mid: "#6b736d",
-    },
-    dark: {
-      bg: "#0d1210",
-      surface: "#131a16",
-      surfaceSoft: "#212c26",
-      text: "#e7f0e9",
-      accent: "#a3dcb4",
-      deep: "#c6ecd1",
-      wash: "#17251c",
-      onAccent: "#0d1210",
-      mid: "#7a817c",
-    },
-  },
-  rod: {
-    light: {
-      bg: "#faf6f6",
-      surface: "#fffdfd",
-      surfaceSoft: "#f6e6e6",
-      text: "#241819",
-      accent: "#f5b3b3",
-      deep: "#c92a2a",
-      wash: "#fff5f5",
-      onAccent: "#241819",
-      mid: "#756c6d",
-    },
-    dark: {
-      bg: "#140f0f",
-      surface: "#1b1515",
-      surfaceSoft: "#2c2222",
-      text: "#f4eaea",
-      accent: "#f3b0b0",
-      deep: "#f8cfcf",
-      wash: "#2a1a1a",
-      onAccent: "#140f0f",
-      mid: "#847c7c",
-    },
-  },
-  gul: {
-    light: {
-      bg: "#faf8f2",
-      surface: "#fffdf8",
-      surfaceSoft: "#f4ecd9",
-      text: "#221c14",
-      accent: "#f8cf8a",
-      deep: "#c2410c",
-      wash: "#fff8e8",
-      onAccent: "#221c14",
-      mid: "#747068",
-    },
-    dark: {
-      bg: "#12100c",
-      surface: "#191612",
-      surfaceSoft: "#2a251c",
-      text: "#f3eee4",
-      accent: "#f7cd85",
-      deep: "#f8dfae",
-      wash: "#241d12",
-      onAccent: "#12100c",
-      mid: "#827f78",
-    },
-  },
-};
 
 /* ── colour math ─────────────────────────────────────────────────────────── */
 
@@ -213,65 +117,149 @@ export const mix = (fg: string, bg: string, alpha: number): string => {
   return toHex(f.map((c, i) => c * alpha + b[i] * (1 - alpha)));
 };
 
-/** HSL (h in degrees, s/l in percent) to hex. */
-export const hsl = (h: number, s: number, l: number): string => {
-  const a = (s / 100) * Math.min(l / 100, 1 - l / 100);
-  const channel = (n: number) => {
-    const k = (n + h / 30) % 12;
-    return l / 100 - a * Math.max(-1, Math.min(k - 3, 9 - k));
-  };
-  return toHex([channel(0), channel(8), channel(4)]);
+/** `#rrggbb` plus an alpha byte, for the alpha tokens (lines, hover wash). */
+export const withAlpha = (hex: string, alpha: number): string =>
+  hex +
+  Math.round(Math.min(1, Math.max(0, alpha)) * 255)
+    .toString(16)
+    .padStart(2, "0");
+
+/** Resolve an `#rrggbbaa` token over an opaque background. */
+export const flatten = (color: string, bg: string): string =>
+  color.length === 9
+    ? mix(color.slice(0, 7), bg, parseInt(color.slice(7), 16) / 255)
+    : color;
+
+const oklchToLinear = (l: number, c: number, h: number): number[] => {
+  const rad = (h * Math.PI) / 180;
+  const a = c * Math.cos(rad);
+  const b = c * Math.sin(rad);
+  const l_ = (l + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+  const m_ = (l - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+  const s_ = (l - 0.0894841775 * a - 1.291485548 * b) ** 3;
+  return [
+    4.0767416621 * l_ - 3.3077115913 * m_ + 0.2309699292 * s_,
+    -1.2684380046 * l_ + 2.6097574011 * m_ - 0.3413193965 * s_,
+    -0.0041960863 * l_ - 0.7034186147 * m_ + 1.707614701 * s_,
+  ];
 };
 
-/** First alpha at which text mixed into bg still clears 4.5:1. */
-const mutedStep = (text: string, bg: string, target = 4.5): string => {
-  for (let a = 0.45; a <= 0.75; a += 0.01) {
-    const candidate = mix(text, bg, a);
-    if (contrast(candidate, bg) >= target) return candidate;
+const gamma = (c: number) =>
+  c <= 0.0031308 ? 12.92 * c : 1.055 * Math.pow(c, 1 / 2.4) - 0.055;
+
+/** OKLCH to sRGB hex. Out-of-gamut colours lose chroma, never lightness. */
+export const oklch = (l: number, c: number, h: number): string => {
+  const inGamut = (rgb: number[]) =>
+    rgb.every((v) => v >= -1e-4 && v <= 1 + 1e-4);
+  let rgb = oklchToLinear(l, c, h);
+  if (!inGamut(rgb)) {
+    let lo = 0;
+    let hi = c;
+    for (let i = 0; i < 20; i++) {
+      const mid = (lo + hi) / 2;
+      if (inGamut(oklchToLinear(l, mid, h))) lo = mid;
+      else hi = mid;
+    }
+    rgb = oklchToLinear(l, lo, h);
   }
-  return text;
+  return toHex(rgb.map((v) => gamma(Math.min(1, Math.max(0, v)))));
 };
 
-/* ── custom theme ────────────────────────────────────────────────────────── */
+/* ── the generator ───────────────────────────────────────────────────────── */
 
-/** Derive a full light/dark pair from one hue. Contrast-safe by construction. */
-export const customAccent = (hue: number): AccentTheme => {
-  const light: Palettes = {
-    bg: hsl(hue, 32, 98),
-    surface: hsl(hue, 40, 99.5),
-    surfaceSoft: hsl(hue, 30, 95),
-    text: hsl(hue, 26, 11),
-    accent: hsl(hue, 72, 78),
-    deep: hsl(hue, 62, 42),
-    wash: hsl(hue, 85, 96),
-    onAccent: hsl(hue, 40, 12),
-    mid: "#000000",
-  };
-  // Darken until accent text clears 4.5:1 on the panel.
-  for (
-    let l = 42;
-    l >= 18 && contrast(light.deep, light.surface) < 4.6;
-    l -= 2
-  ) {
-    light.deep = hsl(hue, 62, l);
-  }
-  light.mid = mutedStep(light.text, light.bg);
-
-  const dark: Palettes = {
-    bg: hsl(hue, 24, 7),
-    surface: hsl(hue, 20, 10),
-    surfaceSoft: hsl(hue, 18, 14),
-    text: hsl(hue, 30, 93),
-    accent: hsl(hue, 66, 78),
-    deep: hsl(hue, 60, 85),
-    wash: hsl(hue, 30, 16),
-    onAccent: hsl(hue, 24, 7),
-    mid: "#000000",
-  };
-  dark.mid = mutedStep(dark.text, dark.bg);
-
-  return { light, dark };
+/** [lightness, chroma] per role. The same table drives every theme. */
+type Role = Exclude<keyof Palettes, "line" | "lineStrong" | "wash">;
+const STEPS: Record<"light" | "dark", Record<Role, [number, number]>> = {
+  light: {
+    bg: [0.958, 0.017],
+    surface: [0.993, 0.005],
+    surfaceSoft: [0.973, 0.013],
+    accentWash: [0.947, 0.034],
+    accent: [0.86, 0.075],
+    chart: [0.72, 0.1],
+    deep: [0.5, 0.115],
+    onAccent: [0.25, 0.035],
+    text: [0.245, 0.022],
+    ink2: [0.44, 0.025],
+    ink3: [0.54, 0.024],
+    ink4: [0.72, 0.016],
+    shadow: [0.3, 0.035],
+  },
+  dark: {
+    bg: [0.195, 0.015],
+    surface: [0.24, 0.018],
+    surfaceSoft: [0.27, 0.02],
+    accentWash: [0.305, 0.04],
+    accent: [0.8, 0.07],
+    chart: [0.78, 0.075],
+    deep: [0.84, 0.075],
+    onAccent: [0.23, 0.03],
+    text: [0.945, 0.01],
+    ink2: [0.8, 0.016],
+    ink3: [0.69, 0.018],
+    ink4: [0.52, 0.016],
+    shadow: [0.12, 0.012],
+  },
 };
+
+/** Alpha of the primary ink for the three structural tints. */
+const ALPHAS = {
+  light: { line: 0.085, lineStrong: 0.16, wash: 0.045 },
+  dark: { line: 0.1, lineStrong: 0.18, wash: 0.06 },
+} as const;
+
+const palette = (
+  mode: "light" | "dark",
+  hue: number,
+  chroma: number,
+): Palettes => {
+  const steps = STEPS[mode];
+  const roles = Object.fromEntries(
+    Object.entries(steps).map(([role, [l, c]]) => [
+      role,
+      oklch(l, c * chroma, hue),
+    ]),
+  ) as Record<Role, string>;
+  const alphas = ALPHAS[mode];
+  return {
+    ...roles,
+    line: withAlpha(roles.text, alphas.line),
+    lineStrong: withAlpha(roles.text, alphas.lineStrong),
+    wash: withAlpha(roles.text, alphas.wash),
+  };
+};
+
+/** One hue in, a light and a dark palette out. */
+export const pastelTheme = (hue: number, chroma = 1): AccentTheme => ({
+  light: palette("light", hue, chroma),
+  dark: palette("dark", hue, chroma),
+});
+
+/** Preset hues in OKLCH degrees, and a chroma trim for the quieter ones. */
+export const PRESET_HUES: Record<
+  Exclude<AccentId, "egen">,
+  [number, number]
+> = {
+  bla: [250, 1], // sky
+  lilla: [295, 1], // lavender
+  rosa: [355, 1], // rose
+  rod: [45, 1], // peach
+  gul: [85, 0.85], // sand
+  gronn: [155, 0.9], // sage
+};
+
+export const ACCENTS: Record<
+  Exclude<AccentId, "egen">,
+  AccentTheme
+> = Object.fromEntries(
+  Object.entries(PRESET_HUES).map(([id, [hue, chroma]]) => [
+    id,
+    pastelTheme(hue, chroma),
+  ]),
+) as Record<Exclude<AccentId, "egen">, AccentTheme>;
+
+/** A custom theme is the same generator at any hue. */
+export const customAccent = (hue: number): AccentTheme => pastelTheme(hue);
 
 /* ── apply ───────────────────────────────────────────────────────────────── */
 
@@ -283,11 +271,20 @@ const CSS_VARS = (
   [`--${mode}-color-background`]: p.bg,
   [`--${mode}-color-surface`]: p.surface,
   [`--${mode}-color-surface-soft`]: p.surfaceSoft,
+  [`--${mode}-color-ink-2`]: p.ink2,
+  [`--${mode}-color-ink-3`]: p.ink3,
+  [`--${mode}-color-ink-4`]: p.ink4,
+  [`--${mode}-color-mid-gray`]: p.ink3,
+  [`--${mode}-color-line`]: p.line,
+  [`--${mode}-color-line-strong`]: p.lineStrong,
+  [`--${mode}-color-wash`]: p.wash,
   // Accent text, icons, focus rings and control borders.
   [`--${mode}-color-logo-primary`]: p.deep,
   [`--${mode}-color-background-ui`]: p.accent,
+  [`--${mode}-color-accent-wash`]: p.accentWash,
+  [`--${mode}-color-chart`]: p.chart,
   [`--${mode}-color-on-accent`]: p.onAccent,
-  [`--${mode}-color-mid-gray`]: p.mid,
+  [`--${mode}-color-shadow`]: p.shadow,
 });
 
 /** Repaint the document and remember the choice for the next launch. */
@@ -325,7 +322,9 @@ export const getStoredAccent = (): AccentId => {
 
 export const getStoredHue = (): number => {
   try {
-    const stored = Number(localStorage.getItem(HUE_STORAGE_KEY));
+    const raw = localStorage.getItem(HUE_STORAGE_KEY);
+    // Number(null) is 0, a valid hue, so a missing key must be ruled out first.
+    const stored = raw === null ? NaN : Number(raw);
     if (Number.isFinite(stored) && stored >= 0 && stored <= 360) return stored;
   } catch {
     // ignore

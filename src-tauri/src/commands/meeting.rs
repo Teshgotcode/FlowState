@@ -57,18 +57,84 @@ pub fn start_meeting_bar_drag(app: AppHandle) -> Result<(), String> {
     Ok(())
 }
 
-/// Pop the meeting bar's context menu at the cursor (right-click on the idle
-/// disc): "Hide for 1 hour". Native, because the disc's window is exactly the
-/// disc — no room for HTML.
+/// Pop the bar's context menu at the cursor (right-click on the resting
+/// bar): Hide for 1 hour, Languages, Microphone, Paste last transcript,
+/// Transcript history, Settings, then the FlowState extras. Native, so it
+/// also fits the exact-fit windows on Windows and Linux. `language_labels`
+/// carries the webview's localized names for the language codes.
 #[tauri::command]
 #[specta::specta]
-pub fn open_meeting_bar_menu(app: AppHandle) -> Result<(), String> {
-    crate::overlay::show_meeting_bar_menu(&app);
+pub async fn open_meeting_bar_menu(
+    app: AppHandle,
+    language_labels: Option<Vec<(String, String)>>,
+) -> Result<(), String> {
+    // Device enumeration can stall: never on the main run loop.
+    let microphones = tokio::task::spawn_blocking(crate::overlay::list_bar_microphones)
+        .await
+        .unwrap_or_default();
+    crate::overlay::show_meeting_bar_menu(&app, language_labels.unwrap_or_default(), microphones);
     Ok(())
 }
 
-/// Widen the idle disc into its action row while the pointer is over it. The
-/// window is an exact fit for its content, so the row needs a real resize.
+/// A click (or Enter/Space) on the Flow Bar: start hands-free dictation, or
+/// finish the running one. The same toggle press the CLI flag and SIGUSR2
+/// send, so it is exempt from the key debounce and keeps toggle parity.
+#[tauri::command]
+#[specta::specta]
+pub fn toggle_dictation_from_bar(app: AppHandle) {
+    crate::signal_handle::send_transcription_input(&app, "transcribe", "flow_bar");
+}
+
+/// The rects of the overlay webview that take clicks (pill, side buttons,
+/// cards, an open menu), in window-local points. On macOS everything else of
+/// the fixed overlay window stays click-through; elsewhere this is unused.
+#[tauri::command]
+#[specta::specta]
+pub fn set_bar_hit_rects(rects: Vec<crate::overlay::BarHitRect>) {
+    crate::overlay::set_bar_hit_rects(rects);
+}
+
+/// The "hidden for an hour" card's Undo: bring the resting bar back now.
+#[tauri::command]
+#[specta::specta]
+pub fn undo_hide_flow_bar(app: AppHandle) {
+    crate::overlay::undo_hide_meeting_bar(&app);
+}
+
+/// "Show the bar at all times" (Wispr's Settings > System). Turning it on
+/// also ends a running hour-long hide; off hides the bar at rest.
+#[tauri::command]
+#[specta::specta]
+pub fn change_show_bar_at_all_times_setting(app: AppHandle, enabled: bool) {
+    let mut settings = get_settings(&app);
+    settings.show_bar_at_all_times = enabled;
+    write_settings(&app, settings);
+    if enabled {
+        crate::overlay::unhide_meeting_bar();
+    }
+    crate::overlay::refresh_meeting_bar(&app);
+}
+
+/// Offer the Scratchpad button beside the hovered bar.
+#[tauri::command]
+#[specta::specta]
+pub fn change_scratchpad_in_flow_bar_setting(app: AppHandle, enabled: bool) {
+    let mut settings = get_settings(&app);
+    settings.scratchpad_in_flow_bar = enabled;
+    write_settings(&app, settings);
+}
+
+/// Show the active dictation style beside the pill while dictating.
+#[tauri::command]
+#[specta::specta]
+pub fn change_flow_bar_style_chip_setting(app: AppHandle, enabled: bool) {
+    let mut settings = get_settings(&app);
+    settings.flow_bar_style_chip = enabled;
+    write_settings(&app, settings);
+}
+
+/// Grow the resting bar's exact-fit window into the hovered pill with its
+/// side buttons (Windows/Linux). A no-op on macOS, where the window is fixed.
 #[tauri::command]
 #[specta::specta]
 pub fn set_meeting_bar_expanded(app: AppHandle, expanded: bool) {

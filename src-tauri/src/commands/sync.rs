@@ -5,7 +5,8 @@
 
 use crate::managers::history::{HistoryEntry, HistoryManager};
 use crate::managers::word_suggestions::WordSuggestionLearner;
-use crate::settings::{get_settings, write_settings, AppSettings};
+use crate::settings::{get_settings, update_settings, write_settings, AppSettings};
+use crate::utils::plain_file_name;
 use crate::sync::{
     bundle::{export_bundle, import_bundle, BundleData},
     history_key, load_journal, merged_snippets, merged_words, now_ms, read_local_conflicts,
@@ -100,21 +101,24 @@ fn reconciled_items(app: &AppHandle) -> ItemSet {
 fn apply_merged(app: &AppHandle, merged: &ItemSet) -> Result<(), String> {
     let words = merged_words(merged);
     let snippets = merged_snippets(merged);
-    let mut settings = get_settings(app);
+    // One read-modify-write step: the dictionary and snippet lists are
+    // replaced wholesale here, and a user edit between read and write must
+    // not be reverted by the merge.
     let mut changed = false;
-    if settings.custom_words != words {
-        settings.custom_words = words;
-        changed = true;
-    }
-    if settings.snippets != snippets {
-        settings.snippets = snippets;
-        changed = true;
-    }
+    let settings = update_settings(app, |s| {
+        if s.custom_words != words {
+            s.custom_words = words.clone();
+            changed = true;
+        }
+        if s.snippets != snippets {
+            s.snippets = snippets.clone();
+            changed = true;
+        }
+    });
     if changed {
         if let Some(learner) = app.try_state::<WordSuggestionLearner>() {
             learner.sync_dictionary(&settings.custom_words);
         }
-        write_settings(app, settings);
         let _ = app.emit("settings-changed", serde_json::json!({ "setting": "sync" }));
     }
     Ok(())
@@ -165,10 +169,11 @@ async fn collect_history(history_manager: &HistoryManager) -> (Vec<HistoryDocEnt
             if entries_out.len() >= HISTORY_SYNC_CAP {
                 continue;
             }
-            let has_audio = !entry.file_name.is_empty()
-                && history_manager
-                    .get_audio_file_path(&entry.file_name)
-                    .is_file();
+            // An empty name (no audio) or one that would leave the
+            // recordings dir is skipped by the path helper.
+            let has_audio = history_manager
+                .get_audio_file_path(&entry.file_name)
+                .is_some_and(|path| path.is_file());
             entries_out.push(HistoryDocEntry {
                 key: history_key(entry.timestamp, &entry.title, &entry.transcription_text),
                 file_name: if has_audio {
@@ -202,11 +207,14 @@ fn import_audio_file(
     source: &Path,
     original_name: &str,
 ) -> Option<String> {
+    // The name arrives from a peer or a bundle: only a plain file name may
+    // be joined onto the recordings dir, or the copy lands outside it.
+    let original_name = plain_file_name(original_name).ok()?;
     if original_name.is_empty() || !source.is_file() {
         return None;
     }
     let recordings = history_manager.recordings_dir().to_path_buf();
-    let mut target = recordings.join(original_name);
+    let mut target = recordings.join(&original_name);
     if target.exists() {
         let stem = format!("sync-{}", original_name);
         target = recordings.join(stem);
@@ -346,12 +354,21 @@ pub async fn sync_now(
         let root = PathBuf::from(state.folder.as_deref().expect("checked in run_sync"))
             .join(crate::sync::SHARED_DIR_NAME);
         for (device_id, entry) in &outcome.imported_history {
-            let source = root
-                .join(crate::sync::HISTORY_SUBDIR)
-                .join(device_id)
-                .join(crate::sync::AUDIO_SUBDIR)
-                .join(&entry.file_name);
-            let audio_name = import_audio_file(history_manager.inner(), &source, &entry.file_name);
+            // The peer's device id and file name are both untrusted: only
+            // plain names may be joined onto the shared folder (the import
+            // re-checks the file name before joining onto the recordings
+            // dir).
+            let audio_name = plain_file_name(device_id)
+                .ok()
+                .zip(plain_file_name(&entry.file_name).ok())
+                .and_then(|(device_id, name)| {
+                    let source = root
+                        .join(crate::sync::HISTORY_SUBDIR)
+                        .join(&device_id)
+                        .join(crate::sync::AUDIO_SUBDIR)
+                        .join(&name);
+                    import_audio_file(history_manager.inner(), &source, &name)
+                });
             if insert_synced_history(history_manager.inner(), entry, audio_name) {
                 imported += 1;
             }
@@ -427,8 +444,7 @@ pub async fn sync_export_bundle(
 
     let mut audio = std::collections::HashMap::new();
     for (index, entry) in history.iter().enumerate() {
-        if !entry.file_name.is_empty() {
-            let source = history_manager.get_audio_file_path(&entry.file_name);
+        if let Some(source) = history_manager.get_audio_file_path(&entry.file_name) {
             if source.is_file() {
                 audio.insert(format!("audio/{:04}-{}", index, entry.file_name), source);
             }
@@ -499,17 +515,23 @@ pub async fn sync_import_bundle(
     // History: only entries this machine has never seen, keyed by content.
     let (_docs, local_keys) = collect_history(history_manager.inner()).await;
     let mut history_imported = 0;
-    for entry in &imported.history {
+    for (index, entry) in imported.history.iter().enumerate() {
         let key = history_key(entry.timestamp, &entry.title, &entry.transcription_text);
         if local_keys.contains(&key) {
             continue;
         }
-        let audio_name = imported
-            .audio
-            .iter()
-            .find(|(name, _)| name.ends_with(&entry.file_name))
-            .and_then(|(_, path)| {
-                import_audio_file(history_manager.inner(), path, &entry.file_name)
+        // The bundle's file name is untrusted: only a plain name may be
+        // joined onto the recordings dir, and the audio member is matched by
+        // its exact key (`audio/{index}-{name}`, as exported) so one name
+        // that ends with another cannot steal its audio.
+        let audio_name = plain_file_name(&entry.file_name)
+            .ok()
+            .and_then(|name| {
+                let member = format!("audio/{:04}-{}", index, name);
+                imported
+                    .audio
+                    .get(&member)
+                    .and_then(|path| import_audio_file(history_manager.inner(), path, &name))
             });
         if insert_synced_history(history_manager.inner(), entry, audio_name) {
             history_imported += 1;

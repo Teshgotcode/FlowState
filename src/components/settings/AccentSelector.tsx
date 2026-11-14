@@ -5,6 +5,7 @@ import {
   ACCENTS,
   ACCENT_OPTIONS,
   applyAccent,
+  customAccent,
   getStoredAccent,
   getStoredHue,
   type AccentId,
@@ -15,7 +16,7 @@ interface AccentSelectorProps {
   grouped?: boolean;
 }
 
-/** Five pastels plus a hue slider. Stored locally: it is a per-device choice,
+/** Six pastel themes plus a hue slider. Stored locally: it is a per-device choice,
  *  like the theme, so it never leaves the machine or the settings payload. */
 export const AccentSelector: React.FC<AccentSelectorProps> = React.memo(
   ({ descriptionMode = "tooltip", grouped = false }) => {
@@ -36,7 +37,9 @@ export const AccentSelector: React.FC<AccentSelectorProps> = React.memo(
 
     const swatch = (id: AccentId) => {
       const color =
-        id === "egen" ? `hsl(${hue} 72% 78%)` : ACCENTS[id].light.accent;
+        id === "egen"
+          ? customAccent(hue).light.accent
+          : ACCENTS[id].light.accent;
       const selected = accent === id;
       return (
         <button
@@ -46,9 +49,9 @@ export const AccentSelector: React.FC<AccentSelectorProps> = React.memo(
           title={t(`theme.accent.${id}`)}
           aria-label={t(`theme.accent.${id}`)}
           aria-pressed={selected}
-          className={`h-7 w-7 rounded-full border border-line-strong/60 transition-transform hover:scale-105 ${
+          className={`h-[26px] w-[26px] cursor-pointer rounded-full border border-line-strong transition-transform duration-[var(--flow-dur-quick)] ease-[var(--flow-ease-spring)] hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-focus ${
             selected
-              ? "ring-2 ring-logo-primary ring-offset-2 ring-offset-surface"
+              ? "ring-2 ring-logo-primary ring-offset-2 ring-offset-surface-soft"
               : ""
           }`}
           style={{ backgroundColor: color }}

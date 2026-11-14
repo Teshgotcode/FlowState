@@ -19,7 +19,7 @@ body {
   color: var(--color-text);
   font-family: var(--flow-font-ui);
   border: 1px solid var(--color-line, rgba(127, 127, 127, 0.22));
-  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.22);
+  box-shadow: var(--flow-shadow-pop, 0 18px 44px rgba(0, 0, 0, 0.22));
 }
 
 .ml-head {

@@ -1166,6 +1166,15 @@ impl AudioRecordingManager {
     }
 
     pub fn update_selected_device(&self) -> Result<(), anyhow::Error> {
+        // Serialize against recording start/stop, like update_selected_channel:
+        // restarting the capture mid-take would discard its samples.
+        let state = self.state.lock().unwrap();
+        if !matches!(*state, RecordingState::Idle) {
+            return Err(anyhow::anyhow!(
+                "Cannot change the microphone while recording"
+            ));
+        }
+
         // Device settings changed; re-enumerate the device and restart capture.
         self.invalidate_device_cache();
         let was_open = *self.is_open.lock().unwrap();
@@ -1174,6 +1183,7 @@ impl AudioRecordingManager {
             self.stop_microphone_stream();
             self.start_microphone_stream()?;
         }
+        drop(state);
         Ok(())
     }
 
@@ -1332,6 +1342,10 @@ impl AudioRecordingManager {
             RecordingState::Recording { .. } => {
                 self.set_state(&mut state, RecordingState::Idle);
                 drop(state);
+
+                // The take is discarded, so the mute it applied ends with it —
+                // in always-on mode nothing later in this path restores it.
+                self.remove_mute();
 
                 if let Some(microphone) = self.recorder.lock().unwrap().as_ref() {
                     let _ = self.collect_recording(microphone); // Discard the result

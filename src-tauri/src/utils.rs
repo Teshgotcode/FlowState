@@ -220,9 +220,50 @@ pub fn flowstate_env_flag_enabled(name: &str) -> bool {
         .is_some_and(|rest| env_flag_enabled(&format!("HANDY_{rest}")))
 }
 
+/// A plain file name: exactly one normal path component, so joining it onto
+/// a directory can never escape that directory. Every file name that arrives
+/// from outside this process (a sync folder, a bundle, the frontend) must
+/// pass this before it is joined anywhere.
+pub fn plain_file_name(name: &str) -> Result<String, String> {
+    let mut components = std::path::Path::new(name).components();
+    let is_plain = matches!(components.next(), Some(std::path::Component::Normal(_)))
+        && components.next().is_none();
+    if is_plain {
+        Ok(name.to_string())
+    } else {
+        Err(format!("'{name}' is not a plain file name"))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn plain_file_name_accepts_exactly_one_component() {
+        for valid in ["take.wav", "flowstate-meeting-123.wav", "a b.txt"] {
+            assert_eq!(plain_file_name(valid).unwrap(), valid);
+        }
+    }
+
+    #[test]
+    fn plain_file_name_rejects_escapes() {
+        for invalid in [
+            "/Users/x/Library/LaunchAgents/evil.plist", // absolute
+            "../x",                                     // parent traversal
+            "a/b",                                      // nested
+            "",                                         // empty
+            "..",
+            ".",
+            "./x",
+            "x/..",
+        ] {
+            assert!(
+                plain_file_name(invalid).is_err(),
+                "{invalid:?} should be rejected"
+            );
+        }
+    }
 
     #[test]
     fn arm64_native_machine_is_the_only_match() {

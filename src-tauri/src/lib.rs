@@ -161,6 +161,10 @@ fn specta_builder() -> Builder<tauri::Wry> {
             shortcut::update_post_process_prompt,
             shortcut::delete_post_process_prompt,
             shortcut::set_post_process_selected_prompt,
+            shortcut::update_post_process_context_prompts,
+            shortcut::update_starred_words,
+            shortcut::update_learned_words,
+            shortcut::set_dictionary_sort,
             style::get_frontmost_app,
             style::get_active_style,
             style::set_app_style_rule,
@@ -285,6 +289,12 @@ fn specta_builder() -> Builder<tauri::Wry> {
             commands::meeting::open_meeting_bar_menu,
             commands::meeting::set_meeting_bar_expanded,
             commands::meeting::set_meeting_bar_nudge,
+            commands::meeting::toggle_dictation_from_bar,
+            commands::meeting::set_bar_hit_rects,
+            commands::meeting::undo_hide_flow_bar,
+            commands::meeting::change_show_bar_at_all_times_setting,
+            commands::meeting::change_scratchpad_in_flow_bar_setting,
+            commands::meeting::change_flow_bar_style_chip_setting,
             commands::meeting::set_meeting_reminder_minutes,
             commands::meeting::suggest_meeting_names,
             commands::meeting::set_current_meeting_notes,
@@ -514,18 +524,29 @@ fn initialize_core_logic(app_handle: &AppHandle) {
     // Choose the appropriate initial icon based on theme
     let initial_icon_path = tray::get_icon_path(initial_theme, tray::TrayIconState::Idle, false);
 
+    // A missing or unreadable tray resource must not take every launch down
+    // with it: fall back to the bundled app icon, and if even that is gone,
+    // build the tray without one.
+    let initial_icon = app_handle
+        .path()
+        .resolve(initial_icon_path, tauri::path::BaseDirectory::Resource)
+        .map_err(|e| e.to_string())
+        .and_then(|path| Image::from_path(&path).map_err(|e| e.to_string()))
+        .or_else(|e| {
+            log::error!("Failed to load the tray icon resource: {e}; falling back to the app icon");
+            app_handle
+                .default_window_icon()
+                .cloned()
+                .ok_or_else(|| "No app icon available either".to_string())
+        })
+        .ok();
+
     let mut tray_builder = TrayIconBuilder::new()
-        .icon(
-            Image::from_path(
-                app_handle
-                    .path()
-                    .resolve(initial_icon_path, tauri::path::BaseDirectory::Resource)
-                    .unwrap(),
-            )
-            .unwrap(),
-        )
         .tooltip(tray::tray_tooltip())
         .icon_as_template(true);
+    if let Some(icon) = initial_icon {
+        tray_builder = tray_builder.icon(icon);
+    }
 
     // Windows notification-area convention: left click opens the app, right click
     // shows the menu. Elsewhere (macOS menu bar, Linux) the menu stays on left click.
@@ -556,8 +577,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
         tray_builder = tray_builder.show_menu_on_left_click(true);
     }
 
-    let tray = tray_builder
-        .on_menu_event(|app, event| match event.id.as_ref() {
+    let tray_builder = tray_builder.on_menu_event(|app, event| match event.id.as_ref() {
             "settings" => {
                 show_main_window(app);
             }
@@ -574,6 +594,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             }
             "copy_last_transcript" => {
                 tray::copy_last_transcript(app);
+            }
+            "paste_last_transcript" => {
+                tray::paste_last_transcript(app);
             }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
@@ -617,10 +640,19 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                 });
             }
             _ => {}
-        })
-        .build(app_handle)
-        .unwrap();
-    app_handle.manage(tray);
+    });
+
+    // A tray-less environment (or a broken tray backend) leaves the app
+    // fully usable: the overlay, shortcuts and windows all work without the
+    // tray, and every tray helper already tolerates the missing icon.
+    match tray_builder.build(app_handle) {
+        Ok(tray) => {
+            app_handle.manage(tray);
+        }
+        Err(e) => {
+            log::error!("Failed to build the tray icon: {e}; continuing without a tray");
+        }
+    }
 
     // Initialize tray menu with idle state
     tray::update_tray_menu(app_handle);
@@ -1131,6 +1163,15 @@ pub fn run(cli_args: CliArgs) {
 
             if let Some(data_dir) = portable::data_dir() {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
+                // The asset protocol scope in tauri.conf.json allows only
+                // $APPDATA/recordings; in portable mode the recordings live
+                // next to the executable, so allow exactly that directory.
+                if let Err(e) = app
+                    .asset_protocol_scope()
+                    .allow_directory(data_dir.join("recordings"), false)
+                {
+                    log::warn!("Failed to allow the portable recordings dir for playback: {e}");
+                }
             }
 
             // Only used on macOS (to size it) and Windows (to disable WebView2
@@ -1307,11 +1348,21 @@ pub fn run(cli_args: CliArgs) {
                 // Notes live in the main window, so show it and let it pick
                 // the section; the frontend owns which one is current.
                 show_main_window(app);
-                let _ = app.emit("navigate-section", "notes");
+                let _ = app.emit("navigate-section", "scratchpad");
             } else if event.id.as_ref() == crate::overlay::MEETING_BAR_HIDE_FOR_HOUR_ID {
                 // the reference's "Hide for 1 hour": the idle disc goes away for an
                 // hour, until restart, or until a meeting starts.
                 crate::overlay::hide_meeting_bar_for(app, 3600);
+            } else if event.id.as_ref() == crate::overlay::BAR_MENU_HISTORY_ID {
+                // The bar's "Transcript history": the main window's History.
+                show_main_window(app);
+                let _ = app.emit("navigate-section", "history");
+            } else if event.id.as_ref() == crate::overlay::BAR_MENU_SETTINGS_ID {
+                show_main_window(app);
+                let _ = app.emit("navigate-section", "general");
+            } else {
+                // Languages, Microphone, Style and Paste last transcript.
+                crate::overlay::handle_bar_menu_event(app, event.id.as_ref());
             }
         })
         .invoke_handler(invoke_handler)

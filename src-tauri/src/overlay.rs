@@ -2,10 +2,11 @@ use crate::input;
 use crate::managers::meeting::MeetingManager;
 use crate::settings;
 use crate::settings::{AppSettings, OverlayPosition, OverlayStyle};
+use crate::transcription_coordinator::RecordingPhase;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::{mpsc, Arc, Mutex, OnceLock};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
-use tauri::menu::{ContextMenu, Menu, MenuItem};
+use tauri::menu::{CheckMenuItem, ContextMenu, Menu, MenuItem, PredefinedMenuItem, Submenu};
 use tauri::{AppHandle, Emitter, Manager, PhysicalPosition, PhysicalSize};
 
 #[cfg(not(target_os = "macos"))]
@@ -36,52 +37,58 @@ tauri_panel! {
     })
 }
 
-// Native overlay window sizes (logical points). One window is reused for every
-// state and resized in `show_overlay_state`; each size need only be at least as
-// large as the card it hosts (the `--ov-*` vars in RecordingOverlay.css). The
-// card is CSS-anchored flush to the screen edge, so window height doesn't move
-// where the card sits — only OVERLAY_TOP_OFFSET / OVERLAY_BOTTOM_OFFSET do. Keep
-// these in sync with the CSS card geometry.
+// The overlay window (logical points; 1 CSS px = 1 pt in the webview).
 //
-// On Windows these sizes are additionally multiplied by the accessibility text
+// macOS follows Wispr's model: one fixed, transparent window per edge that is
+// never resized between states. The webview CSS-anchors the pill inside it
+// (14 px from the edge) and reports the rects that take clicks
+// (`set_bar_hit_rects`); a cursor poll keeps the rest click-through. That is
+// what lets the pill morph in 100 ms, grow side buttons and show tooltips and
+// cards without the window resizing under the cursor.
+//
+// Windows and Linux have no such poll (and layer-shell surfaces cannot use
+// one), so their window stays an exact fit for each state's visible content.
+// On Windows those sizes are additionally multiplied by the accessibility text
 // scale (see windows_text_scale_factor), which WebView2 applies as a zoom.
-//
-// Compact overlay (Minimal / transcribing / processing): the 40h pill animates
-// width from 172 (--ov-rest-w) to 216 (--ov-work-w) and expands from center, so
-// the window must fit the widest state plus a little slack.
+const FIXED_BAR_WINDOW: bool = cfg!(target_os = "macos");
+/// The fixed window at the bottom/top edge (Wispr's status window).
+const BAR_WINDOW_HORIZONTAL: (f64, f64) = (440.0, 320.0);
+/// The fixed window at the left/right edge.
+const BAR_WINDOW_VERTICAL: (f64, f64) = (490.0, 440.0);
+
+// Exact-fit sizes (Windows/Linux). Each must hold the largest pill of its
+// state (src/overlay/pillGeometry.ts): 102.5x30 hands-free, 98x30 processing.
 const OVERLAY_WIDTH: f64 = 256.0;
 const OVERLAY_HEIGHT: f64 = 50.0;
-
-// Actual is 394x118, just a little extra
+/// Live: the text card above the pill.
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;
 const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
-
-// Meeting bar (the Flow-style floating bar): idle is a 9x30 translucent
-// sliver at the screen edge, and the recording pill is the capsule with the
-// running clock and Stop. Both windows are EXACT fits for their visible
-// content: a transparent margin would swallow clicks meant for the app
-// underneath the bar (Sjekkis' S-4c remark), so the slack S-4c carried is gone
-// and the CSS hover no longer scales the disc past the window. Keep in sync
-// with .mdisc / .mcard in RecordingOverlay.css (both border-box). The
-// recording pill shares its footprint with the frontend's short "Saving" pill.
-const MEETING_DISC_WIDTH: f64 = 8.0;
-const MEETING_DISC_HEIGHT: f64 = 40.0;
-const MEETING_PILL_WIDTH: f64 = 176.0;
-const MEETING_PILL_HEIGHT: f64 = 40.0;
-/// Width the recording pill's window grows by while the "still going?"
-/// prompt shows beside it (S-24): the prompt card plus the gap to the pill.
-/// The window stays an EXACT fit — no transparent margin to swallow clicks
-/// meant for the app underneath. Keep in sync with `.mnu` in
-/// RecordingOverlay.css.
+/// The 91x30 failure pill with its notification card above it.
+const OVERLAY_ERROR_WIDTH: f64 = 360.0;
+const OVERLAY_ERROR_HEIGHT: f64 = 130.0;
+/// Resting bar: 40x8 at the bottom/top, 8x40 at the sides.
+const BAR_REST_LONG: f64 = 40.0;
+const BAR_REST_SHORT: f64 = 8.0;
+/// Hovered bar ("ready"): the 50x30 pill centred between up to two 30 px
+/// circles per side, 2 px apart.
+const BAR_READY_LONG: f64 = 180.0;
+const BAR_READY_SHORT: f64 = 30.0;
+/// Meeting pill: a fit-content 30 px capsule (wave + stop, ~69 px) plus slack.
+const MEETING_PILL_WIDTH: f64 = 120.0;
+const MEETING_PILL_HEIGHT: f64 = 30.0;
+/// Width the meeting pill's window grows by while the "still going?" prompt
+/// shows beside it (S-24): the prompt card plus the gap to the pill.
 const MEETING_NUDGE_WIDTH: f64 = 226.0;
-/// The idle disc while hovered: three 40px actions with 6px gaps. Exact fit,
-/// same rule as the disc: no transparent slack to swallow clicks.
-const MEETING_DISC_WIDE: f64 = 132.0;
 
-/// The meeting bar's own `show-overlay` states. The dictation states
-/// ("recording" | "streaming" | "transcribing" | "processing") are unchanged;
-/// these are the only additions to the one shared overlay window.
+/// The resting Flow Bar: the bar between dictations, which a hover turns into
+/// the "ready" pill. It is the same view whatever the meeting state.
+pub const BAR_RESTING: &str = "bar-resting";
+/// The old name of the resting view; the frontend accepts both for one
+/// release.
 pub const MEETING_BAR_IDLE: &str = "meeting-idle";
+/// The bar hidden at rest (Hide for 1 hour, or "Show at all times" off). Only
+/// shown while the hide's undo card is up; otherwise the window is hidden.
+pub const BAR_HIDDEN: &str = "bar-hidden";
 pub const MEETING_BAR_RECORDING: &str = "meeting-recording";
 /// The recording pill with the "still going?" prompt beside it: the same
 /// view as `MEETING_BAR_RECORDING`, one prompt-card wider. Frontend-driven —
@@ -89,21 +96,59 @@ pub const MEETING_BAR_RECORDING: &str = "meeting-recording";
 /// `set_meeting_bar_nudge` — so the backend only owns the footprint.
 pub const MEETING_BAR_NUDGE: &str = "meeting-recording-nudge";
 
-/// Overlay window size (logical) for a given UI state.
-fn overlay_dimensions(state: &str) -> (f64, f64) {
+fn is_bar_resting(state: &str) -> bool {
+    state == BAR_RESTING || state == MEETING_BAR_IDLE
+}
+
+fn is_side_edge(position: OverlayPosition) -> bool {
+    matches!(position, OverlayPosition::Left | OverlayPosition::Right)
+}
+
+/// The fixed window's size at `position`.
+fn bar_window_size(position: OverlayPosition) -> (f64, f64) {
+    if is_side_edge(position) {
+        BAR_WINDOW_VERTICAL
+    } else {
+        BAR_WINDOW_HORIZONTAL
+    }
+}
+
+/// Overlay window size (logical) for a given UI state at an edge.
+fn overlay_dimensions(state: &str, position: OverlayPosition) -> (f64, f64) {
+    if FIXED_BAR_WINDOW {
+        return bar_window_size(position);
+    }
+    exact_fit_dimensions(state, position)
+}
+
+/// The exact-fit window (Windows/Linux) for `state` at `position`.
+fn exact_fit_dimensions(state: &str, position: OverlayPosition) -> (f64, f64) {
+    let side = is_side_edge(position);
+    let along_edge = |long: f64, short: f64| if side { (short, long) } else { (long, short) };
     match state {
+        "streaming" if side => (OVERLAY_STREAM_WIDTH + 40.0, OVERLAY_STREAM_HEIGHT + 20.0),
         "streaming" => (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT),
-        MEETING_BAR_IDLE => (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT),
+        "error" => (OVERLAY_ERROR_WIDTH, OVERLAY_ERROR_HEIGHT),
+        BAR_HIDDEN => along_edge(BAR_REST_LONG, BAR_REST_SHORT),
+        s if is_bar_resting(s) => along_edge(BAR_REST_LONG, BAR_REST_SHORT),
         // The recording pill and the frontend's "Saving" pill share the
         // meeting bar's own exact footprint.
         MEETING_BAR_RECORDING => (MEETING_PILL_WIDTH, MEETING_PILL_HEIGHT),
-        // The "still going?" prompt widens the recording pill's window by its
-        // own card; every other axis is the pill's.
         MEETING_BAR_NUDGE => (
             MEETING_PILL_WIDTH + MEETING_NUDGE_WIDTH,
             MEETING_PILL_HEIGHT,
         ),
+        _ if side => (OVERLAY_HEIGHT, 140.0),
         _ => (OVERLAY_WIDTH, OVERLAY_HEIGHT),
+    }
+}
+
+/// The hovered ("ready") bar's exact-fit window (Windows/Linux).
+fn bar_ready_dimensions(position: OverlayPosition) -> (f64, f64) {
+    if is_side_edge(position) {
+        (BAR_READY_SHORT, BAR_READY_LONG)
+    } else {
+        (BAR_READY_LONG, BAR_READY_SHORT)
     }
 }
 
@@ -112,8 +157,14 @@ fn overlay_dimensions(state: &str) -> (f64, f64) {
 fn is_dictation_state(state: &str) -> bool {
     matches!(
         state,
-        "recording" | "streaming" | "transcribing" | "processing" | "command"
+        "recording" | "streaming" | "transcribing" | "processing" | "command" | "error"
     )
+}
+
+/// Keep the overlay out of screenshots and screen shares only while a meeting
+/// records (Wispr: "excluded only while a meeting is recording").
+fn capture_protected(state: &str, meeting_recording: bool) -> bool {
+    meeting_recording || state == MEETING_BAR_RECORDING || state == MEETING_BAR_NUDGE
 }
 
 static LAST_MIC_LEVEL_EMIT: AtomicU64 = AtomicU64::new(0);
@@ -124,18 +175,24 @@ const EMIT_THROTTLE_MS: u64 = 33; // ~30 FPS
 // their heights. The other platforms keep full monitor bounds with fixed
 // offsets (work_area is unreliable on Wayland; Windows' bottom offset clears
 // the taskbar).
+//
+// On macOS the fixed window sits flush with the work area; the pill's own
+// distance from the edge (14 px, 12 px at the top) lives in the overlay CSS.
 #[cfg(target_os = "macos")]
-const OVERLAY_TOP_OFFSET: f64 = 12.0;
+const OVERLAY_TOP_OFFSET: f64 = 0.0;
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const OVERLAY_TOP_OFFSET: f64 = 4.0;
 
 #[cfg(target_os = "macos")]
-const OVERLAY_BOTTOM_OFFSET: f64 = 15.0;
+const OVERLAY_BOTTOM_OFFSET: f64 = 0.0;
 
 #[cfg(any(target_os = "windows", target_os = "linux"))]
 const OVERLAY_BOTTOM_OFFSET: f64 = 40.0;
 
 // Left / Right placement: the gap from the chosen side's edge.
+#[cfg(target_os = "macos")]
+const OVERLAY_SIDE_OFFSET: f64 = 0.0;
+#[cfg(any(target_os = "windows", target_os = "linux"))]
 const OVERLAY_SIDE_OFFSET: f64 = 12.0;
 
 /// Configures the edge and offset of a GTK layer surface. gtk-layer-shell
@@ -322,18 +379,18 @@ fn calculate_overlay_position(
 }
 
 /// Which screen edge a view docks on. The dictation overlay follows the
-/// user's `overlay_position` setting; the meeting bar has its own dock edge —
-/// the reference's `statusDockEdge` — once it has been dragged to one, and follows the
-/// dictation overlay's edge until then (the S-4c behaviour).
+/// user's `overlay_position` setting; the resting bar follows it too unless
+/// a drag pinned the bar's own edge (`meeting_bar_position`, Wispr's
+/// `statusDockEdge`). Wispr has one bar on one edge, so both default to the
+/// bottom, and a drag now writes both settings (see `dock_meeting_bar_on_main`);
+/// a store that pinned them apart before keeps working.
 fn overlay_position_for(settings: &AppSettings, state: &str) -> OverlayPosition {
     if is_dictation_state(state) {
         settings.overlay_position
     } else {
         settings
             .meeting_bar_position
-            // The reference docks its bar on the right; the dictation card's
-            // edge says nothing about where the meeting bar belongs.
-            .unwrap_or(OverlayPosition::Right)
+            .unwrap_or(settings.overlay_position)
     }
 }
 
@@ -372,22 +429,55 @@ fn overlay_position_on_monitor(
     height: f64,
     position: OverlayPosition,
 ) -> (f64, f64) {
-    let (area_x, area_y, area_w, area_h) = monitor_dock_area(monitor);
+    if FIXED_BAR_WINDOW && (width, height) == bar_window_size(position) {
+        let (x, y, _, _) = bar_window_frame(monitor_dock_area(monitor), position);
+        return (x, y);
+    }
+    origin_in_area(
+        monitor_dock_area(monitor),
+        (width, height),
+        position,
+        (
+            OVERLAY_TOP_OFFSET,
+            OVERLAY_BOTTOM_OFFSET,
+            OVERLAY_SIDE_OFFSET,
+        ),
+    )
+}
+
+/// Where a `size` window docks in `area` (x, y, w, h) at `position`, with
+/// (top, bottom, side) offsets from the area's edges. Centred on the other
+/// axis.
+fn origin_in_area(
+    area: (f64, f64, f64, f64),
+    size: (f64, f64),
+    position: OverlayPosition,
+    offsets: (f64, f64, f64),
+) -> (f64, f64) {
+    let (area_x, area_y, area_w, area_h) = area;
+    let (width, height) = size;
+    let (top, bottom, side) = offsets;
     match position {
-        OverlayPosition::Top => (area_x + (area_w - width) / 2.0, area_y + OVERLAY_TOP_OFFSET),
+        OverlayPosition::Top => (area_x + (area_w - width) / 2.0, area_y + top),
         OverlayPosition::Bottom => (
             area_x + (area_w - width) / 2.0,
-            area_y + area_h - height - OVERLAY_BOTTOM_OFFSET,
+            area_y + area_h - height - bottom,
         ),
-        OverlayPosition::Left => (
-            area_x + OVERLAY_SIDE_OFFSET,
-            area_y + (area_h - height) / 2.0,
-        ),
+        OverlayPosition::Left => (area_x + side, area_y + (area_h - height) / 2.0),
         OverlayPosition::Right => (
-            area_x + area_w - width - OVERLAY_SIDE_OFFSET,
+            area_x + area_w - width - side,
             area_y + (area_h - height) / 2.0,
         ),
     }
+}
+
+/// The fixed bar window's frame (x, y, w, h) in a work area: 440x320 centred
+/// with its bottom on the work-area bottom, or 490x440 vertically centred and
+/// flush with a side edge. The pill's 14 px margin lives in the CSS.
+fn bar_window_frame(area: (f64, f64, f64, f64), edge: OverlayPosition) -> (f64, f64, f64, f64) {
+    let size = bar_window_size(edge);
+    let (x, y) = origin_in_area(area, size, edge, (0.0, 0.0, 0.0));
+    (x, y, size.0, size.1)
 }
 
 /// The monitor whose bounds contain a global logical point — where a dragged
@@ -421,12 +511,12 @@ fn monitor_for_point(app_handle: &AppHandle, x: f64, y: f64) -> Option<tauri::Mo
 }
 
 /// The edge of `area` a dropped bar belongs to: the one it was dropped
-/// closest to (the reference statusDockEdge snapping).
+/// closest to. Like Wispr's drop zones, a drag offers bottom, left and right;
+/// the top edge stays a FlowState extra reachable from Settings.
 fn nearest_overlay_edge(area: (f64, f64, f64, f64), x: f64, y: f64) -> OverlayPosition {
     let (area_x, area_y, area_w, area_h) = area;
     [
         (OverlayPosition::Bottom, area_y + area_h - y),
-        (OverlayPosition::Top, y - area_y),
         (OverlayPosition::Left, x - area_x),
         (OverlayPosition::Right, area_x + area_w - x),
     ]
@@ -697,7 +787,13 @@ fn apply_overlay_geometry_on_main(
     overlay_window: &tauri::webview::WebviewWindow,
     state: &str,
 ) {
-    apply_overlay_geometry_sized(app_handle, overlay_window, state, overlay_dimensions(state));
+    let position = overlay_position_for(&settings::get_settings(app_handle), state);
+    apply_overlay_geometry_sized(
+        app_handle,
+        overlay_window,
+        state,
+        overlay_dimensions(state, position),
+    );
 }
 
 /// Same placement as `apply_overlay_geometry_on_main`, with an explicit size:
@@ -709,17 +805,16 @@ fn apply_overlay_geometry_sized(
     size: (f64, f64),
 ) {
     let (width, height) = size;
-    // The hover poll reads the bar's frame from this cache; both footprints
-    // are recomputed here, on the thread that may talk to the window server.
-    if !is_dictation_state(state) {
-        remember_bar_frames(app_handle);
-    }
     #[cfg(not(target_os = "windows"))]
     {
         let _ = overlay_window.set_size(tauri::Size::Logical(tauri::LogicalSize { width, height }));
         if let Some((x, y)) = calculate_overlay_position(app_handle, width, height, state) {
             let _ = overlay_window
                 .set_position(tauri::Position::Logical(tauri::LogicalPosition { x, y }));
+            // The hit poll maps the webview's rects to the screen through
+            // this origin; it is recorded here, on the thread that may talk
+            // to the window server.
+            remember_window_origin(app_handle, x, y);
         }
     }
     #[cfg(target_os = "windows")]
@@ -744,7 +839,10 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
     // Only the layer-shell branch reads the dimensions here directly; every
     // other path is sized inside apply_overlay_geometry_on_main.
     #[cfg(target_os = "linux")]
-    let (width, height) = overlay_dimensions(state);
+    let (width, height) = overlay_dimensions(
+        state,
+        overlay_position_for(&settings::get_settings(app_handle), state),
+    );
     if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
         // Invalidate any delayed hide still in flight from a previous session
         // (see `hide_recording_overlay`).
@@ -786,28 +884,38 @@ fn show_overlay_state_on_main(app_handle: &AppHandle, state: &str) {
             log::debug!("overlay '{}': show={:?}", state, show_elapsed);
         }
 
-        // macOS polish for the meeting bar (the reference meeting bar direction): the bar
-        // rides on the window server's own soft shadow, drawn from the window's
-        // content shape — it can never intercept a click the way a transparent
-        // margin would. The dictation overlay keeps its flat, shadow-less look.
-        #[cfg(target_os = "macos")]
-        let _ = overlay_window.set_shadow(!is_dictation_state(state));
+        // No window shadow in any state: Wispr's bar is flat (the panel is
+        // created with `has_shadow(false)`).
 
-        // Never carry a click-through state across views: only the idle disc's
-        // hit-shape poll (below) sets `ignoresMouseEvents`, and every other view
-        // must own a fully interactive window.
-        #[cfg(target_os = "macos")]
-        let _ = overlay_window.set_ignore_cursor_events(false);
+        // Out of screenshots and screen shares only while a meeting records.
+        let _ = overlay_window
+            .set_content_protected(capture_protected(state, is_meeting_recording(app_handle)));
 
-        // The idle disc's window is the disc's bounding square, and the disc is
-        // a circle: the transparent corners would swallow clicks meant for the
-        // app underneath. Keep them click-through while the disc is up.
+        // The fixed window is click-through except where the webview reports
+        // a hit rect; the poll flips that as the cursor moves. Start every
+        // view click-through so the transparent window never swallows a
+        // click before the poll has looked.
         #[cfg(target_os = "macos")]
-        if state == MEETING_BAR_IDLE {
-            start_disc_hit_shape_poll(app_handle);
+        {
+            let _ = overlay_window.set_ignore_cursor_events(true);
+            start_bar_hit_poll(app_handle);
         }
 
         let _ = overlay_window.emit("show-overlay", state);
+
+        // The failure pill dismisses itself after four seconds — long enough
+        // to read one short line. The generation is captured at this show, so
+        // a dictation that starts meanwhile bumps it and wins the window.
+        if state == "error" {
+            let shown_at = OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst);
+            let handle = app_handle.clone();
+            std::thread::spawn(move || {
+                std::thread::sleep(std::time::Duration::from_millis(4200));
+                if OVERLAY_SHOW_GENERATION.load(Ordering::SeqCst) == shown_at {
+                    hide_recording_overlay(&handle);
+                }
+            });
+        }
     }
 }
 
@@ -825,6 +933,33 @@ pub fn emit_recording_ready(app_handle: &AppHandle) {
     let handle = app_handle.clone();
     let _ = app_handle.run_on_main_thread(move || {
         let _ = handle.emit_to("recording_overlay", "recording-ready", ());
+    });
+}
+
+/// Which listening pill a recording phase asks for: hold-to-talk while the
+/// key is held, hands-free once the session outlives its key (a tap, toggle
+/// mode, or a click on the bar). Other phases leave the pill as it is.
+fn listening_mode_for_phase(phase: RecordingPhase) -> Option<&'static str> {
+    match phase {
+        RecordingPhase::Started => Some("ptt"),
+        RecordingPhase::Locked => Some("handsfree"),
+        RecordingPhase::Stopped | RecordingPhase::Cancelled => None,
+    }
+}
+
+/// Tell the overlay whether this take is hold-to-talk or hands-free
+/// (`overlay-mode`). Queued on the main thread behind the `show-overlay`
+/// that started the take, so the show's reset can never overwrite it.
+pub fn emit_listening_mode(app_handle: &AppHandle, phase: RecordingPhase) {
+    let Some(mode) = listening_mode_for_phase(phase) else {
+        return;
+    };
+    if !OVERLAY_ENABLED.load(Ordering::Relaxed) {
+        return;
+    }
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        let _ = handle.emit_to("recording_overlay", "overlay-mode", mode);
     });
 }
 
@@ -852,6 +987,28 @@ pub fn show_transcribing_overlay(app_handle: &AppHandle) {
 /// Shows the processing overlay window
 pub fn show_processing_overlay(app_handle: &AppHandle) {
     show_overlay_state(app_handle, "processing");
+}
+
+/// Failures the dictation overlay is allowed to speak out loud. Cosmetic ones
+/// stay silent (the reference collapses a failed polish back to resting), but a
+/// take that never started has to say so: otherwise pressing the shortcut with
+/// no model selected looks like the app ignoring you.
+pub const ERROR_NO_MODEL: &str = "no_model";
+pub const ERROR_MODEL_FAILED: &str = "model_failed";
+pub const ERROR_START_FAILED: &str = "start_failed";
+/// Command Mode: applying the spoken instruction to the selected text failed
+/// (no provider, LLM error, empty answer). Nothing is pasted.
+pub const ERROR_COMMAND_FAILED: &str = "command_failed";
+
+/// Show a short failure pill in the dictation overlay and fade it out again.
+/// The self-dismiss timer lives in `show_overlay_state_on_main`, where the
+/// generation of this show is known, so it can never hide a dictation that
+/// started meanwhile.
+pub fn show_error_overlay(app_handle: &AppHandle, code: &str) {
+    show_overlay_state(app_handle, "error");
+    if let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") {
+        let _ = overlay_window.emit("overlay-error", code);
+    }
 }
 
 /// Updates the overlay window position based on current settings
@@ -938,10 +1095,10 @@ pub fn hide_recording_overlay(app_handle: &AppHandle) {
     }
 }
 
-/// Show the meeting-bar view that matches the meeting session right now: the
-/// recording pill while a meeting records, the idle disc otherwise. Called when
-/// the app starts, whenever the session's stage changes, and when a dictation
-/// view gives the window back — so the bar is effectively always present.
+/// Show the bar view that matches the session right now: the meeting pill
+/// while a meeting records, the resting bar otherwise. Called when the app
+/// starts, whenever the session's stage changes, and when a dictation view
+/// gives the window back — so the bar is effectively always present.
 /// Skipped while a dictation view owns the window: the dictation hide path
 /// calls this again once it is done.
 pub fn refresh_meeting_bar(app_handle: &AppHandle) {
@@ -954,14 +1111,27 @@ pub fn refresh_meeting_bar(app_handle: &AppHandle) {
         return;
     }
 
-    // The disc can be dismissed for a while (right-click > "Hide for 1 hour"):
-    // while it is, the window itself goes away — there is nothing else to see.
-    if meeting_bar_hidden() {
-        hide_meeting_bar_window(app_handle);
+    // Hidden at rest: right-click > "Hide for 1 hour", or "Show the bar at
+    // all times" turned off. Dictation still shows. While the hide's undo
+    // card is up the window stays (macOS, where the window has room for it);
+    // after that the window itself goes away — there is nothing else to see.
+    let show_at_all_times = settings::get_settings(app_handle).show_bar_at_all_times;
+    if !resting_bar_visible(meeting_bar_hidden(), show_at_all_times) {
+        if FIXED_BAR_WINDOW && hide_toast_pending() {
+            show_meeting_bar_state(app_handle, BAR_HIDDEN);
+        } else {
+            hide_meeting_bar_window(app_handle);
+        }
         return;
     }
 
-    show_meeting_bar_state(app_handle, MEETING_BAR_IDLE);
+    show_meeting_bar_state(app_handle, BAR_RESTING);
+}
+
+/// Whether the resting bar shows: not while hidden for the hour, and not
+/// when the user turned "show at all times" off.
+fn resting_bar_visible(hidden_for_hour: bool, show_at_all_times: bool) -> bool {
+    show_at_all_times && !hidden_for_hour
 }
 
 /// Whether a meeting records right now.
@@ -973,12 +1143,11 @@ fn is_meeting_recording(app_handle: &AppHandle) -> bool {
 }
 
 // ============================================================
-// Meeting bar: drag-to-edge, right-click hide, hit-shape (S-4d)
+// The bar: drag-to-edge, right-click menu, hide for an hour, hit shape
 //
-// the reference meeting bar parity, round 2. The bar (idle disc and recording pill
-// alike) can be dragged to another screen edge like the reference statusDockEdge;
-// the disc offers "Hide for 1 hour" on right-click; and the window no longer
-// swallows clicks outside its visible content.
+// The bar (resting or meeting pill) can be dragged to another screen edge
+// like Wispr's statusDockEdge; the resting bar offers its menu on
+// right-click; and the window never swallows clicks outside the pill.
 // ============================================================
 
 /// How long the bar must sit still after a move before it docks. A native
@@ -992,26 +1161,64 @@ const MEETING_BAR_DOCK_QUIESCE: Duration = Duration::from_millis(150);
 /// Move signals for the dock watcher above. Created once, on the first move.
 static OVERLAY_MOVE_SIGNAL: OnceLock<mpsc::Sender<()>> = OnceLock::new();
 
-/// The idle disc can be dismissed for a while: the bar stays gone until the
-/// hour passes, the app restarts, or a meeting is started from Settings.
-/// Deliberately in-memory — a restart always brings the disc back.
+/// The resting bar can be dismissed for a while: it stays gone until the
+/// hour passes, the app restarts, the hide is undone, or a meeting is started
+/// from Settings. Deliberately in-memory — a restart always brings it back.
 static MEETING_BAR_HIDDEN_UNTIL: Mutex<Option<Instant>> = Mutex::new(None);
 
-/// While the disc's native context menu is up. The menu runs its own event
-/// loop; the disc's hit-shape poll leaves the window's input state alone
-/// until it closes.
+/// While the "hidden for an hour" card with its Undo is on screen.
+static HIDE_TOAST_UNTIL: Mutex<Option<Instant>> = Mutex::new(None);
+/// How long the hide's undo card stays up (Wispr: a few seconds).
+const HIDE_TOAST_DURATION: Duration = Duration::from_secs(5);
+
+/// While the bar's native context menu is up. The menu runs its own event
+/// loop; the hit-shape poll leaves the window's input state alone until it
+/// closes.
 static MEETING_BAR_MENU_OPEN: AtomicBool = AtomicBool::new(false);
 
 /// The right-click menu's "hide for an hour" item, handled by the app-wide
 /// menu-event handler in lib.rs.
 pub const MEETING_BAR_HIDE_FOR_HOUR_ID: &str = "meeting_bar_hide_for_hour";
 
-/// The idle disc's menu covers what the bead can start: a meeting (also its
-/// left click), a note, the scratchpad, and hiding the bar for an hour.
+/// FlowState extras in the bar's menu: start a meeting, a new note, the
+/// scratchpad.
 pub const MEETING_BAR_START_ID: &str = "meeting_bar_start";
 pub const MEETING_BAR_NOTE_ID: &str = "meeting_bar_note";
 /// The menu item that opens the Scratchpad (quick note) window.
 pub const MEETING_BAR_SCRATCHPAD_ID: &str = "meeting_bar_scratchpad";
+/// Wispr's menu items. Languages, Microphone and Style are submenus whose
+/// entries carry the prefixes below; lib.rs handles History and Settings
+/// (they open the main window), `handle_bar_menu_event` the rest.
+pub const BAR_MENU_LANGUAGES_ID: &str = "bar_languages";
+pub const BAR_MENU_MICROPHONE_ID: &str = "bar_microphone";
+pub const BAR_MENU_PASTE_LAST_ID: &str = "bar_paste_last";
+pub const BAR_MENU_HISTORY_ID: &str = "bar_history";
+pub const BAR_MENU_SETTINGS_ID: &str = "bar_settings";
+pub const BAR_MENU_STYLE_ID: &str = "bar_style";
+const BAR_LANGUAGE_PREFIX: &str = "bar_lang:";
+const BAR_MICROPHONE_PREFIX: &str = "bar_mic:";
+const BAR_STYLE_PREFIX: &str = "bar_style:";
+
+/// The bar's right-click menu, top to bottom: Wispr's items first, then the
+/// FlowState extras. Empty outside the resting bar: never during dictation,
+/// and the meeting pill is a live session's UI.
+fn bar_menu_items(state: &str, meeting_recording: bool) -> Vec<&'static str> {
+    if !is_bar_resting(state) || meeting_recording {
+        return Vec::new();
+    }
+    vec![
+        MEETING_BAR_HIDE_FOR_HOUR_ID,
+        BAR_MENU_LANGUAGES_ID,
+        BAR_MENU_MICROPHONE_ID,
+        BAR_MENU_PASTE_LAST_ID,
+        BAR_MENU_HISTORY_ID,
+        BAR_MENU_SETTINGS_ID,
+        MEETING_BAR_START_ID,
+        MEETING_BAR_NOTE_ID,
+        MEETING_BAR_SCRATCHPAD_ID,
+        BAR_MENU_STYLE_ID,
+    ]
+}
 
 /// The window moved. Called from the app's window-event handler; every move of
 /// the overlay window — a drag or a programmatic placement — arms the dock
@@ -1040,12 +1247,11 @@ pub fn on_overlay_window_moved(app_handle: &AppHandle) {
     let _ = sender.send(());
 }
 
-/// Begin a native drag of the meeting bar. The window-server drag carries the
-/// window with the pointer across the whole screen — the bar's own exact-fit
-/// window could never track a cross-screen drag by itself — and the dock
-/// watcher snaps it to the nearest edge once it settles. A drag never touches
-/// the session: the frontend only hands over once the pointer has crossed its
-/// drag threshold, so a click still clicks and a drag drags.
+/// Begin a native drag of the bar. The window-server drag carries the window
+/// with the pointer across the whole screen, and the dock watcher snaps it to
+/// the nearest edge once it settles. A drag never touches the session: the
+/// frontend only hands over once the pointer has crossed its drag threshold,
+/// so a click still clicks and a drag drags.
 pub fn begin_meeting_bar_drag(app_handle: &AppHandle) {
     let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
     if is_dictation_state(&state) {
@@ -1067,9 +1273,8 @@ pub fn begin_meeting_bar_drag(app_handle: &AppHandle) {
     });
 }
 
-/// Dock the meeting bar after its window has been still: snap it to the
-/// nearest edge of the monitor it was dropped on, save that edge (the reference
-/// `statusDockEdge` choice, resumed on restart), and tell the webview to
+/// Dock the bar after its window has been still: snap it to the nearest edge
+/// of the monitor it was dropped on, save that edge, and tell the webview to
 /// re-anchor. No-op for dictation views and for a bar that already sits at
 /// its docked spot — which is what every programmatic placement does.
 fn dock_meeting_bar_if_moved(app_handle: &AppHandle) {
@@ -1110,26 +1315,28 @@ fn dock_meeting_bar_on_main(app_handle: &AppHandle, state: &str) {
     let edge = nearest_overlay_edge(area, center_x, center_y);
 
     // Already docked here — a programmatic placement, or a drag that ended
-    // where it began: nothing to move, and nothing to pin. The docked spot is
-    // computed for the footprint the window has right now: the hovered disc
-    // is wider than its resting form, and docking it back to the resting
-    // footprint's spot would collapse it 150 ms after hover opened it.
+    // where it began: nothing to move, and nothing to pin. A settings edge
+    // the drag does not offer (Top) counts as docked when the window sits
+    // there.
     let dropped_x = position.x as f64 / scale;
     let dropped_y = position.y as f64 / scale;
-    let (x, y) = overlay_position_on_monitor(
-        &monitor,
-        size.width as f64 / scale,
-        size.height as f64 / scale,
-        edge,
-    );
-    if (dropped_x - x).abs() <= 3.0 && (dropped_y - y).abs() <= 3.0 {
+    let width = size.width as f64 / scale;
+    let height = size.height as f64 / scale;
+    let current = overlay_position_for(&settings::get_settings(app_handle), state);
+    let docked_at = |edge: OverlayPosition| {
+        let (x, y) = overlay_position_on_monitor(&monitor, width, height, edge);
+        (dropped_x - x).abs() <= 3.0 && (dropped_y - y).abs() <= 3.0
+    };
+    if docked_at(edge) || docked_at(current) {
         return;
     }
 
+    // One bar, one edge (Wispr): the drag moves the dictation pill too.
     let mut settings = settings::get_settings(app_handle);
     settings.meeting_bar_position = Some(edge);
+    settings.overlay_position = edge;
     settings::write_settings(app_handle, settings);
-    log::debug!("meeting bar docked to the {edge:?} edge");
+    log::debug!("bar docked to the {edge:?} edge");
 
     apply_overlay_geometry_on_main(app_handle, &window, state);
     let _ = window.emit("overlay-position-changed", ());
@@ -1138,10 +1345,8 @@ fn dock_meeting_bar_on_main(app_handle: &AppHandle, state: &str) {
 /// Grow or shrink the meeting bar's window for the "still going?" prompt
 /// (S-24): the webview owns the timing — it knows the session's clock — and
 /// asks for the wider footprint while the prompt is up. Resizes in place,
-/// never `show()`s or focuses: the window is already on screen and must not
-/// steal focus from the app the person is working in. No-op for any other
-/// view: a dictation card, the disc or a wrap owns the geometry right now,
-/// and re-applies its own footprint on its own transitions anyway.
+/// never `show()`s or focuses. On macOS the window is fixed and already has
+/// room, so only the state is recorded.
 pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
     let handle = app_handle.clone();
     let _ = app_handle.run_on_main_thread(move || {
@@ -1155,6 +1360,9 @@ pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
             MEETING_BAR_RECORDING
         };
         *CURRENT_OVERLAY_STATE.lock().unwrap() = target.to_string();
+        if FIXED_BAR_WINDOW {
+            return;
+        }
         let Some(window) = handle.get_webview_window("recording_overlay") else {
             return;
         };
@@ -1163,7 +1371,7 @@ pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
         #[cfg(target_os = "linux")]
         if LAYER_SHELL_ACTIVE.load(Ordering::SeqCst) {
             let position = overlay_position_for(&settings::get_settings(&handle), target);
-            let (width, height) = overlay_dimensions(target);
+            let (width, height) = overlay_dimensions(target, position);
             match window.gtk_window() {
                 Ok(gtk_window) => {
                     configure_layer_shell_surface(&gtk_window, position, width, height)
@@ -1177,122 +1385,298 @@ pub fn set_meeting_bar_nudge(app_handle: &AppHandle, show: bool) {
     });
 }
 
-/// Grow or shrink the idle disc into its action row. Hover-driven, and only
-/// while the bar is idle: a dictation or a recording owns the window.
+/// Grow or shrink the resting bar's exact-fit window into the hovered
+/// ("ready") pill with its side buttons (Windows/Linux). macOS has the fixed
+/// window and a backend hover poll, so this is a no-op there.
 pub fn set_meeting_bar_expanded(app_handle: &AppHandle, expanded: bool) {
+    if FIXED_BAR_WINDOW {
+        return;
+    }
     let handle = app_handle.clone();
     let _ = app_handle.run_on_main_thread(move || {
-        if *CURRENT_OVERLAY_STATE.lock().unwrap() != MEETING_BAR_IDLE {
+        let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+        if !is_bar_resting(&state) {
             return;
         }
         let Some(window) = handle.get_webview_window("recording_overlay") else {
             return;
         };
+        let position = overlay_position_for(&settings::get_settings(&handle), &state);
         let size = if expanded {
-            (MEETING_DISC_WIDE, MEETING_DISC_HEIGHT)
+            bar_ready_dimensions(position)
         } else {
-            (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT)
+            overlay_dimensions(&state, position)
         };
-        apply_overlay_geometry_sized(&handle, &window, MEETING_BAR_IDLE, size);
+        apply_overlay_geometry_sized(&handle, &window, &state, size);
     });
 }
 
-/// The idle disc's right-click menu (the reference's escape hatch). Native, not HTML:
-/// the disc's window is exactly the disc, so a menu could never render inside
-/// it. Pops at the cursor; the item is dispatched by the app-wide menu-event
-/// handler.
-pub fn show_meeting_bar_menu(app_handle: &AppHandle) {
-    // Only the idle disc offers the menu — the recording pill is a live
-    // session's UI and can never be hidden.
-    if *CURRENT_OVERLAY_STATE.lock().unwrap() != MEETING_BAR_IDLE
-        || is_meeting_recording(app_handle)
-    {
-        return;
-    }
-
-    let strings = crate::tray_i18n::get_tray_translations(Some(
-        settings::get_settings(app_handle).app_language,
-    ));
-    // Locales that haven't translated a key yet fall back to English, the
-    // same contract the tray's secure-input item has.
-    let english = crate::tray_i18n::get_tray_translations(Some("en".to_string()));
-    let label = if strings.meeting_bar_hide_for_hour.is_empty() {
-        english.meeting_bar_hide_for_hour
-    } else {
-        strings.meeting_bar_hide_for_hour
-    };
-    let scratchpad_label = if strings.scratchpad_open.is_empty() {
-        english.scratchpad_open
-    } else {
-        strings.scratchpad_open
-    };
-
-    let start_label = if strings.meeting_bar_start.is_empty() {
-        english.meeting_bar_start
-    } else {
-        strings.meeting_bar_start
-    };
-    let note_label = if strings.meeting_bar_note.is_empty() {
-        english.meeting_bar_note
-    } else {
-        strings.meeting_bar_note
-    };
-
-    let build = || -> Result<Menu<tauri::Wry>, tauri::Error> {
-        let start = MenuItem::with_id(
-            app_handle,
-            MEETING_BAR_START_ID,
-            &start_label,
-            true,
-            None::<&str>,
-        )?;
-        let note = MenuItem::with_id(
-            app_handle,
-            MEETING_BAR_NOTE_ID,
-            &note_label,
-            true,
-            None::<&str>,
-        )?;
-        let scratchpad = MenuItem::with_id(
-            app_handle,
-            MEETING_BAR_SCRATCHPAD_ID,
-            &scratchpad_label,
-            true,
-            None::<&str>,
-        )?;
-        let hide = MenuItem::with_id(
-            app_handle,
-            MEETING_BAR_HIDE_FOR_HOUR_ID,
-            &label,
-            true,
-            None::<&str>,
-        )?;
-        Menu::with_items(app_handle, &[&start, &note, &scratchpad, &hide])
-    };
-    let menu = match build() {
-        Ok(menu) => menu,
+/// The microphones the bar's menu offers, by name. Device enumeration can
+/// stall, so callers run this off the main thread.
+pub fn list_bar_microphones() -> Vec<String> {
+    match handy_recorder::list_input_devices() {
+        Ok(devices) => devices
+            .into_iter()
+            .filter(|device| !device.is_monitor)
+            .map(|device| device.name)
+            .collect(),
         Err(error) => {
-            log::warn!("Failed to build the meeting bar menu: {error}");
-            return;
+            log::warn!("Failed to list microphones for the bar menu: {error}");
+            Vec::new()
         }
-    };
-    let Some(overlay_window) = app_handle.get_webview_window("recording_overlay") else {
-        return;
-    };
-    // The popup anchors to the hosting window (the panel); the manager's
-    // `get_window` is unstable-only, so reach it through the webview window.
-    let window = overlay_window.as_ref().window();
-
-    MEETING_BAR_MENU_OPEN.store(true, Ordering::SeqCst);
-    if let Err(error) = menu.popup(window) {
-        log::warn!("Failed to open the meeting bar menu: {error}");
     }
-    MEETING_BAR_MENU_OPEN.store(false, Ordering::SeqCst);
 }
 
-/// Hide the idle disc for a while (right-click > "Hide for 1 hour"). It comes
-/// back when the hour passes, when the app restarts, or when a meeting is
-/// started from Settings. The recording pill is never hideable.
+/// A tray string, falling back to English where a locale has not translated
+/// it yet (the same contract the tray's secure-input item has).
+fn tray_label(
+    strings: &crate::tray_i18n::TrayStrings,
+    english: &crate::tray_i18n::TrayStrings,
+    pick: fn(&crate::tray_i18n::TrayStrings) -> &String,
+) -> String {
+    let value = pick(strings);
+    if value.is_empty() {
+        pick(english).clone()
+    } else {
+        value.clone()
+    }
+}
+
+/// The resting bar's right-click menu (Wispr's escape hatch plus the
+/// FlowState extras). Native, so it works in the exact-fit windows too. Pops
+/// at the cursor on the main thread; items are dispatched by the app-wide
+/// menu-event handler. `language_labels` are the webview's localized names
+/// for the language codes; `microphones` comes from `list_bar_microphones`.
+pub fn show_meeting_bar_menu(
+    app_handle: &AppHandle,
+    language_labels: Vec<(String, String)>,
+    microphones: Vec<String>,
+) {
+    let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+    let items = bar_menu_items(&state, is_meeting_recording(app_handle));
+    if items.is_empty() {
+        return;
+    }
+
+    let handle = app_handle.clone();
+    let _ = app_handle.run_on_main_thread(move || {
+        let settings = settings::get_settings(&handle);
+        let strings = crate::tray_i18n::get_tray_translations(Some(settings.app_language.clone()));
+        let english = crate::tray_i18n::get_tray_translations(Some("en".to_string()));
+        let label = |pick: fn(&crate::tray_i18n::TrayStrings) -> &String| {
+            tray_label(&strings, &english, pick)
+        };
+
+        let build = || -> Result<Menu<tauri::Wry>, tauri::Error> {
+            let menu = Menu::new(&handle)?;
+            for (index, id) in items.iter().enumerate() {
+                // The FlowState extras sit under a separator.
+                if *id == MEETING_BAR_START_ID && index > 0 {
+                    menu.append(&PredefinedMenuItem::separator(&handle)?)?;
+                }
+                match *id {
+                    BAR_MENU_LANGUAGES_ID => {
+                        let submenu = Submenu::with_id(
+                            &handle,
+                            BAR_MENU_LANGUAGES_ID,
+                            label(|s| &s.bar_languages),
+                            true,
+                        )?;
+                        let mut codes = vec!["auto".to_string()];
+                        for code in &settings.spoken_languages {
+                            if code != "auto" && !codes.contains(code) {
+                                codes.push(code.clone());
+                            }
+                        }
+                        if !codes.contains(&settings.selected_language) {
+                            codes.push(settings.selected_language.clone());
+                        }
+                        for code in codes {
+                            let text = if code == "auto" {
+                                label(|s| &s.bar_language_auto)
+                            } else {
+                                language_labels
+                                    .iter()
+                                    .find(|(known, _)| *known == code)
+                                    .map(|(_, name)| name.clone())
+                                    .unwrap_or_else(|| code.to_uppercase())
+                            };
+                            submenu.append(&CheckMenuItem::with_id(
+                                &handle,
+                                format!("{BAR_LANGUAGE_PREFIX}{code}"),
+                                text,
+                                true,
+                                settings.selected_language == code,
+                                None::<&str>,
+                            )?)?;
+                        }
+                        menu.append(&submenu)?;
+                    }
+                    BAR_MENU_MICROPHONE_ID => {
+                        let submenu = Submenu::with_id(
+                            &handle,
+                            BAR_MENU_MICROPHONE_ID,
+                            label(|s| &s.bar_microphone),
+                            true,
+                        )?;
+                        let selected = settings.selected_microphone.clone();
+                        submenu.append(&CheckMenuItem::with_id(
+                            &handle,
+                            format!("{BAR_MICROPHONE_PREFIX}default"),
+                            label(|s| &s.bar_microphone_default),
+                            true,
+                            selected.is_none(),
+                            None::<&str>,
+                        )?)?;
+                        for name in &microphones {
+                            submenu.append(&CheckMenuItem::with_id(
+                                &handle,
+                                format!("{BAR_MICROPHONE_PREFIX}{name}"),
+                                name,
+                                true,
+                                selected.as_deref() == Some(name.as_str()),
+                                None::<&str>,
+                            )?)?;
+                        }
+                        menu.append(&submenu)?;
+                    }
+                    BAR_MENU_STYLE_ID => {
+                        // Style switching moved here from the dictation-time
+                        // menu; only offered when post-processing runs.
+                        if !settings.post_process_enabled
+                            || settings.post_process_prompts.is_empty()
+                        {
+                            continue;
+                        }
+                        let submenu = Submenu::with_id(
+                            &handle,
+                            BAR_MENU_STYLE_ID,
+                            label(|s| &s.bar_style),
+                            true,
+                        )?;
+                        for prompt in &settings.post_process_prompts {
+                            submenu.append(&CheckMenuItem::with_id(
+                                &handle,
+                                format!("{BAR_STYLE_PREFIX}{}", prompt.id),
+                                &prompt.name,
+                                true,
+                                settings.post_process_selected_prompt_id.as_deref()
+                                    == Some(prompt.id.as_str()),
+                                None::<&str>,
+                            )?)?;
+                        }
+                        menu.append(&submenu)?;
+                    }
+                    other => {
+                        let text = match other {
+                            MEETING_BAR_HIDE_FOR_HOUR_ID => label(|s| &s.meeting_bar_hide_for_hour),
+                            BAR_MENU_PASTE_LAST_ID => label(|s| &s.paste_last_transcript),
+                            BAR_MENU_HISTORY_ID => label(|s| &s.bar_history),
+                            BAR_MENU_SETTINGS_ID => label(|s| &s.settings),
+                            MEETING_BAR_START_ID => label(|s| &s.meeting_bar_start),
+                            MEETING_BAR_NOTE_ID => label(|s| &s.meeting_bar_note),
+                            _ => label(|s| &s.scratchpad_open),
+                        };
+                        menu.append(&MenuItem::with_id(
+                            &handle,
+                            other,
+                            text,
+                            true,
+                            None::<&str>,
+                        )?)?;
+                    }
+                }
+            }
+            Ok(menu)
+        };
+        let menu = match build() {
+            Ok(menu) => menu,
+            Err(error) => {
+                log::warn!("Failed to build the bar menu: {error}");
+                return;
+            }
+        };
+        let Some(overlay_window) = handle.get_webview_window("recording_overlay") else {
+            return;
+        };
+        // The popup anchors to the hosting window (the panel); the manager's
+        // `get_window` is unstable-only, so reach it through the webview window.
+        let window = overlay_window.as_ref().window();
+
+        MEETING_BAR_MENU_OPEN.store(true, Ordering::SeqCst);
+        // The menu takes the clicks it needs; the fixed window must accept
+        // them while it is up.
+        #[cfg(target_os = "macos")]
+        let _ = overlay_window.set_ignore_cursor_events(false);
+        if let Err(error) = menu.popup(window) {
+            log::warn!("Failed to open the bar menu: {error}");
+        }
+        MEETING_BAR_MENU_OPEN.store(false, Ordering::SeqCst);
+    });
+}
+
+/// Handle the bar menu's own items (language, microphone, style, paste
+/// last). Returns whether `id` was one of them; History and Settings open the
+/// main window and are handled in lib.rs.
+pub fn handle_bar_menu_event(app_handle: &AppHandle, id: &str) -> bool {
+    if let Some(code) = id.strip_prefix(BAR_LANGUAGE_PREFIX) {
+        if let Err(error) =
+            crate::shortcut::change_selected_language_setting(app_handle.clone(), code.to_string())
+        {
+            log::warn!("Failed to switch the dictation language: {error}");
+        }
+        let _ = app_handle.emit(
+            "settings-changed",
+            serde_json::json!({ "setting": "selected_language", "value": code }),
+        );
+        return true;
+    }
+    if let Some(name) = id.strip_prefix(BAR_MICROPHONE_PREFIX) {
+        let mut settings = settings::get_settings(app_handle);
+        settings.selected_microphone = (name != "default").then(|| name.to_string());
+        settings::write_settings(app_handle, settings);
+        // Restarting the stream can block on CoreAudio: never on the main
+        // thread.
+        if let Some(recorder) =
+            app_handle.try_state::<Arc<crate::managers::audio::AudioRecordingManager>>()
+        {
+            let recorder = recorder.inner().clone();
+            std::thread::spawn(move || {
+                if let Err(error) = recorder.update_selected_device() {
+                    log::warn!("Failed to switch the microphone: {error}");
+                }
+            });
+        }
+        let _ = app_handle.emit(
+            "settings-changed",
+            serde_json::json!({ "setting": "selected_microphone", "value": name }),
+        );
+        return true;
+    }
+    if let Some(style_id) = id.strip_prefix(BAR_STYLE_PREFIX) {
+        if let Err(error) = crate::shortcut::set_post_process_selected_prompt(
+            app_handle.clone(),
+            style_id.to_string(),
+        ) {
+            log::warn!("Failed to switch the dictation style: {error}");
+        }
+        let _ = app_handle.emit(
+            "settings-changed",
+            serde_json::json!({ "setting": "post_process_selected_prompt_id", "value": style_id }),
+        );
+        return true;
+    }
+    if id == BAR_MENU_PASTE_LAST_ID {
+        crate::tray::paste_last_transcript(app_handle);
+        return true;
+    }
+    false
+}
+
+/// Hide the resting bar for a while (right-click > "Hide for 1 hour"). It
+/// comes back when the hour passes, when the app restarts, when the hide is
+/// undone, or when a meeting is started from Settings. The meeting pill is
+/// never hideable. On macOS an undo card shows for a few seconds first.
 pub fn hide_meeting_bar_for(app_handle: &AppHandle, secs: u64) {
     if is_meeting_recording(app_handle) {
         return;
@@ -1301,10 +1685,22 @@ pub fn hide_meeting_bar_for(app_handle: &AppHandle, secs: u64) {
         return;
     };
     *MEETING_BAR_HIDDEN_UNTIL.lock().unwrap() = Some(deadline);
+    *HIDE_TOAST_UNTIL.lock().unwrap() = Instant::now().checked_add(HIDE_TOAST_DURATION);
 
-    // Hide the window now if the idle disc is showing; a dictation view keeps
-    // it — the flag is re-checked when the dictation hands the window back.
+    // Show the undo card (or hide the window) now if the bar is resting; a
+    // dictation view keeps the window — the flag is re-checked when the
+    // dictation hands the window back.
     refresh_meeting_bar(app_handle);
+
+    // The card's end: take the window away unless the hide was undone.
+    let toast_handle = app_handle.clone();
+    std::thread::spawn(move || {
+        std::thread::sleep(HIDE_TOAST_DURATION + Duration::from_millis(200));
+        *HIDE_TOAST_UNTIL.lock().unwrap() = None;
+        if *CURRENT_OVERLAY_STATE.lock().unwrap() == BAR_HIDDEN {
+            refresh_meeting_bar(&toast_handle);
+        }
+    });
 
     // The hour itself: one sleeping thread, no polling, no persistence.
     let handle = app_handle.clone();
@@ -1321,14 +1717,29 @@ pub fn hide_meeting_bar_for(app_handle: &AppHandle, secs: u64) {
     });
 }
 
-/// Bring the bar back early: starting a meeting from Settings dismisses the
-/// hour-long hide. Callers refresh the bar themselves (the pill shows).
+/// Bring the bar back early: starting a meeting from Settings, undoing the
+/// hide, or turning "show at all times" back on ends the hour-long hide.
+/// Callers refresh the bar themselves.
 pub fn unhide_meeting_bar() {
     *MEETING_BAR_HIDDEN_UNTIL.lock().unwrap() = None;
+    *HIDE_TOAST_UNTIL.lock().unwrap() = None;
+}
+
+/// The undo card's action: end the hide and bring the resting bar back.
+pub fn undo_hide_meeting_bar(app_handle: &AppHandle) {
+    unhide_meeting_bar();
+    refresh_meeting_bar(app_handle);
 }
 
 fn meeting_bar_hidden() -> bool {
     MEETING_BAR_HIDDEN_UNTIL
+        .lock()
+        .unwrap()
+        .is_some_and(|until| until > Instant::now())
+}
+
+fn hide_toast_pending() -> bool {
+    HIDE_TOAST_UNTIL
         .lock()
         .unwrap()
         .is_some_and(|until| until > Instant::now())
@@ -1339,6 +1750,7 @@ fn meeting_bar_hidden() -> bool {
 fn hide_meeting_bar_window(app_handle: &AppHandle) {
     let handle = app_handle.clone();
     let _ = app_handle.run_on_main_thread(move || {
+        *CURRENT_OVERLAY_STATE.lock().unwrap() = BAR_HIDDEN.to_string();
         if let Some(window) = handle.get_webview_window("recording_overlay") {
             #[cfg(target_os = "macos")]
             let _ = window.set_ignore_cursor_events(false);
@@ -1347,47 +1759,89 @@ fn hide_meeting_bar_window(app_handle: &AppHandle) {
     });
 }
 
-/// Slack added to the disc's radius when deciding whether the cursor is "on"
-/// the disc: the whole visible circle must stay clickable even if the
-/// global-cursor-to-window-frame math lands a point off on a scaled display.
+// ---- Hit shape and hover (the fixed window) ----
+
+/// A rect of the webview that takes clicks (the pill, its side buttons, a
+/// card, an open menu), in window-local logical points.
+#[derive(Clone, Copy, Debug, PartialEq, serde::Deserialize, specta::Type)]
+pub struct BarHitRect {
+    pub x: f64,
+    pub y: f64,
+    pub width: f64,
+    pub height: f64,
+}
+
+/// The rects the webview last reported (`set_bar_hit_rects`).
+static BAR_HIT_RECTS: Mutex<Vec<BarHitRect>> = Mutex::new(Vec::new());
+
+/// Record the webview's hit rects; the poll reads them on its next tick.
+pub fn set_bar_hit_rects(rects: Vec<BarHitRect>) {
+    *BAR_HIT_RECTS.lock().unwrap() = rects
+        .into_iter()
+        .filter(|rect| {
+            rect.width.is_finite()
+                && rect.height.is_finite()
+                && rect.width > 0.0
+                && rect.height > 0.0
+        })
+        .collect();
+}
+
+/// How close the pointer must come to the resting bar before it opens into
+/// the "ready" pill, and how far past the ready pill and its side buttons it
+/// may go before it closes (Wispr: hot-area padding 6/10 px plus 12 px).
+const BAR_HOVER_ZONE: f64 = 12.0;
+/// Slack on every hit rect, so a scaled display's rounding never leaves the
+/// pill's own edge unclickable.
 #[cfg(target_os = "macos")]
-const DISC_HIT_MARGIN: f64 = 3.0;
-/// How close the pointer must come to the idle sliver before it opens. The
-/// sliver is 8 points wide, so aiming at it exactly was never going to work;
-/// the bar now opens when the pointer comes near and closes when it leaves.
-const DISC_HOVER_ENTER: f64 = 18.0;
-/// How far past the open row the pointer may wander before it closes again.
-/// Wider than the enter zone so the row does not flicker on a wobble.
-const DISC_HOVER_EXIT: f64 = 26.0;
+const BAR_HIT_MARGIN: f64 = 1.0;
+
+/// Distance from a point to a rect (0 inside).
+fn rect_distance(rect: &BarHitRect, point: (f64, f64)) -> f64 {
+    let (x, y) = point;
+    let dx = (rect.x - x).max(x - (rect.x + rect.width)).max(0.0);
+    let dy = (rect.y - y).max(y - (rect.y + rect.height)).max(0.0);
+    dx.hypot(dy)
+}
+
+/// Whether `point` lies within `margin` of any rect.
+fn rect_hit(rects: &[BarHitRect], point: (f64, f64), margin: f64) -> bool {
+    rects
+        .iter()
+        .any(|rect| rect_distance(rect, point) <= margin)
+}
+
+/// Whether the pointer is in the bar's hover zone: within 12 px of the
+/// resting bar (to open) or of the ready pill and its side buttons (to stay
+/// open). The webview reports whichever is showing, so one rule does both.
+fn bar_hover_zone(rects: &[BarHitRect], point: (f64, f64)) -> bool {
+    rect_hit(rects, point, BAR_HOVER_ZONE)
+}
 
 #[cfg(target_os = "macos")]
-const DISC_HIT_POLL_INTERVAL: Duration = Duration::from_millis(40);
+const BAR_HIT_POLL_INTERVAL: Duration = Duration::from_millis(40);
 
-/// Freshness token for the disc's hit-shape poll: each show of the idle disc
-/// starts a poll and invalidates the previous one.
+/// Freshness token for the hit poll: each show starts a poll and
+/// invalidates the previous one.
 #[cfg(target_os = "macos")]
-static DISC_HIT_POLL_GENERATION: AtomicU64 = AtomicU64::new(0);
+static BAR_HIT_POLL_GENERATION: AtomicU64 = AtomicU64::new(0);
 
-/// The idle disc's window is the disc's bounding square, and the disc is a
-/// circle: the square's corners are transparent yet still ours, so a click
-/// aimed just past the disc's edge would die in our window instead of reaching
-/// the app underneath. While the disc owns the window, keep the window's
-/// `ignoresMouseEvents` in sync with the cursor: click-through everywhere
-/// except on the disc itself (plus a small margin). Fails safe — on any error
-/// the window stays fully clickable.
+/// Keep the fixed window click-through everywhere except the webview's hit
+/// rects, and drive the resting bar's hover from the cursor's distance to
+/// them (Wispr's `setIgnoreMouseEvents(true, {forward: true})` with an input
+/// shape). Runs while the window is visible; each show restarts it. When
+/// the cursor or the window's origin is unknown, the window stays
+/// click-through: a lost click on the pill beats a swallowed one elsewhere.
 #[cfg(target_os = "macos")]
-fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
-    let generation = DISC_HIT_POLL_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
+fn start_bar_hit_poll(app_handle: &AppHandle) {
+    let generation = BAR_HIT_POLL_GENERATION.fetch_add(1, Ordering::SeqCst) + 1;
     let handle = app_handle.clone();
     std::thread::spawn(move || {
-        let mut ignored = false;
-        let mut expanded = false;
+        let mut ignored = true;
+        let mut hovered = false;
         loop {
-            std::thread::sleep(DISC_HIT_POLL_INTERVAL);
-            if generation != DISC_HIT_POLL_GENERATION.load(Ordering::SeqCst) {
-                break;
-            }
-            if *CURRENT_OVERLAY_STATE.lock().unwrap() != MEETING_BAR_IDLE {
+            std::thread::sleep(BAR_HIT_POLL_INTERVAL);
+            if generation != BAR_HIT_POLL_GENERATION.load(Ordering::SeqCst) {
                 break;
             }
             if MEETING_BAR_MENU_OPEN.load(Ordering::SeqCst) {
@@ -1400,35 +1854,22 @@ fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
                 break;
             }
 
-            // None (no cursor, no frame) means "can't tell" — stay clickable
-            // and keep the row as it is.
-            let probe = bar_cursor_probe(&handle, expanded);
-            let (near, hits_disc) = match probe {
-                Some((_inside_row, distance)) => {
-                    let zone = if expanded {
-                        DISC_HOVER_EXIT
-                    } else {
-                        DISC_HOVER_ENTER
-                    };
-                    // The zone is an approach zone: being near is enough, the
-                    // pointer does not have to be inside the sliver.
-                    (distance <= zone, distance <= zone)
-                }
-                None => (expanded, expanded),
-            };
+            let state = CURRENT_OVERLAY_STATE.lock().unwrap().clone();
+            let rects = BAR_HIT_RECTS.lock().unwrap().clone();
+            let local = window_local_cursor(&handle);
 
-            // The sliver is only 8 points wide: hovering it exactly was never
-            // realistic. Opening on approach and closing on departure is what
-            // the reference does, and it needs no transparent hit area that
-            // would swallow clicks meant for the app underneath.
-            if near != expanded {
-                expanded = near;
+            let inside = local.is_some_and(|point| rect_hit(&rects, point, BAR_HIT_MARGIN));
+            // Only the resting bar opens on approach; every other view keeps
+            // its own shape.
+            let near =
+                is_bar_resting(&state) && local.is_some_and(|point| bar_hover_zone(&rects, point));
+            if near != hovered {
+                hovered = near;
                 log::debug!("bar hover: {near}");
-                set_meeting_bar_expanded(&handle, near);
-                let _ = handle.emit("meeting-bar-hover", near);
+                let _ = handle.emit_to("recording_overlay", "meeting-bar-hover", near);
             }
 
-            let want_ignore = !hits_disc;
+            let want_ignore = !inside;
             if want_ignore != ignored {
                 ignored = want_ignore;
                 let poll_handle = handle.clone();
@@ -1439,103 +1880,59 @@ fn start_disc_hit_shape_poll(app_handle: &AppHandle) {
                 });
             }
         }
-
-        // Leaving the disc: whatever comes next owns a fully clickable window.
-        let exit_handle = handle.clone();
-        let _ = handle.run_on_main_thread(move || {
-            if let Some(window) = exit_handle.get_webview_window("recording_overlay") {
-                let _ = window.set_ignore_cursor_events(false);
-            }
-        });
     });
 }
 
-/// Where the pointer is, in the same logical, top-left space the bar's frame
-/// is computed in. enigo answers this too, but its reading has come back
-/// stale or missing after a relaunch; AppKit's is the one the window server
-/// itself uses.
+/// Where the pointer is, in the same logical, top-left space the window's
+/// origin is computed in. enigo answers this too, but its reading has come
+/// back stale or missing after a relaunch; AppKit's is the one the window
+/// server itself uses.
 #[cfg(target_os = "macos")]
-fn cursor_location(_app_handle: &AppHandle, screen_height: f64) -> Option<(f64, f64)> {
+fn cursor_location(screen_height: f64) -> Option<(f64, f64)> {
     use objc2_app_kit::NSEvent;
     if screen_height <= 0.0 {
         return None;
     }
-    // AppKit counts up from the bottom of the main screen; the bar's frame
-    // counts down from the top.
-    let point = unsafe { NSEvent::mouseLocation() };
+    // AppKit counts up from the bottom of the main screen; the window's
+    // origin counts down from the top.
+    let point = NSEvent::mouseLocation();
     Some((point.x, screen_height - point.y))
 }
 
-#[cfg(not(target_os = "macos"))]
-fn cursor_location(app_handle: &AppHandle, _screen_height: f64) -> Option<(f64, f64)> {
-    input::get_cursor_position(app_handle)
+/// The cursor in the overlay window's own coordinates (the webview's CSS px).
+#[cfg(target_os = "macos")]
+fn window_local_cursor(_app_handle: &AppHandle) -> Option<(f64, f64)> {
+    let origin = (*BAR_WINDOW_ORIGIN.lock().unwrap())?;
+    let (x, y) = cursor_location(origin.screen_height)?;
+    Some((x - origin.x, y - origin.y))
 }
 
-/// The bar's logical frame, cached on the main thread: the window server
-/// cannot be queried from the hover poll's own thread. Both footprints are
-/// kept, because the row opens into a wider one.
-static BAR_FRAMES: Mutex<Option<BarFrames>> = Mutex::new(None);
+/// The overlay window's logical origin, cached on the main thread: the
+/// window server cannot be queried from the hit poll's own thread.
+static BAR_WINDOW_ORIGIN: Mutex<Option<WindowOrigin>> = Mutex::new(None);
 
 #[derive(Clone, Copy)]
-struct BarFrames {
-    idle: (f64, f64, f64, f64),
-    wide: (f64, f64, f64, f64),
+struct WindowOrigin {
+    x: f64,
+    y: f64,
     /// The main screen's logical height, for flipping AppKit's bottom-up
-    /// cursor into the top-down space the frames use.
+    /// cursor into the top-down space the origin uses.
     screen_height: f64,
 }
 
-fn remember_bar_frames(app_handle: &AppHandle) {
-    let idle = calculate_overlay_position(
-        app_handle,
-        MEETING_DISC_WIDTH,
-        MEETING_DISC_HEIGHT,
-        MEETING_BAR_IDLE,
-    )
-    .map(|(x, y)| (x, y, MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT));
-    let wide = calculate_overlay_position(
-        app_handle,
-        MEETING_DISC_WIDE,
-        MEETING_DISC_HEIGHT,
-        MEETING_BAR_IDLE,
-    )
-    .map(|(x, y)| (x, y, MEETING_DISC_WIDE, MEETING_DISC_HEIGHT));
+fn remember_window_origin(app_handle: &AppHandle, x: f64, y: f64) {
     let screen_height = app_handle
         .primary_monitor()
         .ok()
         .flatten()
         .map(|monitor| monitor.size().height as f64 / monitor.scale_factor())
         .unwrap_or(0.0);
-    if let (Some(idle), Some(wide)) = (idle, wide) {
-        *BAR_FRAMES.lock().unwrap() = Some(BarFrames {
-            idle,
-            wide,
-            screen_height,
-        });
-    }
+    *BAR_WINDOW_ORIGIN.lock().unwrap() = Some(WindowOrigin {
+        x,
+        y,
+        screen_height,
+    });
 }
-
-/// Where the cursor sits relative to the bar, computed from the same
-/// placement the window uses rather than read back from the window: the
-/// window's own frame is reported in a unit the cursor does not share, and
-/// `overlay_position_on_monitor` is the one source of truth for where the bar
-/// landed. Returns whether the cursor is inside `expanded`'s footprint and how
-/// far outside it is (0 when inside).
-fn bar_cursor_probe(app_handle: &AppHandle, expanded: bool) -> Option<(bool, f64)> {
-    let frames = (*BAR_FRAMES.lock().unwrap())?;
-    let (cursor_x, cursor_y) = cursor_location(app_handle, frames.screen_height)?;
-    let (left, top, width, height) = if expanded { frames.wide } else { frames.idle };
-    let right = left + width;
-    let bottom = top + height;
-
-    let x = cursor_x as f64;
-    let y = cursor_y as f64;
-    let dx = (left - x).max(x - right).max(0.0);
-    let dy = (top - y).max(y - bottom).max(0.0);
-    let distance = dx.hypot(dy);
-    Some((dx == 0.0 && dy == 0.0, distance))
-}
-
 
 // Cached "overlay is enabled" flag, kept in sync with overlay_style. Avoids
 // reading the Tauri store on every audio callback (~24 Hz during recording).
@@ -1599,28 +1996,22 @@ mod tests {
     use super::*;
 
     #[test]
-    fn meeting_bar_views_have_their_own_footprints() {
-        // The idle disc's window is exactly the 40x40 circle: no transparent
-        // margin to swallow clicks around it.
+    fn exact_fit_windows_hold_each_state() {
+        use OverlayPosition::*;
+        // Resting bar: 40x8 at the bottom, 8x40 at the sides (Wispr).
+        assert_eq!(exact_fit_dimensions(BAR_RESTING, Bottom), (40.0, 8.0));
+        assert_eq!(exact_fit_dimensions(MEETING_BAR_IDLE, Right), (8.0, 40.0));
+        // Hovered: room for the 50x30 pill and two 30px circles per side.
+        assert_eq!(bar_ready_dimensions(Bottom), (180.0, 30.0));
+        assert_eq!(bar_ready_dimensions(Left), (30.0, 180.0));
+        // Dictation: the widest pill (102.5x30 hands-free) fits.
+        let (w, h) = exact_fit_dimensions("recording", Bottom);
+        assert!(w >= 102.5 && h >= 30.0);
+        let (w, h) = exact_fit_dimensions("recording", Left);
+        assert!(w >= 30.0 && h >= 102.5);
+        // The prompt adds exactly its card's width to the meeting pill.
         assert_eq!(
-            overlay_dimensions(MEETING_BAR_IDLE),
-            (MEETING_DISC_WIDTH, MEETING_DISC_HEIGHT)
-        );
-        // The recording pill (and the frontend's "Saving" pill) is the
-        // capsule's own exact footprint, not the dictation pill's.
-        assert_eq!(
-            overlay_dimensions(MEETING_BAR_RECORDING),
-            (MEETING_PILL_WIDTH, MEETING_PILL_HEIGHT)
-        );
-        // The dictation states keep their own footprints untouched.
-        assert_eq!(
-            overlay_dimensions("recording"),
-            (OVERLAY_WIDTH, OVERLAY_HEIGHT)
-        );
-        // The "still going?" prompt adds exactly its card's width to the
-        // pill's footprint — the window is never wider than what is visible.
-        assert_eq!(
-            overlay_dimensions(MEETING_BAR_NUDGE),
+            exact_fit_dimensions(MEETING_BAR_NUDGE, Bottom),
             (
                 MEETING_PILL_WIDTH + MEETING_NUDGE_WIDTH,
                 MEETING_PILL_HEIGHT
@@ -1628,18 +2019,131 @@ mod tests {
         );
     }
 
+    #[cfg(target_os = "macos")]
     #[test]
-    fn meeting_bar_edge_follows_the_dictation_overlay_until_dragged() {
-        let mut settings = crate::settings::get_default_settings();
-        settings.overlay_position = OverlayPosition::Top;
-        // Unpinned (the default): the bar sits on the right edge, where the
-        // reference's Flow Bar lives, whatever the dictation card does.
+    fn macos_window_is_fixed_for_every_state() {
+        use OverlayPosition::*;
+        for state in [
+            BAR_RESTING,
+            "recording",
+            "streaming",
+            "error",
+            MEETING_BAR_RECORDING,
+        ] {
+            assert_eq!(overlay_dimensions(state, Bottom), (440.0, 320.0));
+            assert_eq!(overlay_dimensions(state, Right), (490.0, 440.0));
+        }
+    }
+
+    #[test]
+    fn bar_window_frame_docks_flush_with_the_work_area() {
+        // A 1512x944 work area below a 38pt menu bar.
+        let area = (0.0, 38.0, 1512.0, 944.0);
+        let (x, y, w, h) = bar_window_frame(area, OverlayPosition::Bottom);
+        assert_eq!((w, h), (440.0, 320.0));
+        assert_eq!(x, (1512.0 - 440.0) / 2.0);
+        assert_eq!(y + h, 38.0 + 944.0);
+        let (x, y, w, h) = bar_window_frame(area, OverlayPosition::Right);
+        assert_eq!((w, h), (490.0, 440.0));
+        assert_eq!(x + w, 1512.0);
+        assert_eq!(y, 38.0 + (944.0 - 440.0) / 2.0);
+        let (x, _, _, _) = bar_window_frame(area, OverlayPosition::Left);
+        assert_eq!(x, 0.0);
+    }
+
+    #[test]
+    fn hit_rects_and_hover_zone() {
+        // The resting bar, centred at the bottom of the 440x320 window with
+        // its bottom 14px above the window's bottom.
+        let resting = [BarHitRect {
+            x: 200.0,
+            y: 298.0,
+            width: 40.0,
+            height: 8.0,
+        }];
+        assert!(rect_hit(&resting, (220.0, 302.0), 0.0));
+        assert!(!rect_hit(&resting, (220.0, 290.0), 0.0));
+        // 11px above the bar: in the hover zone; 13px: not.
+        assert!(bar_hover_zone(&resting, (220.0, 298.0 - 11.0)));
+        assert!(!bar_hover_zone(&resting, (220.0, 298.0 - 13.0)));
+        // Sideways too, measured from the bar's edge.
+        assert!(bar_hover_zone(&resting, (240.0 + 11.0, 302.0)));
+        assert!(!bar_hover_zone(&resting, (240.0 + 13.0, 302.0)));
+        // No rects: nothing is hit and nothing hovers.
+        assert!(!rect_hit(&[], (0.0, 0.0), 100.0));
+        assert!(!bar_hover_zone(&[], (0.0, 0.0)));
+    }
+
+    #[test]
+    fn bar_menu_is_only_offered_at_rest() {
+        let items = bar_menu_items(BAR_RESTING, false);
+        // Wispr's items first, in order, then the FlowState extras.
         assert_eq!(
-            overlay_position_for(&settings, MEETING_BAR_IDLE),
-            OverlayPosition::Right
+            &items[..6],
+            &[
+                MEETING_BAR_HIDE_FOR_HOUR_ID,
+                BAR_MENU_LANGUAGES_ID,
+                BAR_MENU_MICROPHONE_ID,
+                BAR_MENU_PASTE_LAST_ID,
+                BAR_MENU_HISTORY_ID,
+                BAR_MENU_SETTINGS_ID,
+            ]
         );
-        // Pinned by a drag: the bar keeps its own edge, the dictation card
-        // keeps the setting's.
+        assert!(items.contains(&MEETING_BAR_START_ID));
+        assert!(items.contains(&MEETING_BAR_NOTE_ID));
+        assert!(items.contains(&MEETING_BAR_SCRATCHPAD_ID));
+        assert_eq!(bar_menu_items(MEETING_BAR_IDLE, false), items);
+        for state in [
+            "recording",
+            "streaming",
+            "transcribing",
+            "processing",
+            "command",
+            "error",
+        ] {
+            assert!(bar_menu_items(state, false).is_empty(), "{state}");
+        }
+        assert!(bar_menu_items(MEETING_BAR_RECORDING, true).is_empty());
+        assert!(bar_menu_items(BAR_RESTING, true).is_empty());
+    }
+
+    #[test]
+    fn screen_capture_is_blocked_only_while_a_meeting_records() {
+        assert!(capture_protected(MEETING_BAR_RECORDING, true));
+        assert!(capture_protected(MEETING_BAR_NUDGE, true));
+        // A dictation during a meeting stays protected.
+        assert!(capture_protected("recording", true));
+        assert!(!capture_protected("recording", false));
+        assert!(!capture_protected(BAR_RESTING, false));
+    }
+
+    #[test]
+    fn resting_bar_hides_for_the_hour_or_when_not_shown_at_all_times() {
+        assert!(resting_bar_visible(false, true));
+        assert!(!resting_bar_visible(true, true));
+        assert!(!resting_bar_visible(false, false));
+        assert!(!resting_bar_visible(true, false));
+    }
+
+    #[test]
+    fn bar_and_dictation_share_the_bottom_edge_by_default() {
+        let mut settings = crate::settings::get_default_settings();
+        // Default settings: one bar on the bottom edge (Wispr).
+        assert_eq!(
+            overlay_position_for(&settings, BAR_RESTING),
+            OverlayPosition::Bottom
+        );
+        assert_eq!(
+            overlay_position_for(&settings, "recording"),
+            OverlayPosition::Bottom
+        );
+        // Unpinned, the bar follows the dictation edge.
+        settings.overlay_position = OverlayPosition::Top;
+        assert_eq!(
+            overlay_position_for(&settings, BAR_RESTING),
+            OverlayPosition::Top
+        );
+        // A store that pinned the bar apart keeps working.
         settings.meeting_bar_position = Some(OverlayPosition::Left);
         assert_eq!(
             overlay_position_for(&settings, MEETING_BAR_IDLE),
@@ -1652,15 +2156,31 @@ mod tests {
     }
 
     #[test]
+    fn recording_phases_map_to_the_listening_pill() {
+        assert_eq!(
+            listening_mode_for_phase(RecordingPhase::Started),
+            Some("ptt")
+        );
+        assert_eq!(
+            listening_mode_for_phase(RecordingPhase::Locked),
+            Some("handsfree")
+        );
+        assert_eq!(listening_mode_for_phase(RecordingPhase::Stopped), None);
+        assert_eq!(listening_mode_for_phase(RecordingPhase::Cancelled), None);
+    }
+
+    #[test]
     fn dropped_bar_docks_to_the_nearest_edge() {
         let area = (0.0, 0.0, 1000.0, 800.0);
         assert_eq!(
             nearest_overlay_edge(area, 500.0, 790.0),
             OverlayPosition::Bottom
         );
+        // Wispr offers no top drop zone: near the top, the nearest of the
+        // other three wins.
         assert_eq!(
-            nearest_overlay_edge(area, 500.0, 12.0),
-            OverlayPosition::Top
+            nearest_overlay_edge(area, 120.0, 12.0),
+            OverlayPosition::Left
         );
         assert_eq!(
             nearest_overlay_edge(area, 9.0, 400.0),
@@ -1827,4 +2347,15 @@ mod tests {
         // Top offset rides the DPI scale alone, so the top edge doesn't move.
         assert_eq!(top_y, -195);
     }
+    #[test]
+    fn a_failed_take_shows_as_a_dictation_pill() {
+        // The failure pill lives in the dictation window, sized for the
+        // pill plus its notification card.
+        assert!(is_dictation_state("error"));
+        assert_eq!(
+            exact_fit_dimensions("error", OverlayPosition::Bottom),
+            (OVERLAY_ERROR_WIDTH, OVERLAY_ERROR_HEIGHT)
+        );
+    }
+
 }

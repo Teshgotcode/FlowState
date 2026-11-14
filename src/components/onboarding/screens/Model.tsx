@@ -264,7 +264,7 @@ export const Model: React.FC<ModelProps> = ({
     </span>
   );
 
-  const roleBase = "shrink-0 font-[650] uppercase tracking-[0.04em]";
+  const roleBase = "shrink-0 font-[650] tracking-[-0.005em]";
   const sizeClass =
     "ms-auto min-w-[50px] text-end text-label text-ink-3 tabular-nums";
 

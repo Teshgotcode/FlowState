@@ -38,6 +38,8 @@ fn emit_recording_phase(app: &AppHandle, phase: RecordingPhase) {
     if let Err(e) = (RecordingStateEvent { phase }).emit(app) {
         warn!("Failed to emit recording state {phase:?}: {e}");
     }
+    // The Flow Bar shows hold-to-talk vs. hands-free from the same phases.
+    crate::overlay::emit_listening_mode(app, phase);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -581,65 +583,24 @@ impl TranscriptionCoordinator {
         let (tx, rx) = mpsc::channel();
 
         thread::spawn(move || {
-            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let mut state = CoordinatorState::new();
-
-                loop {
-                    let cmd = if let Some(deadline) = state.grace_deadline() {
-                        match rx.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
-                            Ok(cmd) => cmd,
-                            Err(mpsc::RecvTimeoutError::Timeout) => {
-                                let was_locked = state.is_recording_locked();
-                                if let Some(effect) = state.on_grace_expired() {
-                                    run_effect(&app, &mut state, effect);
-                                }
-                                if !was_locked && state.is_recording_locked() {
-                                    emit_recording_phase(&app, RecordingPhase::Locked);
-                                }
-                                continue;
-                            }
-                            Err(mpsc::RecvTimeoutError::Disconnected) => break,
-                        }
-                    } else {
-                        match rx.recv() {
-                            Ok(cmd) => cmd,
-                            Err(_) => break,
-                        }
-                    };
-
-                    let was_locked = state.is_recording_locked();
-                    match cmd {
-                        Command::Input(input) => {
-                            if let Some(effect) = state.on_input(input, Instant::now()) {
-                                run_effect(&app, &mut state, effect);
-                            }
-                        }
-                        Command::Cancel {
-                            recording_was_active,
-                        } => {
-                            // A cancel while transcribing ends the take too.
-                            let busy =
-                                recording_was_active || matches!(state.stage, Stage::Processing);
-                            state.on_cancel(recording_was_active);
-                            if busy {
-                                emit_recording_phase(&app, RecordingPhase::Cancelled);
-                            }
-                        }
-                        Command::ProcessingFinished => {
-                            if let Some(effect) = state.on_processing_finished() {
-                                run_effect(&app, &mut state, effect);
-                            }
-                        }
-                    }
-                    if !was_locked && state.is_recording_locked() {
-                        emit_recording_phase(&app, RecordingPhase::Locked);
+            // A panic inside an effect (tray, overlay, the actions) must not
+            // end this thread: the receiver would go with it and every later
+            // hotkey would be silently dropped. Reset the state machine and
+            // keep serving the same channel.
+            loop {
+                let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    let mut state = CoordinatorState::new();
+                    while coordinator_turn(&app, &rx, &mut state) {}
+                }));
+                match result {
+                    Ok(()) => break,
+                    Err(e) => {
+                        error!("Transcription coordinator panicked: {e:?}");
+                        error!("Restarting the coordinator with a fresh state");
                     }
                 }
-                debug!("Transcription coordinator exited");
-            }));
-            if let Err(e) = result {
-                error!("Transcription coordinator panicked: {e:?}");
             }
+            debug!("Transcription coordinator exited");
         });
 
         Self { tx }
@@ -722,6 +683,65 @@ impl TranscriptionCoordinator {
     }
 }
 
+/// One turn of the coordinator loop: wait for the next command (or fire the
+/// grace timer), advance the state machine, run the resulting effect.
+/// Returns `false` once the channel is closed and the thread should exit.
+fn coordinator_turn(
+    app: &AppHandle,
+    rx: &mpsc::Receiver<Command>,
+    state: &mut CoordinatorState,
+) -> bool {
+    let cmd = if let Some(deadline) = state.grace_deadline() {
+        match rx.recv_timeout(deadline.saturating_duration_since(Instant::now())) {
+            Ok(cmd) => cmd,
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                let was_locked = state.is_recording_locked();
+                if let Some(effect) = state.on_grace_expired() {
+                    run_effect(app, state, effect);
+                }
+                if !was_locked && state.is_recording_locked() {
+                    emit_recording_phase(app, RecordingPhase::Locked);
+                }
+                return true;
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => return false,
+        }
+    } else {
+        match rx.recv() {
+            Ok(cmd) => cmd,
+            Err(_) => return false,
+        }
+    };
+
+    let was_locked = state.is_recording_locked();
+    match cmd {
+        Command::Input(input) => {
+            if let Some(effect) = state.on_input(input, Instant::now()) {
+                run_effect(app, state, effect);
+            }
+        }
+        Command::Cancel {
+            recording_was_active,
+        } => {
+            // A cancel while transcribing ends the take too.
+            let busy = recording_was_active || matches!(state.stage, Stage::Processing);
+            state.on_cancel(recording_was_active);
+            if busy {
+                emit_recording_phase(app, RecordingPhase::Cancelled);
+            }
+        }
+        Command::ProcessingFinished => {
+            if let Some(effect) = state.on_processing_finished() {
+                run_effect(app, state, effect);
+            }
+        }
+    }
+    if !was_locked && state.is_recording_locked() {
+        emit_recording_phase(app, RecordingPhase::Locked);
+    }
+    true
+}
+
 fn run_effect(app: &AppHandle, state: &mut CoordinatorState, effect: Effect) {
     match effect {
         Effect::Start {
@@ -757,6 +777,14 @@ fn start(app: &AppHandle, binding_id: &str, hotkey_string: &str) -> bool {
         .is_some_and(|a| a.is_recording());
     if !recording {
         debug!("Start for '{binding_id}' did not begin recording; staying idle");
+        // Only speak up when the model is there; a missing model reports itself
+        // from the loader, which knows which of the two failures it is.
+        let model_ready = app
+            .try_state::<Arc<crate::managers::transcription::TranscriptionManager>>()
+            .is_some_and(|tm| tm.is_model_loaded());
+        if model_ready {
+            crate::overlay::show_error_overlay(app, crate::overlay::ERROR_START_FAILED);
+        }
     }
     recording
 }
@@ -1169,6 +1197,22 @@ mod tests {
     }
 
     const OTHER_BINDING: &str = "transcribe_with_post_process";
+
+    /// A click on the Flow Bar is an external toggle press: the first starts
+    /// a session that outlives the click (hands-free), the next one stops it.
+    #[test]
+    fn flow_bar_click_starts_hands_free_and_the_next_click_stops() {
+        let mut state = CoordinatorState::new();
+        let now = Instant::now();
+        let effect = state.on_input(toggle_input(true), now);
+        assert!(matches!(effect, Some(Effect::Start { .. })));
+        assert!(
+            state.is_recording_locked(),
+            "a bar click locks the session on"
+        );
+        let effect = state.on_input(toggle_input(true), now + Duration::from_millis(5));
+        assert!(matches!(effect, Some(Effect::Stop { .. })));
+    }
 
     /// Only one press can be pending. Once a binding has claimed it, a toggle
     /// for a different binding is ignored (as it is while recording) instead of

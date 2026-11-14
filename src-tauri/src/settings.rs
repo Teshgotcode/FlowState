@@ -1,5 +1,5 @@
 use crate::utils;
-use log::{debug, warn};
+use log::{debug, error, warn};
 use serde::de::{self, Visitor};
 use serde::{Deserialize, Deserializer, Serialize};
 use specta::Type;
@@ -417,6 +417,32 @@ pub enum LanguageDetectionMode {
 #[serde(transparent)]
 pub(crate) struct SecretMap(HashMap<String, String>);
 
+/// The placeholder the settings command hands the webview for a key that is
+/// set: the real key never crosses into the frontend, only the fact of it.
+pub(crate) const MASKED_API_KEY: &str = "flowstate-key-set";
+
+impl SecretMap {
+    /// A copy with every set key replaced by the masked placeholder, for
+    /// anything that leaves the backend (the settings command).
+    pub(crate) fn masked(&self) -> SecretMap {
+        SecretMap(
+            self.0
+                .iter()
+                .map(|(provider, key)| {
+                    (
+                        provider.clone(),
+                        if key.is_empty() {
+                            String::new()
+                        } else {
+                            MASKED_API_KEY.to_string()
+                        },
+                    )
+                })
+                .collect(),
+        )
+    }
+}
+
 impl fmt::Debug for SecretMap {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let redacted: HashMap<&String, &str> = self
@@ -524,6 +550,19 @@ pub struct AppSettings {
     /// it there, and the pinned choice persists across restarts.
     #[serde(default)]
     pub meeting_bar_position: Option<OverlayPosition>,
+    /// Wispr's "Show Flow Bar at all times": the resting bar stays on screen
+    /// between dictations. Off hides it at rest; dictation still shows.
+    #[serde(default = "default_show_bar_at_all_times")]
+    pub show_bar_at_all_times: bool,
+    /// Offer the Scratchpad button beside the hovered bar (Wispr's
+    /// `scratchpadInFlowBar`, off by default). The right-click menu always
+    /// has it.
+    #[serde(default)]
+    pub scratchpad_in_flow_bar: bool,
+    /// Show the active dictation style beside the pill while dictating. A
+    /// FlowState extra, off by default so the pill matches Wispr's.
+    #[serde(default)]
+    pub flow_bar_style_chip: bool,
     /// How many minutes a meeting may record before the meeting bar shows the
     /// discreet "still going?" prompt with a Stop button (the reference's meeting
     /// reminders, so a forgotten recording doesn't run for hours). `None`
@@ -543,12 +582,33 @@ pub struct AppSettings {
     pub log_level: LogLevel,
     #[serde(default = "default_custom_words")]
     pub custom_words: Vec<String>,
+    /// Words the user pinned in the dictionary. Purely organisational: they
+    /// sort first and keep their place while the list is ordered by newest.
+    #[serde(default)]
+    pub starred_words: Vec<String>,
+    /// Words that came from a correction rather than from typing. The marker
+    /// survives because the learner retires its suggestion once accepted.
+    #[serde(default)]
+    pub learned_words: Vec<String>,
+    /// `az` or `newest`. Unknown values read as `az`.
+    #[serde(default = "default_dictionary_sort")]
+    pub dictionary_sort: String,
+    /// One post-processing prompt per writing context (`email`, `chat`,
+    /// `docs`, `terminal`). A per-app rule still wins; an empty map leaves
+    /// the global prompt in charge.
+    #[serde(default)]
+    pub post_process_context_prompts: std::collections::HashMap<String, String>,
     /// Whether the dictionary learns from corrections the user makes — the
     /// explicit "correct this" flow in history, and the diff against
     /// LLM post-processed text. Everything stays on this device; off means
     /// no corrections are recorded at all.
     #[serde(default = "default_learn_from_corrections")]
     pub learn_from_corrections: bool,
+    /// With learning on: words that reach the suggestion threshold are added
+    /// to the dictionary straight away (marked learned), instead of waiting
+    /// in the suggestion list for the user to accept them.
+    #[serde(default)]
+    pub add_learned_words_automatically: bool,
     /// Spoken text templates ("say trigger, get expansion"), expanded after
     /// transcription in [`post_process_transcription_text`].
     #[serde(default = "default_snippets")]
@@ -725,6 +785,11 @@ fn default_overlay_position() -> OverlayPosition {
     OverlayPosition::Bottom
 }
 
+/// The resting bar shows at all times unless the user turns it off.
+fn default_show_bar_at_all_times() -> bool {
+    true
+}
+
 /// The meeting reminder prompt waits this long by default (reference parity).
 fn default_meeting_reminder_minutes() -> Option<u64> {
     Some(60)
@@ -738,12 +803,13 @@ fn default_record_system_audio() -> bool {
 }
 
 fn default_overlay_style() -> OverlayStyle {
-    // Linux hides the overlay by default; other platforms show the live overlay.
-    // Position is independent and only selects top vs. bottom placement.
+    // Linux hides the overlay by default; other platforms show the minimal
+    // pill (Wispr's Flow Bar has no live text; Live stays an opt-in). Stores
+    // that already hold a style keep it. Position is independent.
     #[cfg(target_os = "linux")]
     return OverlayStyle::None;
     #[cfg(not(target_os = "linux"))]
-    return OverlayStyle::Live;
+    return OverlayStyle::Minimal;
 }
 
 fn default_vad_enabled() -> bool {
@@ -846,6 +912,10 @@ fn default_learn_from_corrections() -> bool {
 }
 
 /// FlowState: ES-ordliste forhåndslastet — redigerbar i innstillinger.
+fn default_dictionary_sort() -> String {
+    "az".to_string()
+}
+
 fn default_custom_words() -> Vec<String> {
     vec![
         "Entreprenørskolen".to_string(),
@@ -1237,6 +1307,21 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: "escape".to_string(),
         },
     );
+    #[cfg(target_os = "macos")]
+    let default_paste_last_shortcut = "command+option+v";
+    #[cfg(not(target_os = "macos"))]
+    let default_paste_last_shortcut = "ctrl+alt+v";
+
+    bindings.insert(
+        "paste_last_transcript".to_string(),
+        ShortcutBinding {
+            id: "paste_last_transcript".to_string(),
+            name: "Paste Last Transcript".to_string(),
+            description: "Pastes the most recent transcript again at the cursor.".to_string(),
+            default_binding: default_paste_last_shortcut.to_string(),
+            current_binding: default_paste_last_shortcut.to_string(),
+        },
+    );
 
     AppSettings {
         settings_schema_version: default_settings_schema_version(),
@@ -1264,13 +1349,21 @@ pub fn get_default_settings() -> AppSettings {
         selected_language: "auto".to_string(),
         overlay_position: default_overlay_position(),
         meeting_bar_position: None,
+        show_bar_at_all_times: default_show_bar_at_all_times(),
+        scratchpad_in_flow_bar: false,
+        flow_bar_style_chip: false,
         meeting_reminder_minutes: default_meeting_reminder_minutes(),
         record_system_audio: default_record_system_audio(),
         debug_mode: false,
         log_level: default_log_level(),
-        custom_words: Vec::new(),
+        custom_words: default_custom_words(),
+        starred_words: Vec::new(),
+        learned_words: Vec::new(),
+        dictionary_sort: default_dictionary_sort(),
+        post_process_context_prompts: std::collections::HashMap::new(),
         learn_from_corrections: true,
-        snippets: Vec::new(),
+        add_learned_words_automatically: false,
+        snippets: default_snippets(),
         model_unload_timeout: ModelUnloadTimeout::default(),
         word_correction_threshold: default_word_correction_threshold(),
         history_limit: default_history_limit(),
@@ -1365,7 +1458,49 @@ pub fn load_or_create_app_settings(app: &AppHandle) -> AppSettings {
     settings
 }
 
+/// Process-wide lock that serialises settings access (S2). Every whole-object
+/// read-modify-write that goes through [`update_settings`] holds it across
+/// its read and its write; [`get_settings`] and [`write_settings`] take it
+/// per call, so a plain write can never land inside an update's read-modify-
+/// write window and silently revert it.
+fn settings_lock() -> &'static std::sync::Mutex<()> {
+    static LOCK: std::sync::OnceLock<std::sync::Mutex<()>> = std::sync::OnceLock::new();
+    LOCK.get_or_init(|| std::sync::Mutex::new(()))
+}
+
+/// Read the settings, apply `update`, and write them back as one step no
+/// concurrent writer can revert. Prefer this over `get_settings` followed by
+/// `write_settings` wherever settings are mutated; whole lists (dictionary
+/// words, snippets, prompts, app rules) are the fields where a lost update
+/// hurts most, because the frontend replaces them wholesale.
+///
+/// The lock is a plain `Mutex`, not reentrant, and it is held across the
+/// read and the write. The closure must therefore not call `get_settings`,
+/// `write_settings`, or `update_settings` (deadlock), and must not emit an
+/// event whose handler reads settings synchronously. Do that work after
+/// this returns, using the returned `AppSettings`.
+pub fn update_settings(
+    app: &AppHandle,
+    update: impl FnOnce(&mut AppSettings),
+) -> AppSettings {
+    let _guard = settings_lock()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    let mut settings = read_settings(app);
+    update(&mut settings);
+    persist_settings(app, &settings);
+    settings
+}
+
 pub fn get_settings(app: &AppHandle) -> AppSettings {
+    let _guard = settings_lock()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    read_settings(app)
+}
+
+/// The settings as stored, migrations applied. Callers hold [`settings_lock`].
+fn read_settings(app: &AppHandle) -> AppSettings {
     let store = app
         .store(crate::portable::store_path(SETTINGS_STORE_PATH))
         .expect("Failed to initialize store");
@@ -1402,6 +1537,10 @@ pub fn get_settings(app: &AppHandle) -> AppSettings {
         settings
     } else {
         let default_settings = get_default_settings();
+        // An existing file that failed to parse reads here as an empty store
+        // (the plugin swallows load errors). Keep a copy before the defaults
+        // overwrite it, so one bad file cannot silently wipe the settings.
+        backup_unreadable_settings_file(app);
         store.set("settings", serde_json::to_value(&default_settings).unwrap());
         default_settings
     };
@@ -1411,6 +1550,47 @@ pub fn get_settings(app: &AppHandle) -> AppSettings {
     }
 
     settings
+}
+
+/// Copy an existing settings store file aside as
+/// `settings_store.json.corrupt-<unix time>` before defaults overwrite it
+/// (S4). The store plugin pretends an unreadable file is an empty store, so
+/// this is the only chance the user's settings survive a corrupt or
+/// partially-written file. Fresh installs have no file and are left alone.
+fn backup_unreadable_settings_file(app: &AppHandle) {
+    let relative = crate::portable::store_path(SETTINGS_STORE_PATH);
+    // Portable mode resolves to an absolute path; otherwise the plugin
+    // resolves the relative name against the app data directory.
+    let path = if relative.is_absolute() {
+        relative
+    } else {
+        match crate::portable::app_data_dir(app) {
+            Ok(dir) => dir.join(relative),
+            Err(e) => {
+                warn!("Cannot locate the settings store to back it up: {e}");
+                return;
+            }
+        }
+    };
+    if !path.is_file() {
+        return;
+    }
+    let timestamp = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|since| since.as_secs())
+        .unwrap_or(0);
+    let backup = path.with_file_name(format!(
+        "{}.corrupt-{timestamp}",
+        path.file_name().unwrap_or_default().to_string_lossy()
+    ));
+    warn!(
+        "The settings store {} exists but its 'settings' key did not load; it may be corrupt. Backing it up to {} before writing defaults",
+        path.display(),
+        backup.display()
+    );
+    if let Err(e) = std::fs::read(&path).and_then(|bytes| std::fs::write(&backup, bytes)) {
+        error!("Failed to back up the unreadable settings file: {e}");
+    }
 }
 
 /// Rebuilds settings from a store value that failed to deserialize as a whole.
@@ -1648,11 +1828,19 @@ pub fn update_checks_effectively_enabled(settings: &AppSettings) -> bool {
 }
 
 pub fn write_settings(app: &AppHandle, settings: AppSettings) {
+    let _guard = settings_lock()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+    persist_settings(app, &settings);
+}
+
+/// Write the settings back to the store. Callers hold [`settings_lock`].
+fn persist_settings(app: &AppHandle, settings: &AppSettings) {
     let store = app
         .store(crate::portable::store_path(SETTINGS_STORE_PATH))
         .expect("Failed to initialize store");
 
-    store.set("settings", serde_json::to_value(&settings).unwrap());
+    store.set("settings", serde_json::to_value(settings).unwrap());
 }
 
 pub fn get_bindings(app: &AppHandle) -> HashMap<String, ShortcutBinding> {
@@ -1975,9 +2163,36 @@ mod tests {
 
     #[cfg(not(target_os = "linux"))]
     #[test]
-    fn default_overlay_style_is_live_when_overlay_defaults_on() {
+    fn default_overlay_style_is_minimal_when_overlay_defaults_on() {
         let settings = get_default_settings();
+        assert_eq!(settings.overlay_style, OverlayStyle::Minimal);
+    }
+
+    #[test]
+    fn stored_live_overlay_style_survives_the_minimal_default() {
+        // Existing users who chose (or defaulted to) Live keep it: the
+        // default only applies where the store has no value.
+        let mut stored = serde_json::to_value(get_default_settings()).unwrap();
+        stored["overlay_style"] = serde_json::json!("live");
+        let settings: AppSettings = serde_json::from_value(stored).unwrap();
         assert_eq!(settings.overlay_style, OverlayStyle::Live);
+    }
+
+    #[test]
+    fn flow_bar_settings_default_to_wispr_behaviour() {
+        let settings = get_default_settings();
+        assert!(settings.show_bar_at_all_times);
+        assert!(!settings.scratchpad_in_flow_bar);
+        assert!(!settings.flow_bar_style_chip);
+        // A store written before these settings existed loads the defaults.
+        let mut stored = serde_json::to_value(get_default_settings()).unwrap();
+        let object = stored.as_object_mut().unwrap();
+        object.remove("show_bar_at_all_times");
+        object.remove("scratchpad_in_flow_bar");
+        object.remove("flow_bar_style_chip");
+        let settings: AppSettings = serde_json::from_value(stored).unwrap();
+        assert!(settings.show_bar_at_all_times);
+        assert!(!settings.scratchpad_in_flow_bar);
     }
 
     #[test]

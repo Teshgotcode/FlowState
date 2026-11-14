@@ -697,19 +697,22 @@ impl TranscriptionManager {
 
     /// Kicks off the model loading in a background thread if it's not already loaded
     pub fn initiate_model_load(&self) {
-        let mut is_loading = self.is_loading.lock().unwrap();
-        if *is_loading {
+        // Claim the loading flag atomically; the guard clears it and wakes
+        // waiters on drop, so a panic inside the load thread can never leave
+        // `is_loading` stuck at true (and block every future load).
+        let Some(loading) = self.try_start_loading() else {
             return;
-        }
+        };
 
         let reload_pending = self.reload_model_on_next_use.load(Ordering::Acquire);
         if !reload_pending && self.is_model_loaded() {
-            return;
+            return; // the guard drops here: flag cleared, waiters notified
         }
 
-        *is_loading = true;
         let self_clone = self.clone();
         thread::spawn(move || {
+            // Dropped on every exit path of this thread, panic included.
+            let _loading = loading;
             if reload_pending {
                 self_clone
                     .reload_model_on_next_use
@@ -718,10 +721,15 @@ impl TranscriptionManager {
             let settings = get_settings(&self_clone.app_handle);
             if let Err(e) = self_clone.load_model(&settings.selected_model) {
                 error!("Failed to load model: {}", e);
+                // Nothing was heard and nothing will be: say so once, instead of
+                // letting the shortcut look like it did nothing at all.
+                let code = if settings.selected_model.trim().is_empty() {
+                    crate::overlay::ERROR_NO_MODEL
+                } else {
+                    crate::overlay::ERROR_MODEL_FAILED
+                };
+                crate::overlay::show_error_overlay(&self_clone.app_handle, code);
             }
-            let mut is_loading = self_clone.is_loading.lock().unwrap();
-            *is_loading = false;
-            self_clone.loading_condvar.notify_all();
         });
     }
 
@@ -1434,6 +1442,7 @@ fn run_setup(info: &LoadedInfo, settings: &AppSettings, language: LanguageDecisi
                 .as_deref()
                 .is_some_and(is_norwegian_language),
             &settings.custom_words,
+            &settings.starred_words,
         ),
         ..Default::default()
     };
@@ -1729,12 +1738,31 @@ fn vocabulary_for_model(
     supports_vocabulary: bool,
     language_is_norwegian: bool,
     custom_words: &[String],
+    starred_words: &[String],
 ) -> Vec<String> {
     if supports_vocabulary && language_is_norwegian {
-        custom_words.to_vec()
+        words_with_starred_first(custom_words, starred_words)
     } else {
         Vec::new()
     }
+}
+
+/// Dictionary order for the engine's bias prompt: starred words first, so
+/// they survive any length cap on the vocabulary slot, then the rest. Each
+/// half keeps its stored order; a starred word is never listed twice.
+fn words_with_starred_first(custom_words: &[String], starred_words: &[String]) -> Vec<String> {
+    let is_starred = |word: &String| {
+        starred_words
+            .iter()
+            .any(|starred| starred.eq_ignore_ascii_case(word))
+    };
+    let mut ordered: Vec<String> = custom_words
+        .iter()
+        .filter(|w| is_starred(w))
+        .cloned()
+        .collect();
+    ordered.extend(custom_words.iter().filter(|w| !is_starred(w)).cloned());
+    ordered
 }
 
 struct TranscribeCppRunPlan {
@@ -2237,7 +2265,11 @@ mod tests {
 
     #[test]
     fn voice_commands_rewrite_spoken_punctuation() {
-        let settings = AppSettings::default();
+        let mut settings = AppSettings::default();
+        // The seeded ES dictionary fuzzy-corrects part of this sentence
+        // ("linje" reads as "linjeforening"); voice commands are under test
+        // here, not the dictionary.
+        settings.custom_words.clear();
         let result = post_process_transcription_text(
             "Hei komma ny linje Hvordan går det spørsmålstegn".to_string(),
             &settings,
@@ -2657,13 +2689,38 @@ mod tests {
     fn vocabulary_is_only_sent_for_norwegian_runs() {
         let words = vec!["Solan".to_string()];
 
-        assert_eq!(vocabulary_for_model(true, true, &words), words);
-        assert!(vocabulary_for_model(true, false, &words).is_empty());
-        assert!(vocabulary_for_model(false, true, &words).is_empty());
+        assert_eq!(vocabulary_for_model(true, true, &words, &[]), words);
+        assert!(vocabulary_for_model(true, false, &words, &[]).is_empty());
+        assert!(vocabulary_for_model(false, true, &words, &[]).is_empty());
         assert!(is_norwegian_language("no"));
         assert!(is_norwegian_language("nb"));
         assert!(is_norwegian_language("nn"));
         assert!(!is_norwegian_language("en"));
+    }
+
+    #[test]
+    fn starred_words_lead_the_engine_vocabulary() {
+        let words = ["gründer", "Solan", "aksjekapital"]
+            .map(String::from)
+            .to_vec();
+
+        // Starred (in their own order) come first, the rest keep theirs.
+        assert_eq!(
+            words_with_starred_first(&words, &["aksjekapital".to_string()]),
+            ["aksjekapital", "gründer", "Solan"]
+        );
+        // Case-insensitive star match; the starred half keeps dictionary order.
+        assert_eq!(
+            words_with_starred_first(&words, &["solan".to_string(), "gründer".to_string()]),
+            ["gründer", "Solan", "aksjekapital"]
+        );
+        // Nothing starred: the dictionary order is unchanged, no duplicates.
+        assert_eq!(words_with_starred_first(&words, &[]), words);
+        // Stars on words that are not in the dictionary add nothing.
+        assert_eq!(
+            words_with_starred_first(&words, &["ukjent".to_string()]),
+            words
+        );
     }
 
     /// A model segment row, as transcribe-cpp reports it.

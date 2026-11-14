@@ -32,8 +32,12 @@ interface IconProps {
   [key: string]: any;
 }
 
-/** Three bands: the three daily screens, the library, the app's own settings. */
-type SectionGroup = "daily" | "system";
+/**
+ * Sidebar bands, top to bottom: where text gets made, what shapes it, how it
+ * is going. `system` is the foot pinned to the bottom edge (Settings, Help);
+ * hidden system sections are Settings tabs and light up the Settings row.
+ */
+type SectionGroup = "capture" | "words" | "progress" | "system";
 
 interface SectionConfig {
   labelKey: string;
@@ -52,56 +56,56 @@ export const SECTIONS_CONFIG = {
     icon: AudioLines,
     component: null,
     enabled: () => true,
-    group: "daily",
-  },
-  notetaker: {
-    labelKey: "sidebar.notetaker",
-    icon: Mic,
-    component: null,
-    enabled: () => true,
-    group: "daily",
-  },
-  insights: {
-    labelKey: "sidebar.insights",
-    icon: ChartNoAxesColumn,
-    component: null,
-    enabled: () => true,
-    group: "daily",
-  },
-  dictionary: {
-    labelKey: "sidebar.dictionary",
-    icon: BookOpen,
-    component: null,
-    enabled: () => true,
-    group: "daily",
-  },
-  snippets: {
-    labelKey: "sidebar.snippets",
-    icon: Scissors,
-    component: null,
-    enabled: () => true,
-    group: "daily",
-  },
-  style: {
-    labelKey: "sidebar.style",
-    icon: Paintbrush,
-    component: null,
-    enabled: () => true,
-    group: "daily",
-  },
-  transforms: {
-    labelKey: "sidebar.transforms",
-    icon: Sparkles,
-    component: null,
-    enabled: () => true,
-    group: "daily",
+    group: "capture",
   },
   scratchpad: {
     labelKey: "sidebar.scratchpad",
     icon: SquarePen,
     component: null,
     enabled: () => true,
-    group: "daily",
+    group: "capture",
+  },
+  notetaker: {
+    labelKey: "sidebar.notetaker",
+    icon: Mic,
+    component: null,
+    enabled: () => true,
+    group: "capture",
+  },
+  insights: {
+    labelKey: "sidebar.insights",
+    icon: ChartNoAxesColumn,
+    component: null,
+    enabled: () => true,
+    group: "progress",
+  },
+  dictionary: {
+    labelKey: "sidebar.dictionary",
+    icon: BookOpen,
+    component: null,
+    enabled: () => true,
+    group: "words",
+  },
+  snippets: {
+    labelKey: "sidebar.snippets",
+    icon: Scissors,
+    component: null,
+    enabled: () => true,
+    group: "words",
+  },
+  style: {
+    labelKey: "sidebar.style",
+    icon: Paintbrush,
+    component: null,
+    enabled: () => true,
+    group: "words",
+  },
+  transforms: {
+    labelKey: "sidebar.transforms",
+    icon: Sparkles,
+    component: null,
+    enabled: () => true,
+    group: "words",
   },
   general: {
     labelKey: "sidebar.settings",
@@ -184,21 +188,29 @@ export const SECTIONS_CONFIG = {
   },
 } as const satisfies Record<string, SectionConfig>;
 
+/** Band order and headings; rows keep their SECTIONS_CONFIG order inside. */
+const BANDS = [
+  { id: "capture", labelKey: "sidebar.groups.capture" },
+  { id: "words", labelKey: "sidebar.groups.words" },
+  { id: "progress", labelKey: "sidebar.groups.progress" },
+] as const satisfies readonly { id: SectionGroup; labelKey: string }[];
+
 interface SidebarProps {
   activeSection: SidebarSection;
   onSectionChange: (section: SidebarSection) => void;
 }
 
 /**
- * The rail: brand, the working screens, the "Kom i gang" card until it is
- * dismissed, and a foot that says what the app is doing right now.
+ * The rail: brand, the working screens in headed bands (scrolling when the
+ * window is short), the "Kom i gang" card until it is dismissed, and a foot
+ * pinned to the bottom edge with Settings, Help and what the app is doing.
  */
 export const Sidebar: React.FC<SidebarProps> = ({
   activeSection,
   onSectionChange,
 }) => {
   const { t } = useTranslation();
-  const { settings } = useSettings();
+  const { settings, updateSetting } = useSettings();
   const { models, currentModel } = useModelStore();
   const modelName = models.find((model) => model.id === currentModel)?.name;
   // "System" leaves data-theme unset, so ask the OS which one is showing.
@@ -211,7 +223,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [dark, setDark] = useState(isDarkNow);
   const toggleTheme = () => {
     const next = isDarkNow() ? "light" : "dark";
+    // Same as TopBar: persist the choice so the overlay hears theme-changed
+    // and syncThemeFromSettings() keeps it after a restart.
     applyTheme(next);
+    updateSetting("theme", next);
     setDark(next === "dark");
   };
   const [promoHidden, setPromoHidden] = useState(() => {
@@ -236,31 +251,44 @@ export const Sidebar: React.FC<SidebarProps> = ({
         !(config as { hidden?: boolean }).hidden && config.enabled(settings),
     )
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
-  const daily = visible.filter((section) => section.group === "daily");
+  const bands = BANDS.map((band) => ({
+    ...band,
+    rows: visible.filter((section) => section.group === band.id),
+  })).filter((band) => band.rows.length > 0);
   const system = visible.filter((section) => section.group === "system");
+  // Settings tabs (Models, Sync, ...) are not rows of their own; while one of
+  // them is open the Settings row is the one that reads as selected.
+  const activeConfig = SECTIONS_CONFIG[activeSection] as {
+    hidden?: boolean;
+    group: SectionGroup;
+  };
+  const activeRow: SidebarSection =
+    activeConfig?.hidden && activeConfig.group === "system"
+      ? "general"
+      : activeSection;
+
+  const focusRing =
+    "focus:outline-none focus-visible:ring-2 focus-visible:ring-focus";
 
   const renderRow = (section: (typeof visible)[number]) => {
     const Icon = section.icon;
-    const isActive = activeSection === section.id;
+    const isActive = activeRow === section.id;
     return (
       <button
         key={section.id}
         type="button"
         aria-current={isActive ? "page" : undefined}
         onClick={() => onSectionChange(section.id)}
-        className={`relative flex h-[30px] cursor-pointer items-center gap-[9px] rounded-[6px] px-[9px] text-start transition-colors ${
+        className={`relative flex h-[32px] shrink-0 cursor-pointer items-center gap-[9px] rounded-[8px] px-[9px] text-start transition-colors duration-[var(--flow-dur-quick)] ease-[var(--flow-ease-spring)] ${focusRing} ${
           isActive
-            ? "bg-surface font-[600] text-text shadow-[0_1px_3px_rgba(20,22,28,0.10)]"
-            : "text-ink-2 hover:bg-wash hover:text-text"
+            ? "bg-text/[0.07] font-[600] text-text"
+            : "text-ink-2 hover:bg-text/[0.04] hover:text-text"
         }`}
       >
-        {isActive && (
-          <span className="absolute start-[3px] top-[8px] bottom-[8px] w-[2.5px] rounded-full bg-logo-primary" />
-        )}
         <Icon
           size={15}
-          strokeWidth={1.8}
-          className={`shrink-0 ${isActive ? "text-logo-primary" : "opacity-70"}`}
+          strokeWidth={isActive ? 2 : 1.8}
+          className={`shrink-0 ${isActive ? "text-text" : "text-ink-3"}`}
         />
         <span className="min-w-0 flex-1 truncate text-[13px] leading-[20px] tracking-[-0.005em]">
           {t(section.labelKey)}
@@ -273,9 +301,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
     <nav
       aria-label={t("sidebar.mainNav")}
       data-tauri-drag-region
-      className="flex h-full w-[210px] shrink-0 flex-col border-e border-line bg-surface-soft px-[10px] pt-[38px] pb-[12px]"
+      className="flex h-full w-[228px] shrink-0 flex-col px-[12px] pt-[38px] pb-[10px]"
     >
-      <div className="flex items-center gap-[8px] px-[6px] pb-[22px]">
+      <div className="flex shrink-0 items-center gap-[8px] px-[6px] pb-[16px]">
         <FlowStateMark width={18} height={19} />
         {/* eslint-disable-next-line i18next/no-literal-string -- the wordmark */}
         <span className="font-ui text-[13.5px] font-[650] tracking-[-0.01em] text-text">
@@ -283,54 +311,89 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </span>
       </div>
 
-      <div className="flex flex-col gap-[2px]">{daily.map(renderRow)}</div>
-
-      <div className="mt-auto flex flex-col gap-[2px]">
-        {!promoHidden && (
-          <div className="mb-[10px] rounded-[10px] border border-line bg-surface p-[12px]">
-            <div className="flex items-center justify-between pe-[2px]">
-              <span className="text-[12px] font-semibold text-text">
-                {t("sidebar.promoTitle")}
-              </span>
-              <button
-                type="button"
-                onClick={dismissPromo}
-                aria-label={t("home.dismiss")}
-                title={t("home.dismiss")}
-                className="flex h-[20px] w-[20px] shrink-0 cursor-pointer items-center justify-center rounded-[5px] text-ink-3 transition-colors hover:bg-wash hover:text-text"
+      {/* The bands scroll on a short window; the foot below never moves. The
+          4px bleed keeps focus rings from being clipped by the scroller. */}
+      <div className="-mx-[4px] flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain px-[4px] pt-[2px] pb-[4px]">
+        {bands.map((band, index) => {
+          const headingId = `sidebar-band-${band.id}`;
+          return (
+            <div
+              key={band.id}
+              role="group"
+              aria-labelledby={headingId}
+              className={`flex flex-col gap-[2px] ${index > 0 ? "mt-[18px]" : ""}`}
+            >
+              <div
+                id={headingId}
+                className="truncate px-[9px] pb-[3px] text-[11.5px] leading-[16px] font-[560] text-ink-3"
               >
-                <X size={12} />
-              </button>
+                {t(band.labelKey)}
+              </div>
+              {band.rows.map(renderRow)}
             </div>
-            <div className="mt-[6px] flex flex-col gap-[2px]">
-              <button
-                type="button"
-                onClick={() => onSectionChange("general")}
-                className="flex cursor-pointer items-center gap-[8px] rounded-[6px] px-[6px] py-[5px] text-start text-[12px] text-ink-2 transition-colors hover:bg-wash hover:text-text"
-              >
-                <Keyboard
-                  size={13}
-                  strokeWidth={1.8}
-                  className="shrink-0 opacity-70"
-                />
-                {t("sidebar.promoShortcuts")}
-              </button>
-              <button
-                type="button"
-                onClick={() => onSectionChange("help")}
-                className="flex cursor-pointer items-center gap-[8px] rounded-[6px] px-[6px] py-[5px] text-start text-[12px] text-ink-2 transition-colors hover:bg-wash hover:text-text"
-              >
-                <BookOpen
-                  size={13}
-                  strokeWidth={1.8}
-                  className="shrink-0 opacity-70"
-                />
-                <span>{t("sidebar.promoDocs")}</span>
-              </button>
+          );
+        })}
+
+        {!promoHidden && (
+          <div className="mt-auto shrink-0 pt-[20px]">
+            <div className="rounded-[10px] border border-line bg-surface p-[12px]">
+              <div className="flex items-center justify-between pe-[2px]">
+                <span className="text-[12px] font-semibold text-text">
+                  {t("sidebar.promoTitle")}
+                </span>
+                <button
+                  type="button"
+                  onClick={dismissPromo}
+                  aria-label={t("home.dismiss")}
+                  title={t("home.dismiss")}
+                  className={`flex h-[20px] w-[20px] shrink-0 cursor-pointer items-center justify-center rounded-[5px] text-ink-3 transition-colors hover:bg-wash hover:text-text ${focusRing}`}
+                >
+                  <X size={12} />
+                </button>
+              </div>
+              <div className="mt-[6px] flex flex-col gap-[2px]">
+                <button
+                  type="button"
+                  onClick={() => onSectionChange("general")}
+                  className={`flex cursor-pointer items-center gap-[8px] rounded-[6px] px-[6px] py-[5px] text-start text-[12px] text-ink-2 transition-colors hover:bg-wash hover:text-text ${focusRing}`}
+                >
+                  <Keyboard
+                    size={13}
+                    strokeWidth={1.8}
+                    className="shrink-0 opacity-70"
+                  />
+                  {t("sidebar.promoShortcuts")}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onSectionChange("help")}
+                  className={`flex cursor-pointer items-center gap-[8px] rounded-[6px] px-[6px] py-[5px] text-start text-[12px] text-ink-2 transition-colors hover:bg-wash hover:text-text ${focusRing}`}
+                >
+                  <BookOpen
+                    size={13}
+                    strokeWidth={1.8}
+                    className="shrink-0 opacity-70"
+                  />
+                  <span>{t("sidebar.promoDocs")}</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
-        <div className="flex items-center gap-[6px] pb-[8px] ps-[9px] pe-[2px] text-[11px] text-ink-3">
+      </div>
+
+      {/* The foot: utilities pinned to the bottom edge, set off by a hairline
+          instead of a heading. */}
+      <div className="flex shrink-0 flex-col pt-[8px]">
+        <div aria-hidden className="mx-[9px] mb-[8px] h-px bg-line" />
+        <div
+          role="group"
+          aria-label={t("sidebar.system")}
+          className="flex flex-col gap-[2px]"
+        >
+          {system.map(renderRow)}
+        </div>
+        <div className="mt-[6px] flex h-[26px] items-center gap-[14px] ps-[13px] pe-[3px] text-[11px] text-ink-3">
           <span className="h-[6px] w-[6px] shrink-0 rounded-full bg-moss" />
           <span className="min-w-0 flex-1 truncate">
             {modelName ?? t("sidebar.localModel")}
@@ -340,12 +403,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onClick={toggleTheme}
             aria-label={t("palette.toggleTheme")}
             title={t("palette.toggleTheme")}
-            className="flex h-[22px] w-[22px] shrink-0 cursor-pointer items-center justify-center rounded-[5px] text-ink-3 hover:bg-wash hover:text-text"
+            className={`flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] text-ink-3 transition-colors duration-[var(--flow-dur-quick)] hover:bg-text/[0.04] hover:text-text ${focusRing}`}
           >
             {dark ? <Sun size={13} /> : <Moon size={13} />}
           </button>
         </div>
-        {system.map(renderRow)}
       </div>
     </nav>
   );

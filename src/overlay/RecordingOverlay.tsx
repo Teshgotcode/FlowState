@@ -1,6 +1,13 @@
 import { emit, listen } from "@tauri-apps/api/event";
-import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { type as currentOsType } from "@tauri-apps/plugin-os";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
+import { Trans, useTranslation } from "react-i18next";
 import "./RecordingOverlay.css";
 import { commands, events } from "@/bindings";
 import type {
@@ -13,82 +20,231 @@ import type {
 import { useMeetingClock } from "@/hooks/useMeetingClock";
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import type { ModelStateEvent } from "@/lib/types/events";
-import { formatDurationClock } from "@/lib/utils/format";
+import { MIC_SILENCE_WARN_MS, micHasSound } from "@/lib/utils/micSilence";
 import { getLanguageDirection } from "@/lib/utils/rtl";
+import { barLanguageOptions } from "@/lib/utils/barLanguages";
+import { languageName } from "@/lib/constants/languages";
+import { suggestedLanguages } from "@/lib/utils/languageSuggestions";
+import { keycapLabel, type OSType } from "@/lib/utils/keyboard";
+import {
+  RECLICK_CANCEL_MS,
+  WAVE_BAR_COUNT,
+  audioScale,
+  barDelayS,
+  barHeightScale,
+  isSideEdge,
+  levelFromBuckets,
+  sizeFor,
+  smoothLevel,
+  type BarEdge,
+  type PillState,
+} from "./pillGeometry";
+
+// The Flow Bar: one black pill that rests at the screen edge, opens into the
+// "ready" pill on hover, and morphs through the dictation states, plus the
+// meeting pill while a meeting records. Sizes, colours and timings follow
+// Wispr Flow's bar (see pillGeometry.ts and RecordingOverlay.css).
 
 type OverlayState =
   | "recording"
   | "streaming"
   | "transcribing"
   | "processing"
-  | "command";
+  | "command"
+  | "error";
 
-// The meeting bar's views — the Flow-style floating bar that shares this
-// window with the dictation overlay. "recording" and "idle" follow the
-// backend's meeting state; "wrapping" is frontend-only: the short "Saving…"
-// pill shown while `stop_meeting` is in flight, until the history entry is
-// in place.
 type MeetingSession = "idle" | "recording";
 
-// `show-overlay` carries the dictation states and the meeting bar's two
-// backend-driven views.
+// `show-overlay` carries the dictation states and the bar's own views.
 const isDictationState = (state: string): state is OverlayState =>
   state === "recording" ||
   state === "streaming" ||
   state === "transcribing" ||
   state === "processing" ||
-  state === "command";
+  state === "command" ||
+  state === "error";
 
-// Number of reactive bars in the waveform (the simple, smoothed style shared by
-// every overlay form). Mic levels arrive as 16 FFT buckets; we take the first N.
-const WAVE_BARS = 9;
+const detectOs = (): OSType => {
+  try {
+    const os = currentOsType();
+    return os === "macos" || os === "windows" || os === "linux"
+      ? os
+      : "unknown";
+  } catch {
+    return "unknown";
+  }
+};
+const OS: OSType = detectOs();
 
-// A pointer must travel this far before a press on the meeting bar becomes a
-// drag; anything less stays a click (start / stop the meeting).
+// macOS runs the bar in one fixed, click-through window (overlay.rs): the
+// webview reports its hit rects, the backend drives hover, and the pill sits
+// 14 px from the edge inside the window. Elsewhere the window is an exact fit
+// and the webview handles hover itself.
+const FIXED_FRAME = OS === "macos";
+
+// A pointer must travel this far before a press on the bar becomes a drag;
+// anything less stays a click.
 const BAR_DRAG_THRESHOLD_PX = 6;
 
-// Only call out a model load in the Live preview once it has run this long.
-// Warm loads finish in well under this (~0.2s on Apple Silicon, ~1.5s on a
-// Windows CPU backend), so the common case never flashes a loading notice while
-// the user is speaking; cold loads can take 40s+.
+// Only call out a model load in the Live card once it has run this long, so
+// warm loads never flash a notice while the user is speaking.
 const SLOW_MODEL_LOAD_MS = 2000;
 
+// How long the "nothing selected" command hint stays up.
+const COMMAND_HINT_MS = 5000;
+
+const isListeningState = (state: OverlayState) =>
+  state === "recording" || state === "streaming" || state === "command";
+
 // ---- The long-meeting prompt (S-24) ----
-// How long the prompt stays up on its own: it dismisses itself so the bar
-// never carries a stale question (and never blocks the app underneath for
-// longer than a courtesy glance).
 const MEETING_NUDGE_AUTO_DISMISS_MS = 30_000;
+
+/** Hover open/close delays for the exact-fit windows (no backend poll). */
+const HOVER_OPEN_MS = 140;
+const HOVER_CLOSE_MS = 200;
+
+const shortLanguageCode = (code: string) =>
+  code === "auto" ? "A" : code.split(/[-_]/)[0].toUpperCase();
+
+const shortcutLabel = (binding: string | undefined) => {
+  if (!binding) return "fn";
+  const label = keycapLabel(binding, OS);
+  return label === "Fn" ? "fn" : label;
+};
+
+// ---- Building blocks ----
+
+const Waveform = React.forwardRef<
+  HTMLDivElement,
+  { animated: boolean; live: boolean; vertical: boolean; bars?: number }
+>(({ animated, live, vertical, bars = WAVE_BAR_COUNT }, ref) => (
+  <div
+    ref={ref}
+    className={`pwave ${live ? "live" : ""} ${vertical ? "vertical" : ""} ${
+      bars !== WAVE_BAR_COUNT ? "meeting" : ""
+    }`}
+    aria-hidden="true"
+  >
+    {Array.from({ length: bars }, (_, i) => (
+      <i
+        key={i}
+        className={animated ? "wave-anim" : undefined}
+        style={
+          {
+            "--bar-height-scale": barHeightScale(i, bars),
+            animationDelay: `${barDelayS(i, bars)}s`,
+          } as React.CSSProperties
+        }
+      />
+    ))}
+  </div>
+));
+Waveform.displayName = "Waveform";
+
+const Spinner: React.FC = () => (
+  <span className="pspin" aria-hidden="true">
+    {Array.from({ length: 8 }, (_, i) => (
+      <i
+        key={i}
+        style={{
+          transform: `rotate(${45 * i}deg) translate(0, -6px)`,
+          animationDelay: `${-(7 - i) * 0.1375}s`,
+        }}
+      />
+    ))}
+  </span>
+);
+
+const MicIcon: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    width="16"
+    height="16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="9" y="2.5" width="6" height="12" rx="3" />
+    <path d="M5.5 11a6.5 6.5 0 0 0 13 0M12 17.5V21" />
+  </svg>
+);
+
+const NotesIcon: React.FC = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+  >
+    <rect x="5" y="3.5" width="14" height="17" rx="2.5" />
+    <path d="M9 9h6M9 13h6M9 17h3" />
+  </svg>
+);
+
+const BoltIcon: React.FC = () => (
+  <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+    <path d="M13.2 2.5 4.8 13.4h5.1l-1.1 8.1 8.4-10.9h-5.1z" />
+  </svg>
+);
+
+const Tooltip: React.FC<{ children: React.ReactNode; gap?: number }> = ({
+  children,
+  gap = 4,
+}) => (
+  <span
+    className="btip"
+    role="tooltip"
+    style={{ "--tip-gap": `${gap}px` } as React.CSSProperties}
+  >
+    {children}
+  </span>
+);
+
+interface BarPrefs {
+  spokenLanguages: string[];
+  selectedLanguage: string;
+  scratchpad: boolean;
+  styleChip: boolean;
+  shortcut: string;
+}
 
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
-  // The tone/style the dictation will be cleaned up in (per-app rule or the
-  // globally selected prompt), plus the little quick-switch menu.
+  // Which failure the error pill is showing; the backend sends a code, never
+  // localized copy, so the app language decides the wording.
+  const [errorCode, setErrorCode] = useState<string>("start_failed");
+  // A failed take rolls the overlay back to idle right after it reports, and
+  // that hide would erase the message before it is read.
+  const stateRef = useRef(state);
+  stateRef.current = state;
+  const errorUntilRef = useRef(0);
   const [styleInfo, setStyleInfo] = useState<ActiveStyleInfo | null>(null);
-  const [styleMenuPos, setStyleMenuPos] = useState<{
-    x: number;
-    y: number;
-  } | null>(null);
-  // `Stream::play()` returning does not mean hardware callbacks are flowing.
-  // Stay visually in an arming state until the backend processes the first
-  // actual microphone sample chunk.
+  // `Stream::play()` returning does not mean hardware callbacks are flowing:
+  // the pill stays "initializing" until the first microphone samples.
   const [captureReady, setCaptureReady] = useState(false);
-  // Command Mode: briefly shown when the command hotkey found no selection and
-  // the take continues as normal dictation.
+  // Hold-to-talk vs. hands-free (`overlay-mode` from the coordinator).
+  const [handsFree, setHandsFree] = useState(false);
+  // This take is a Command Mode take: orange from listening through
+  // processing, until the overlay hides.
+  const [commandTake, setCommandTake] = useState(false);
+  // Command Mode found no selection; the take continues as dictation.
   const [commandHint, setCommandHint] = useState(false);
-  // Recording starts while the model loads in the background. Say so, otherwise
-  // a cold start looks like an empty Live preview that ignores speech, then a
-  // hung "Transcribing..." spinner. Once recording stops, any in-flight load is
-  // the wait, so the working label reflects it immediately; the Live notice
-  // waits for the load to be slow so fast loads don't flash it mid-speech.
+  // The mic has delivered only silence since this take started.
+  const [micSilent, setMicSilent] = useState(false);
+  const heardSoundRef = useRef(false);
+  const silenceTimerRef = useRef<number | undefined>(undefined);
   const [modelLoading, setModelLoading] = useState(false);
   const [modelLoadSlow, setModelLoadSlow] = useState(false);
   const modelLoadTimerRef = useRef<ReturnType<typeof setTimeout>>();
-  // Latched per Live session: once the loading notice has opened the panel, keep
-  // it open after the load so it doesn't collapse and reopen when text arrives.
   const [loadNoticeShown, setLoadNoticeShown] = useState(false);
-  const [levels, setLevels] = useState<number[]>(Array(WAVE_BARS).fill(0));
   const [streamText, setStreamText] = useState<StreamTextEvent>({
     committed: "",
     tentative: "",
@@ -96,62 +252,56 @@ const RecordingOverlay: React.FC = () => {
   const [phase, setPhase] = useState<StreamPhase>("listening");
   const [workKind, setWorkKind] = useState<StreamWorkKind>("transcribing");
   const [elapsed, setElapsed] = useState(0);
-  // Bumped on each new streaming session so the Live card remounts fresh (replays
-  // the pop-in, and never animates in from the previous panel's open size).
   const [session, setSession] = useState(0);
-  // Overlay placement (which edge of the screen). The Live panel grows downward
-  // from a top overlay (oldest line under the pill) and upward from a bottom one;
-  // left/right anchor the card to that edge and center it vertically.
-  const [position, setPosition] = useState<"top" | "bottom" | "left" | "right">(
-    "bottom",
-  );
-  // The meeting bar's own dock edge — the reference statusDockEdge: pinned by a drag
-  // once one has happened, following the dictation overlay's edge until then.
-  const [barPosition, setBarPosition] = useState<
-    "top" | "bottom" | "left" | "right"
-  >("bottom");
-  // True once live text overflows the cap. A top overlay fades its top edge only
-  // while overflowing, so the resting first line stays crisp flush under the pill.
+  const [overlayStyle, setOverlayStyle] = useState<string>("minimal");
+  // Dictation edge, and the bar's own edge (pinned by a drag, else the
+  // dictation edge).
+  const [position, setPosition] = useState<BarEdge>("bottom");
+  const [barPosition, setBarPosition] = useState<BarEdge>("bottom");
   const [overflowing, setOverflowing] = useState(false);
 
-  // ---- Meeting bar (the Flow-style floating bar) ----
-  // The backend owns the session; this mirrors the meeting state it emits so
-  // every window follows one session. `null` until the first status arrives.
+  // ---- The bar at rest and the meeting pill ----
   const [meetingSession, setMeetingSession] = useState<MeetingSession | null>(
     null,
   );
-  // Set while a stop started from this bar is in flight: the "Saving…" pill
-  // until the history entry is in place, then the idle disc again.
   const [meetingWrapping, setMeetingWrapping] = useState(false);
   const [meetingStartedAt, setMeetingStartedAt] = useState(0);
-  // After this many minutes of recording, the discreet "still going?" prompt
-  // appears beside the pill (0/off = never). Read from the settings; the
-  // backend default is 60.
   const [reminderMinutes, setReminderMinutes] = useState(0);
-  // Whether the prompt is on screen right now, plus the session (by its start
-  // time) that has already had it: once per meeting, reference-style.
   const [nudgeOpen, setNudgeOpen] = useState(false);
-  // The idle disc opens into its action row while the pointer is over it.
-  const [discOpen, setDiscOpen] = useState(false);
+  // The resting bar is hovered: it opens into the "ready" pill.
+  const [hovered, setHovered] = useState(false);
+  const hoverTimerRef = useRef<number | null>(null);
+  // Hidden at rest; the hide's undo card shows while this is set.
+  const [barHidden, setBarHidden] = useState(false);
   const [barError, setBarError] = useState<string | null>(null);
-  const discTimerRef = useRef<number | null>(null);
-  // Shrinking the window puts the pointer back over the disc; without a
-  // cooldown it would immediately re-expand and flicker.
-  const discShutAtRef = useRef(0);
+  const [langMenuOpen, setLangMenuOpen] = useState(false);
+  // Which element's tooltip is showing (pointer over it).
+  const [tipFor, setTipFor] = useState<string | null>(null);
+  const [prefs, setPrefs] = useState<BarPrefs>({
+    spokenLanguages: [],
+    selectedLanguage: "auto",
+    scratchpad: false,
+    styleChip: false,
+    shortcut: "fn",
+  });
   const nudgeDoneForRef = useRef(0);
   const nudgeOpenRef = useRef(false);
   const nudgeTimerRef = useRef<number | undefined>(undefined);
+  // When a click on the bar started the running dictation (0 = it didn't).
+  const barStartedAtRef = useRef(0);
 
-  const smoothedLevelsRef = useRef<number[]>(Array(16).fill(0));
-  // Live-text scroll-back: the text region "sticks" to the newest line while the
-  // user is at the bottom; if they scroll up to read history, auto-follow pauses
-  // until they scroll back down.
+  // Waveform level: the latest bucket max, smoothed per animation frame and
+  // written to the waveform as `--audio-scale` (no React render per frame).
+  const levelTargetRef = useRef(0);
+  const levelRef = useRef(0);
+  const waveRef = useRef<HTMLDivElement>(null);
+
   const capRef = useRef<HTMLDivElement>(null);
   const pinnedRef = useRef(true);
+  const stageRef = useRef<HTMLDivElement>(null);
+  const lastHitRectsRef = useRef("");
   const direction = getLanguageDirection(i18n.language);
 
-  // The recording pill's clock, from the session's start time. Ticks only
-  // while the pill is the active view.
   const meetingRecording = meetingSession === "recording" && !meetingWrapping;
   const meetingElapsed = useMeetingClock(
     meetingRecording ? meetingStartedAt : 0,
@@ -159,13 +309,6 @@ const RecordingOverlay: React.FC = () => {
   );
 
   // ---- The long-meeting prompt (S-24) ----
-  // After `reminderMinutes` of recording (60 by default), a discreet prompt
-  // appears beside the pill — "Meeting still going?" with a Stop button — so
-  // a forgotten recording is caught while it can still be saved cleanly. It
-  // asks the backend for the bar's wider footprint (the resize never focuses
-  // the window, so the app underneath keeps the keyboard), dismisses itself
-  // after 30 s, and shows at most once per session. It is never eligible
-  // while a dictation card owns the window.
   const reminderSeconds = reminderMinutes * 60;
   const nudgeEligible =
     meetingRecording &&
@@ -181,7 +324,6 @@ const RecordingOverlay: React.FC = () => {
       commands
         .setMeetingBarNudge(true)
         .catch((err) => console.warn("Failed to widen the meeting bar:", err));
-      // Auto-dismiss: the prompt never lingers on the bar.
       clearTimeout(nudgeTimerRef.current);
       nudgeTimerRef.current = window.setTimeout(() => {
         nudgeDoneForRef.current = meetingStartedAt;
@@ -194,8 +336,6 @@ const RecordingOverlay: React.FC = () => {
           );
       }, MEETING_NUDGE_AUTO_DISMISS_MS);
     } else if (!nudgeEligible && nudgeOpen) {
-      // The meeting ended, a dictation card took the window, or the reminder
-      // was turned off: never leave the wider footprint behind.
       clearTimeout(nudgeTimerRef.current);
       setNudgeOpen(false);
       nudgeOpenRef.current = false;
@@ -205,95 +345,162 @@ const RecordingOverlay: React.FC = () => {
     }
   }, [nudgeEligible, nudgeOpen, meetingStartedAt]);
 
-  useEffect(() => {
-    // Re-read the reminder threshold from the settings: the overlay window
-    // outlives the Settings window, so the threshold picked after it loaded
-    // must be able to reach the bar (on load, and whenever a session starts).
-    const refreshReminderMinutes = () => {
-      commands
-        .getAppSettings()
-        .then((result) => {
-          if (result.status !== "ok") return;
-          const minutes = result.data.meeting_reminder_minutes;
-          setReminderMinutes(
-            typeof minutes === "number" && minutes > 0 ? minutes : 0,
-          );
-        })
-        .catch((err) =>
-          console.warn("Failed to read the reminder setting:", err),
+  // The bar's own settings: languages for the language circle, the optional
+  // Scratchpad circle and style chip, and the shortcut the tooltips name.
+  // Re-read on mount, on hover and on each show: the overlay outlives the
+  // Settings window.
+  const refreshPrefs = useCallback(() => {
+    commands
+      .getAppSettings()
+      .then((result) => {
+        if (result.status !== "ok") return;
+        const s = result.data;
+        setPrefs({
+          spokenLanguages: s.spoken_languages ?? [],
+          selectedLanguage: s.selected_language ?? "auto",
+          scratchpad: Boolean(s.scratchpad_in_flow_bar),
+          styleChip: Boolean(s.flow_bar_style_chip),
+          shortcut: shortcutLabel(s.bindings?.transcribe?.current_binding),
+        });
+        setOverlayStyle(s.overlay_style ?? "minimal");
+        const minutes = s.meeting_reminder_minutes;
+        setReminderMinutes(
+          typeof minutes === "number" && minutes > 0 ? minutes : 0,
         );
-    };
+      })
+      .catch((err) => console.warn("Failed to read the bar settings:", err));
+  }, []);
 
+  useEffect(() => {
     const setupEventListeners = async () => {
-      const unlistenShow = await listen("show-overlay", async (event) => {
-        const overlayState = event.payload as string;
-        // A meeting-bar view owns the window: stop rendering the dictation
-        // card (the bar — which follows the meeting state — takes over). A
-        // dictation state arriving later re-shows the card as before.
-        if (!isDictationState(overlayState)) {
-          setIsVisible(false);
-          // The bar's own states say which session it shows. Trusting only
-          // the meeting-state event left the window blank whenever that event
-          // arrived before this webview had its listener up.
-          if (
-            overlayState === "meeting-recording" ||
-            overlayState === "meeting-recording-nudge"
-          ) {
-            setMeetingSession("recording");
-          } else if (overlayState === "meeting-idle") {
-            setMeetingSession("idle");
+      // Warn about a silent mic during the take. The watch arms at dictation
+      // start; the first non-silent level event clears it.
+      const armMicSilenceWatch = () => {
+        window.clearTimeout(silenceTimerRef.current);
+        heardSoundRef.current = false;
+        setMicSilent(false);
+        silenceTimerRef.current = window.setTimeout(() => {
+          if (!heardSoundRef.current && isListeningState(stateRef.current)) {
+            setMicSilent(true);
           }
-          // A re-show of the recording pill re-applies the plain pill's
-          // footprint; if the "still going?" prompt is up, ask for its wider
-          // one again so it is never clipped.
-          if (nudgeOpenRef.current) {
-            commands
-              .setMeetingBarNudge(true)
-              .catch((err) =>
-                console.warn("Failed to widen the meeting bar:", err),
-              );
-          }
-          return;
-        }
-        // Reset synchronously before settings I/O. A fast microphone can emit
-        // recording-ready while the awaits below are in flight; resetting after
-        // them would overwrite that event and leave the overlay stuck arming.
-        if (overlayState === "recording" || overlayState === "streaming") {
-          setCaptureReady(false);
-          smoothedLevelsRef.current = Array(16).fill(0);
-          setLevels(Array(WAVE_BARS).fill(0));
-          setStreamText({ committed: "", tentative: "" });
-        }
+        }, MIC_SILENCE_WARN_MS);
+      };
+      const clearMicSilenceWatch = () => {
+        window.clearTimeout(silenceTimerRef.current);
+        setMicSilent(false);
+      };
 
-        await syncLanguageFromSettings();
-        // The Live panel flows downward from a top overlay and upward from a
-        // bottom one; read the placement so the layout can flip to match.
-        try {
-          const settings = await commands.getAppSettings();
-          if (settings.status === "ok") {
-            setPosition(settings.data.overlay_position ?? "bottom");
+      const unlistenShow = await listen<string>(
+        "show-overlay",
+        async (event) => {
+          let overlayState = event.payload;
+          // The bar's own views. A dictation state arriving later re-shows
+          // the dictation pill.
+          if (
+            !isDictationState(overlayState) &&
+            overlayState !== "recording-handsfree"
+          ) {
+            setIsVisible(false);
+            setLangMenuOpen(false);
+            setBarHidden(overlayState === "bar-hidden");
+            if (
+              overlayState === "meeting-recording" ||
+              overlayState === "meeting-recording-nudge"
+            ) {
+              setMeetingSession("recording");
+            } else if (
+              overlayState === "meeting-idle" ||
+              overlayState === "bar-resting" ||
+              overlayState === "bar-hidden"
+            ) {
+              setMeetingSession("idle");
+            }
+            if (nudgeOpenRef.current) {
+              commands
+                .setMeetingBarNudge(true)
+                .catch((err) =>
+                  console.warn("Failed to widen the meeting bar:", err),
+                );
+            }
+            return;
           }
-        } catch {
-          // Keep the previous/default placement if settings can't be read.
-        }
-        setState(overlayState);
-        if (overlayState === "streaming") {
-          setPhase("listening");
-          setWorkKind("transcribing");
-          setElapsed(0);
-          setLoadNoticeShown(false);
-          setSession((s) => s + 1); // remount the card fresh for this session
-        }
+          // `recording-handsfree` is the recording pill already known to be
+          // hands-free (the preview, or a backend that says so up front).
+          const handsFreeShow = overlayState === "recording-handsfree";
+          if (handsFreeShow) overlayState = "recording";
+          // Reset synchronously before settings I/O: a fast microphone can
+          // emit recording-ready (and the coordinator its mode) while the
+          // awaits below are in flight.
+          if (
+            overlayState === "recording" ||
+            overlayState === "streaming" ||
+            overlayState === "command"
+          ) {
+            setCaptureReady(false);
+            setHandsFree(handsFreeShow);
+            setCommandTake(overlayState === "command");
+            levelTargetRef.current = 0;
+            levelRef.current = 0;
+            setStreamText({ committed: "", tentative: "" });
+            armMicSilenceWatch();
+          }
+          setHovered(false);
+          setLangMenuOpen(false);
+          setBarHidden(false);
+          stateRef.current = overlayState as OverlayState;
+          setState(overlayState as OverlayState);
+          if (overlayState === "streaming") {
+            setPhase("listening");
+            setWorkKind("transcribing");
+            setElapsed(0);
+            setLoadNoticeShown(false);
+            setSession((s) => s + 1);
+          }
+          setIsVisible(true);
+
+          await syncLanguageFromSettings();
+          try {
+            const settings = await commands.getAppSettings();
+            if (settings.status === "ok") {
+              setPosition(settings.data.overlay_position ?? "bottom");
+              setOverlayStyle(settings.data.overlay_style ?? "minimal");
+              setPrefs((prev) => ({
+                ...prev,
+                styleChip: Boolean(settings.data.flow_bar_style_chip),
+                shortcut: shortcutLabel(
+                  settings.data.bindings?.transcribe?.current_binding,
+                ),
+              }));
+            }
+          } catch {
+            // Keep the previous placement if settings can't be read.
+          }
+        },
+      );
+
+      const unlistenError = await listen<string>("overlay-error", (event) => {
+        stateRef.current = "error";
+        errorUntilRef.current = Date.now() + 4000;
+        setErrorCode(event.payload);
+        setState("error");
         setIsVisible(true);
       });
 
       const unlistenHide = await listen("hide-overlay", () => {
+        if (
+          stateRef.current === "error" &&
+          Date.now() < errorUntilRef.current
+        ) {
+          return;
+        }
         setIsVisible(false);
         setCaptureReady(false);
-        // A pending hover timer must not re-open the row while a dictation
-        // view owns the window.
-        if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
-        setDiscOpen(false);
+        setHandsFree(false);
+        setCommandTake(false);
+        barStartedAtRef.current = 0;
+        clearMicSilenceWatch();
+        if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+        setHovered(false);
       });
 
       const unlistenReady = await listen("recording-ready", () => {
@@ -301,34 +508,32 @@ const RecordingOverlay: React.FC = () => {
         setCaptureReady(true);
       });
 
-      // The bead's menu starts a meeting without opening the app window; the
-      // click path below is the only other way in, so both call the command.
+      const unlistenMode = await listen<string>("overlay-mode", (event) => {
+        setHandsFree(event.payload === "handsfree");
+      });
+
+      // The bar's menu starts a meeting without opening the app window.
       const unlistenStartMeeting = await listen("overlay-start-meeting", () => {
         commands
           .startMeeting()
           .catch((err) => console.warn("Failed to start the meeting:", err));
       });
 
-      // Command Mode fell back to plain dictation (no text was selected):
-      // a discreet hint, auto-dismissed so it never lingers.
       const unlistenCommandFallback = await listen(
         "command-mode-fallback",
         () => {
           setCommandHint(true);
-          window.setTimeout(() => setCommandHint(false), 5000);
+          window.setTimeout(() => setCommandHint(false), COMMAND_HINT_MS);
         },
       );
 
       const unlistenLevel = await listen<number[]>("mic-level", (event) => {
-        const newLevels = event.payload as number[];
-        // Exponential smoothing across the 16 buckets, then take the first N
-        // bars for the shared waveform.
-        const smoothed = smoothedLevelsRef.current.map((prev, i) => {
-          const target = newLevels[i] || 0;
-          return prev * 0.7 + target * 0.3;
-        });
-        smoothedLevelsRef.current = smoothed;
-        setLevels(smoothed.slice(0, WAVE_BARS));
+        const buckets = event.payload ?? [];
+        if (!heardSoundRef.current && micHasSound(buckets)) {
+          heardSoundRef.current = true;
+          setMicSilent(false);
+        }
+        levelTargetRef.current = levelFromBuckets(buckets);
       });
 
       const unlistenStream = await events.streamTextEvent.listen((event) => {
@@ -341,37 +546,37 @@ const RecordingOverlay: React.FC = () => {
         if (payload.kind) setWorkKind(payload.kind);
       });
 
-      // The meeting bar follows the session wherever it changes — a click on
-      // this bar, the Settings window, anywhere: the pill while a meeting
-      // records, the idle disc once it stops or is cancelled.
       const unlistenMeeting = await events.meetingStateEvent.listen(
         ({ payload }) => {
           const status = payload.status;
           if (status.state === "recording") {
             setMeetingStartedAt(status.started_at);
             setMeetingSession("recording");
-            refreshReminderMinutes();
+            refreshPrefs();
           } else {
-            // The stop's history entry is in place by the time Idle arrives;
-            // the "Saving…" pill ends with it.
             setMeetingWrapping(false);
             setMeetingSession("idle");
           }
         },
       );
 
-      // The idle sliver opens when the pointer comes near it and closes when
-      // it leaves. The backend owns that decision — the sliver is 8 points
-      // wide, so the pointer never reliably entered it — and this only mirrors
-      // it into the view.
-      const unlistenHover = await listen<boolean>("meeting-bar-hover", (event) => {
-        if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
-        setDiscOpen(Boolean(event.payload));
-      });
+      // The resting bar opens when the pointer comes near it. On macOS the
+      // backend owns that decision (its cursor poll measures the distance to
+      // the pill); this only mirrors it into the view.
+      const unlistenHover = await listen<boolean>(
+        "meeting-bar-hover",
+        (event) => {
+          if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+          const open = Boolean(event.payload);
+          setHovered(open);
+          if (open) refreshPrefs();
+          else {
+            setLangMenuOpen(false);
+            setTipFor(null);
+          }
+        },
+      );
 
-      // The window moves when the placement setting changes; the bar is a
-      // persistent view, so re-read the edge to re-anchor without waiting for
-      // the next state change.
       const unlistenPosition = await listen(
         "overlay-position-changed",
         async () => {
@@ -391,9 +596,8 @@ const RecordingOverlay: React.FC = () => {
         },
       );
 
-      // The backend shows the window before this webview has finished loading,
-      // so the state events above may have been missed. Ask once, after the
-      // listeners are in place, and paint the bar for the current session.
+      // The backend shows the window before this webview has finished
+      // loading, so the state events above may have been missed. Ask once.
       try {
         const [status, settings] = await Promise.all([
           commands.getMeetingStatus(),
@@ -407,28 +611,18 @@ const RecordingOverlay: React.FC = () => {
               "bottom",
           );
         }
-        if (settings.status === "ok") {
-          const minutes = settings.data.meeting_reminder_minutes;
-          setReminderMinutes(
-            typeof minutes === "number" && minutes > 0 ? minutes : 0,
-          );
-        }
-        if (status.state === "recording") {
+        refreshPrefs();
+        if (status?.state === "recording") {
           setMeetingStartedAt(status.started_at);
           setMeetingSession("recording");
         } else {
           setMeetingSession("idle");
         }
       } catch (err) {
-        // Without a status the bar still starts meetings from the disc.
         console.warn("Failed to read the meeting status:", err);
         setMeetingSession("idle");
       }
 
-      // The backend ends every `loading_started` with exactly one of completed
-      // or failed, so only those end a load. Other events (e.g. `unloaded` from
-      // the idle watcher) aren't ordered against an in-flight load and must not
-      // clear it.
       const unlistenModel = await listen<ModelStateEvent>(
         "model-state-changed",
         (event) => {
@@ -452,74 +646,169 @@ const RecordingOverlay: React.FC = () => {
         },
       );
 
-      return () => {
-        unlistenShow();
-        unlistenHide();
-        unlistenReady();
-        unlistenStartMeeting();
-        unlistenCommandFallback();
-        unlistenLevel();
-        unlistenStream();
-        unlistenPhase();
-        unlistenMeeting();
-        unlistenHover();
-        unlistenPosition();
-        unlistenModel();
-        clearTimeout(modelLoadTimerRef.current);
-      };
+      return [
+        unlistenShow,
+        unlistenHide,
+        unlistenError,
+        unlistenReady,
+        unlistenMode,
+        unlistenStartMeeting,
+        unlistenCommandFallback,
+        unlistenLevel,
+        unlistenStream,
+        unlistenPhase,
+        unlistenMeeting,
+        unlistenHover,
+        unlistenPosition,
+        unlistenModel,
+      ];
     };
 
-    setupEventListeners();
-  }, []);
+    // The setup is async, so it can outlive this effect (StrictMode mounts
+    // twice before any listen resolves); the flag hands the just-resolved
+    // listeners straight to unlisten in that case instead of leaking them.
+    let cancelled = false;
+    let unlisteners: Array<() => void> = [];
+    setupEventListeners().then(
+      (fns) => {
+        if (cancelled) {
+          for (const un of fns) un();
+        } else {
+          unlisteners = fns;
+        }
+      },
+      (err) => console.warn("Failed to set up the overlay listeners:", err),
+    );
 
-  // Elapsed capture timer starts only once microphone samples are flowing.
+    return () => {
+      cancelled = true;
+      for (const un of unlisteners) un();
+      clearTimeout(modelLoadTimerRef.current);
+      clearTimeout(silenceTimerRef.current);
+    };
+  }, [refreshPrefs]);
+
+  // Elapsed capture timer (Live card) starts once samples are flowing.
   useEffect(() => {
     if (state !== "streaming" || !isVisible || !captureReady) return;
     const id = setInterval(() => setElapsed((e) => e + 1), 1000);
     return () => clearInterval(id);
   }, [state, isVisible, captureReady]);
 
-  // Stick to the bottom as text streams in — but only while pinned, so a user who
-  // has scrolled up to read history isn't yanked back down by the next chunk.
+  // Stick to the newest line as text streams in, while pinned.
   useLayoutEffect(() => {
     const el = capRef.current;
     if (!el) return;
-    // Fade the top edge only once text actually overflows the cap.
     setOverflowing(el.scrollHeight > el.clientHeight + 1);
     if (pinnedRef.current) el.scrollTop = el.scrollHeight;
   }, [streamText]);
 
-  // `session` re-runs this when a new Live session starts mid-load (e.g. a
-  // retry during a cold load), since the reset doesn't change the other deps.
   useEffect(() => {
     if (modelLoadSlow && state === "streaming") setLoadNoticeShown(true);
   }, [modelLoadSlow, state, session]);
 
-  // Each fresh streaming session starts pinned to the bottom, fade cleared.
   useEffect(() => {
     pinnedRef.current = true;
     setOverflowing(false);
   }, [session]);
 
-  // ---- Meeting bar handlers ----
-  // The bar can be dragged to another screen edge (disc and pill alike). A
-  // press arms a drag; crossing the threshold hands the gesture to the native
-  // window drag — the window follows the pointer across the whole screen,
-  // which its own exact-fit bounds could never do — and the backend docks the
-  // bar to the nearest edge once it settles, saving the choice. A drag never
-  // starts or stops the meeting: the click handlers bail out once the gesture
-  // became a drag, and the native drag swallows the mouse-up that would have
-  // made it a click anyway.
+  // The active dictation style, for the optional style chip.
+  useEffect(() => {
+    if (!isVisible || !prefs.styleChip) return;
+    let cancelled = false;
+    commands
+      .getActiveStyle()
+      .then((info) => {
+        if (!cancelled) setStyleInfo(info);
+      })
+      .catch((err) => console.warn("Failed to read the active style:", err));
+    return () => {
+      cancelled = true;
+    };
+  }, [isVisible, state, prefs.styleChip]);
+
+  // ---- Which pill shows ----
+  const working =
+    isVisible &&
+    (state === "transcribing" ||
+      state === "processing" ||
+      (state === "streaming" && phase === "working"));
+  const listening = isVisible && !working && isListeningState(state);
+  let pillState: PillState;
+  if (isVisible) {
+    if (state === "error") pillState = "error";
+    else if (working) pillState = "processing";
+    else if (!captureReady) pillState = "initializing";
+    else pillState = handsFree ? "listening_handsfree" : "listening_ptt";
+  } else if (barHidden) {
+    pillState = "hidden";
+  } else {
+    pillState = hovered ? "ready" : "resting";
+  }
+  const commandStyle = isVisible && (commandTake || state === "command");
+  const liveCapture = listening && captureReady;
+
+  // Smooth the level per animation frame while the mic is live.
+  useEffect(() => {
+    if (!liveCapture) {
+      waveRef.current?.style.setProperty("--audio-scale", "1");
+      return;
+    }
+    let frame = 0;
+    const tick = () => {
+      levelRef.current = smoothLevel(levelRef.current, levelTargetRef.current);
+      waveRef.current?.style.setProperty(
+        "--audio-scale",
+        audioScale(levelRef.current).toFixed(3),
+      );
+      frame = window.requestAnimationFrame(tick);
+    };
+    frame = window.requestAnimationFrame(tick);
+    return () => window.cancelAnimationFrame(frame);
+  }, [liveCapture, pillState]);
+
+  // ---- Hit rects (macOS fixed window) ----
+  // Every element marked `data-hit` takes clicks; the rest of the window is
+  // click-through. Reported after each render and once more after the 100 ms
+  // morph settles; unchanged rects are not re-sent.
+  const reportHitRects = useCallback(() => {
+    if (!FIXED_FRAME) return;
+    const stage = stageRef.current;
+    const rects = stage
+      ? Array.from(stage.querySelectorAll<HTMLElement>("[data-hit]"))
+          .map((el) => el.getBoundingClientRect())
+          .filter((r) => r.width > 0 && r.height > 0)
+          .map((r) => ({
+            x: Math.round(r.left * 10) / 10,
+            y: Math.round(r.top * 10) / 10,
+            width: Math.round(r.width * 10) / 10,
+            height: Math.round(r.height * 10) / 10,
+          }))
+      : [];
+    const key = JSON.stringify(rects);
+    if (key === lastHitRectsRef.current) return;
+    lastHitRectsRef.current = key;
+    commands.setBarHitRects(rects).catch(() => {});
+  }, []);
+
+  useLayoutEffect(() => {
+    if (!FIXED_FRAME) return;
+    const frame = window.requestAnimationFrame(reportHitRects);
+    const settle = window.setTimeout(reportHitRects, 140);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      window.clearTimeout(settle);
+    };
+  });
+
+  // ---- Bar handlers ----
   const dragOriginRef = useRef<{ x: number; y: number } | null>(null);
   const dragStartedRef = useRef(false);
 
   const handleBarPointerDown = (event: React.PointerEvent) => {
-    // The primary button only — a right-click is the disc's context menu, and
-    // the Stop button keeps its own click.
     if (event.button !== 0) return;
-    if ((event.target as Element).closest(".mstop")) return;
+    if ((event.target as Element).closest("button")) return;
     dragOriginRef.current = { x: event.clientX, y: event.clientY };
-    // A leftover flag from a previous gesture must not eat the next click.
     dragStartedRef.current = false;
   };
 
@@ -534,37 +823,78 @@ const RecordingOverlay: React.FC = () => {
     dragStartedRef.current = true;
     commands
       .startMeetingBarDrag()
-      .catch((err) => console.warn("Failed to drag the meeting bar:", err));
+      .catch((err) => console.warn("Failed to drag the bar:", err));
   };
 
   const handleBarPointerUp = () => {
     dragOriginRef.current = null;
   };
 
-  // Right-click on the disc: the backend pops the native menu ("Hide for 1
-  // hour") at the cursor. Native, because the disc's window is exactly the
-  // disc — there is no room for HTML around it.
-  const openDiscMenu = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    commands
-      .openMeetingBarMenu()
-      .catch((err) => console.warn("Failed to open the bar menu:", err));
+  const consumeDrag = () => {
+    if (!dragStartedRef.current) return false;
+    dragStartedRef.current = false;
+    return true;
   };
 
-  // A click on the disc starts the meeting; the state event turns the bar
-  // into the pill. A failed start (e.g. a dictation holds the microphone)
-  // leaves the disc as it was. A gesture that became a drag is not a click.
-  const startMeeting = async () => {
-    if (dragStartedRef.current) {
-      dragStartedRef.current = false;
+  // Right-click: the native menu, only on the resting/ready bar.
+  const showBarMenu = () => {
+    if (isVisible || barHidden || meetingSession === "recording") return;
+    const codes = Array.from(
+      new Set([...prefs.spokenLanguages, prefs.selectedLanguage]),
+    ).filter((code) => code && code !== "auto");
+    const labels: [string, string][] = codes.map((code) => [
+      code,
+      languageName(code, i18n.language),
+    ]);
+    setLangMenuOpen(false);
+    commands
+      .openMeetingBarMenu(labels)
+      .catch((err) => console.warn("Failed to open the bar menu:", err));
+  };
+  const onContextMenu = (event: React.MouseEvent) => {
+    event.preventDefault();
+    event.stopPropagation();
+    showBarMenu();
+  };
+
+  // A click on the pill: ready → hands-free dictation; hold-to-talk → finish;
+  // a second click within half a second of a bar start → cancel.
+  const onPillClick = () => {
+    if (consumeDrag()) return;
+    const now = Date.now();
+    if (
+      isVisible &&
+      barStartedAtRef.current &&
+      now - barStartedAtRef.current < RECLICK_CANCEL_MS
+    ) {
+      barStartedAtRef.current = 0;
+      commands.cancelOperation().catch(() => {});
       return;
     }
+    if (pillState === "ready" || pillState === "resting") {
+      barStartedAtRef.current = now;
+      setHovered(false);
+      setLangMenuOpen(false);
+      commands.toggleDictationFromBar().catch(() => {});
+      return;
+    }
+    if (pillState === "listening_ptt" || pillState === "initializing") {
+      commands.toggleDictationFromBar().catch(() => {});
+    }
+  };
+
+  const onPillKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      onPillClick();
+    }
+  };
+
+  const startMeeting = async () => {
+    setHovered(false);
     try {
       await commands.startMeeting();
     } catch (err) {
-      // A dead sliver is the worst outcome: say what failed, and give the
-      // microphone case its one useful action.
       const message = String(err);
       console.error("Failed to start the meeting:", message);
       setBarError(
@@ -572,34 +902,32 @@ const RecordingOverlay: React.FC = () => {
           ? t("overlay.meeting.micBlocked")
           : t("overlay.meeting.startFailed"),
       );
-      setDiscOpen(false);
-      void commands.setMeetingBarExpanded(true).catch(() => {});
+      if (!FIXED_FRAME) {
+        void commands.setMeetingBarExpanded(true).catch(() => {});
+      }
       window.setTimeout(() => {
         setBarError(null);
-        void commands.setMeetingBarExpanded(false).catch(() => {});
+        if (!FIXED_FRAME) {
+          void commands.setMeetingBarExpanded(false).catch(() => {});
+        }
       }, 8000);
     }
   };
 
-  // reference-style stop: save immediately, no confirmation dialog — the
-  // recording lands in History. The pill shows "Saving…" until the stop
-  // resolves (the history entry is in place by then) and the idle event
-  // returns the bar to the disc.
+  // Stop saves immediately; the pill shows a spinner until the stop resolves.
   const stopMeeting = async () => {
     setMeetingWrapping(true);
     try {
       await commands.stopMeeting();
-      // The Idle event usually arrived during the await; this is the net.
       setMeetingWrapping(false);
       setMeetingSession("idle");
     } catch (err) {
       console.warn("Failed to stop the meeting:", err);
       setMeetingWrapping(false);
+      setBarError(t("settings.meeting.stopFailed"));
+      window.setTimeout(() => setBarError(null), 8000);
     }
   };
-  // Stop straight from the long-meeting prompt: the same save as the pill's
-  // Stop, with the prompt's once-per-session bookkeeping done and the bar
-  // back to the plain pill footprint before the wrap pill takes it.
   const stopMeetingFromNudge = () => {
     nudgeDoneForRef.current = meetingStartedAt;
     clearTimeout(nudgeTimerRef.current);
@@ -611,224 +939,48 @@ const RecordingOverlay: React.FC = () => {
     void stopMeeting();
   };
 
-  // ---- View routing ----
-  // A dictation view always wins the window while it shows; the meeting bar
-  // fills it otherwise (the bar is the window's resting state).
-  if (!isVisible) {
-    if (meetingSession === null) return null;
+  const openMainSection = (section: string) => {
+    emit("navigate-section", section).catch(() => {});
+    commands.showMainWindowCommand().catch(() => {});
+  };
 
-    // Saving…: the pill keeps its footprint while the stop is in flight.
-    if (meetingWrapping) {
-      return (
-        <div dir={direction} className={`ov-stage ${barPosition}`}>
-          <div
-            className="mcard"
-            onPointerDown={handleBarPointerDown}
-            onPointerMove={handleBarPointerMove}
-            onPointerUp={handleBarPointerUp}
-            onPointerCancel={handleBarPointerUp}
-          >
-            <span className="sspinner" />
-            <span className="mlabel">{t("overlay.meeting.saving")}</span>
-          </div>
-        </div>
-      );
+  const pickLanguage = async (code: string) => {
+    setLangMenuOpen(false);
+    setPrefs((prev) => ({ ...prev, selectedLanguage: code }));
+    try {
+      const result = await commands.changeSelectedLanguageSetting(code);
+      if (result.status === "error") throw new Error(result.error);
+    } catch (err) {
+      console.warn("Failed to switch the dictation language:", err);
     }
+  };
 
-    // Recording: red pulsing dot + running clock (mm:ss) + Stop, with the
-    // long-meeting prompt beside the pill once the session has run past the
-    // reminder threshold. The row carries the drag gesture so the pill stays
-    // draggable while the prompt is up; the prompt's own Stop is a plain
-    // click (the drag handler ignores presses on `.mstop`).
-    if (meetingSession === "recording") {
-      return (
-        <div dir={direction} className={`ov-stage ${barPosition}`}>
-          <div
-            className="mrow"
-            onPointerDown={handleBarPointerDown}
-            onPointerMove={handleBarPointerMove}
-            onPointerUp={handleBarPointerUp}
-            onPointerCancel={handleBarPointerUp}
-          >
-            <div
-              className="mcard"
-              role="status"
-              aria-label={t("overlay.meeting.recording")}
-            >
-              <span className="mdot" aria-hidden="true" />
-              <span className="mtimer">
-                {formatDurationClock(meetingElapsed)}
-              </span>
-              <button type="button" className="mstop" onClick={stopMeeting}>
-                {t("overlay.meeting.stop")}
-              </button>
-            </div>
-            {nudgeOpen && (
-              <div className="mnu" role="status">
-                <span className="mnu-text">
-                  {t("overlay.meeting.stillGoing")}
-                </span>
-                <button
-                  type="button"
-                  className="mstop"
-                  onClick={stopMeetingFromNudge}
-                >
-                  {t("overlay.meeting.stop")}
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      );
+  // Exact-fit windows (Windows/Linux): the webview drives hover itself.
+  const onStagePointerEnter = () => {
+    if (FIXED_FRAME || isVisible || barHidden || meetingSession !== "idle") {
+      return;
     }
+    if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+    if (hovered) return;
+    hoverTimerRef.current = window.setTimeout(() => {
+      hoverTimerRef.current = null;
+      setHovered(true);
+      refreshPrefs();
+      commands.setMeetingBarExpanded(true).catch(() => {});
+    }, HOVER_OPEN_MS);
+  };
+  const onStagePointerLeave = () => {
+    if (FIXED_FRAME) return;
+    if (hoverTimerRef.current) window.clearTimeout(hoverTimerRef.current);
+    if (!hovered) return;
+    hoverTimerRef.current = window.setTimeout(() => {
+      hoverTimerRef.current = null;
+      setHovered(false);
+      setLangMenuOpen(false);
+      commands.setMeetingBarExpanded(false).catch(() => {});
+    }, HOVER_CLOSE_MS);
+  };
 
-    // Idle: a disc with a mic. Hovering it grows the window into the action
-    // row (start a meeting, open Notes, open the Scratchpad); the window is an
-    // exact fit for whatever it shows, so the backend resizes with us.
-    const discActions = (
-      <>
-        <button
-          type="button"
-          className="mact primary"
-          aria-label={t("overlay.meeting.start")}
-          title={t("overlay.meeting.start")}
-          onClick={() => {
-            setDiscOpen(false);
-            commands.setMeetingBarExpanded(false);
-            startMeeting();
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <rect x="9" y="2.5" width="6" height="11" rx="3" />
-            <path
-              d="M5.5 11.5a6.5 6.5 0 0 0 13 0"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-            <path
-              d="M12 18v3.5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.7"
-              strokeLinecap="round"
-            />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="mact"
-          aria-label={t("overlay.quickNote")}
-          title={t("overlay.quickNote")}
-          onClick={() => {
-            setDiscOpen(false);
-            commands.setMeetingBarExpanded(false);
-            // The main window owns which section is showing; ask it for Notes.
-            emit("navigate-section", "notes").catch(() => {});
-            commands.showMainWindowCommand().catch(() => {});
-          }}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            aria-hidden="true"
-          >
-            <rect x="4.5" y="3.5" width="15" height="17" rx="3" />
-            <path d="M8.5 9h7M8.5 13h7M8.5 17h4" />
-          </svg>
-        </button>
-        <button
-          type="button"
-          className="mact"
-          aria-label={t("tray.scratchpad_open")}
-          title={t("tray.scratchpad_open")}
-          onClick={() => {
-            setDiscOpen(false);
-            commands.setMeetingBarExpanded(false);
-            commands.openScratchpad().catch(() => {});
-          }}
-        >
-          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M13.2 2.5 4.8 13.4h5.1l-1.1 8.1 8.4-10.9h-5.1z" />
-          </svg>
-        </button>
-      </>
-    );
-
-    return (
-      <div
-        dir={direction}
-        className={`ov-stage ${barPosition}`}
-        onPointerEnter={() => {
-          // Re-entry cancels whatever is pending: a close in its grace
-          // period, or a stale open timer.
-          if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
-          if (discOpen) return;
-          if (Date.now() - discShutAtRef.current < 400) return;
-          discTimerRef.current = window.setTimeout(() => {
-            discTimerRef.current = null;
-            setDiscOpen(true);
-            commands.setMeetingBarExpanded(true).catch(() => {});
-          }, 140);
-        }}
-        onPointerLeave={() => {
-          if (discTimerRef.current) window.clearTimeout(discTimerRef.current);
-          if (!discOpen) return;
-          // Close on a delay: leaving and coming straight back keeps the row
-          // open, because re-entry cancels this timer.
-          discTimerRef.current = window.setTimeout(() => {
-            discTimerRef.current = null;
-            discShutAtRef.current = Date.now();
-            setDiscOpen(false);
-            commands.setMeetingBarExpanded(false).catch(() => {});
-          }, 200);
-        }}
-      >
-        {discOpen ? (
-          <div className="midle">{discActions}</div>
-        ) : barError ? (
-          <button
-            type="button"
-            className="merr"
-            role="alert"
-            onClick={() => {
-              void commands.openMicrophonePrivacySettings().catch(() => {});
-              setBarError(null);
-              void commands.setMeetingBarExpanded(false).catch(() => {});
-            }}
-          >
-            <span className="merr-line">{barError}</span>
-            <span className="merr-action">{t("overlay.meeting.openSettings")}</span>
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="mdisc"
-            aria-label={t("overlay.meeting.start")}
-            title={t("overlay.meeting.start")}
-            onClick={startMeeting}
-            onContextMenu={openDiscMenu}
-            onPointerDown={handleBarPointerDown}
-            onPointerMove={handleBarPointerMove}
-            onPointerUp={handleBarPointerUp}
-            onPointerCancel={handleBarPointerUp}
-          >
-            <span className="mwave" aria-hidden="true">
-              {Array.from({ length: 10 }, (_, index) => (
-                <i key={index} />
-              ))}
-            </span>
-          </button>
-        )}
-      </div>
-    );
-  }
-
-  // Re-pin when the user is within ~a line of the bottom; unpin otherwise.
   const handleStreamScroll = () => {
     const el = capRef.current;
     if (!el) return;
@@ -838,246 +990,516 @@ const RecordingOverlay: React.FC = () => {
   const fmtTime = (s: number) =>
     `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
-  const transcribingLabel = modelLoading
-    ? t("overlay.loadingModel")
-    : t("overlay.transcribing");
+  const tipProps = (id: string) => ({
+    onPointerEnter: () => setTipFor(id),
+    onPointerLeave: () => setTipFor((cur) => (cur === id ? null : cur)),
+  });
 
-  // ---- Style (tone) chip + local quick-switch menu ----
-  // The backend resolves the active style from the focused app; the overlay
-  // only shows it (and lets the user switch it) — templates live in local
-  // settings, nothing leaves the machine.
-  useEffect(() => {
-    if (!isVisible) return;
-    let cancelled = false;
-    commands
-      .getActiveStyle()
-      .then((info) => {
-        if (!cancelled) setStyleInfo(info);
-      })
-      .catch((err) => console.warn("Failed to read the active style:", err));
-    return () => {
-      cancelled = true;
-    };
-  }, [isVisible, state]);
+  // ---- Render ----
+  if (!isVisible && meetingSession === null) return null;
 
-  const pickStyle = async (styleId: string) => {
-    setStyleMenuPos(null);
-    try {
-      // When a per-app rule matched the focused app, retarget that rule;
-      // otherwise switch the globally selected style.
-      if (styleInfo?.matchedRuleKey) {
-        const result = await commands.setAppStyleRule(
-          styleInfo.matchedRuleKey,
-          styleId,
-        );
-        if (result.status === "error") throw new Error(result.error);
-      } else {
-        const result = await commands.setPostProcessSelectedPrompt(styleId);
-        if (result.status === "error") throw new Error(result.error);
-      }
-      const info = await commands.getActiveStyle();
-      setStyleInfo(info);
-    } catch (err) {
-      console.warn("Failed to switch the dictation style:", err);
-    }
-  };
+  const edge: BarEdge = isVisible ? position : barPosition;
+  const vertical = isSideEdge(edge);
+  const stageClass = `ov-stage ${edge} ${FIXED_FRAME ? "fixed" : ""}`;
+  const keyLabel = <b className="key" />;
 
-  const openStyleMenu = (event: React.MouseEvent) => {
-    event.preventDefault();
-    event.stopPropagation();
-    setStyleMenuPos({
-      x: Math.max(4, Math.min(event.clientX, window.innerWidth - 190)),
-      y: Math.max(4, Math.min(event.clientY, window.innerHeight - 40)),
-    });
-  };
-
-  const styleMenu =
-    styleInfo && styleMenuPos ? (
-      <>
-        <div
-          className="sstyle-backdrop"
-          onPointerDown={() => setStyleMenuPos(null)}
-        />
-        <div
-          className="sstyle-menu"
-          style={{ left: styleMenuPos.x, top: styleMenuPos.y }}
-          role="menu"
+  const cards: React.ReactNode[] = [];
+  const card = (
+    key: string,
+    title: React.ReactNode,
+    options: {
+      body?: React.ReactNode;
+      action?: { label: string; onClick: () => void };
+      role?: "alert" | "status";
+    } = {},
+  ) => (
+    <div className="ncard" key={key} role={options.role ?? "status"} data-hit>
+      <div className="ncard-text">
+        <span className="ncard-title">{title}</span>
+        {options.body && <span className="ncard-body">{options.body}</span>}
+      </div>
+      {options.action && (
+        <button
+          type="button"
+          className="ncard-action"
+          onClick={options.action.onClick}
         >
-          <div className="sstyle-menu-title">
-            {t("overlay.style.menuTitle")}
-          </div>
-          {styleInfo.styles.map((style) => (
-            <button
-              key={style.id}
-              type="button"
-              role="menuitemradio"
-              aria-checked={style.id === styleInfo.styleId}
-              className={`sstyle-item ${
-                style.id === styleInfo.styleId ? "active" : ""
-              }`}
-              onClick={() => pickStyle(style.id)}
-            >
-              {style.name}
-            </button>
-          ))}
-        </div>
-      </>
-    ) : null;
-
-  // ---- Shared building blocks (one visual language for every overlay form) ----
-  const waveform = (
-    <div className={`swave ${captureReady ? "ready" : "arming"}`}>
-      {levels.map((v, i) => (
-        <i
-          key={i}
-          style={{
-            height: `${Math.max(3, Math.min(18, 3 + Math.pow(v, 0.7) * 15))}px`,
-          }}
-        />
-      ))}
-    </div>
-  );
-
-  const cancelBtn = (
-    <button
-      className="sx"
-      aria-label="cancel"
-      onClick={() => commands.cancelOperation()}
-    >
-      <svg viewBox="0 0 16 16" aria-hidden="true">
-        <path
-          d="M4 4 L12 12 M12 4 L4 12"
-          stroke="currentColor"
-          strokeWidth="1.6"
-          strokeLinecap="round"
-        />
-      </svg>
-    </button>
-  );
-
-  // dot (left) | waveform (center) | timer + cancel (right) — same structure for
-  // pill & panel, so the Live morph is a pure width change.
-  const listeningRow = (showTimer: boolean, showCancel: boolean) => (
-    <div className="sbase">
-      <div className="sbase-l">
-        <span className={`sdot ${captureReady ? "ready" : "arming"}`} />
-        {styleInfo?.postProcessEnabled && styleInfo.styleName ? (
-          <span className="sstyle-chip" title={t("overlay.style.chipTitle")}>
-            {styleInfo.styleName}
-          </span>
-        ) : null}
-      </div>
-      {waveform}
-      {(state === "command" || commandHint) && (
-        <span className="swork-label scmd-label">
-          {state === "command"
-            ? t("overlay.command")
-            : t("overlay.commandFallback")}
-        </span>
+          {options.action.label}
+        </button>
       )}
-      <div className="sbase-r">
-        {showTimer && <span className="stimer">{fmtTime(elapsed)}</span>}
-        {showCancel && cancelBtn}
-      </div>
     </div>
   );
 
-  // spinner (left) | label (center) | cancel (right) — same 3-zone grid as the
-  // listening row, so the label is centered.
-  const workingRow = (label: string, showCancel: boolean) => (
-    <div className="sbase">
-      <div className="sbase-l">
-        <span className="sspinner" />
-      </div>
-      <span className="swork-label">{label}</span>
-      <div className="sbase-r">{showCancel && cancelBtn}</div>
-    </div>
-  );
-
-  // ---- Live overlay: a pill that sculpts open into a panel ----
-  if (state === "streaming") {
-    const hasText =
-      streamText.committed.length > 0 || streamText.tentative.length > 0;
-    const working = phase === "working";
-    // While listening, a slow model load opens the panel with a notice where the
-    // text would be, so speech that isn't transcribing yet doesn't look ignored.
-    const loadingNotice = modelLoadSlow && !working && !hasText;
-    // Keep the panel open whenever there's text — even while finalizing — so the
-    // transcript stays put under a working spinner instead of collapsing and
-    // squishing the text mid-stream. Only fall back to the small working pill
-    // when there was no text to preserve.
-    const open = hasText || loadingNotice || (loadNoticeShown && !working);
-    const collapsed = working && !hasText;
-
+  // ---- The meeting pill ----
+  if (!isVisible && meetingSession === "recording") {
+    if (barError) {
+      cards.push(card("bar-error", barError, { role: "alert" }));
+    }
     return (
       <div
         dir={direction}
-        className={`ov-stage ${position}`}
-        onContextMenu={openStyleMenu}
+        ref={stageRef}
+        className={`${stageClass} bar-view`}
+        data-bar-position={edge}
+        onContextMenu={(event) => event.preventDefault()}
       >
-        {styleMenu}
-        <div
-          key={session}
-          className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
-            isVisible ? "" : "leaving"
-          }`}
-        >
-          <div className="stext">
-            <div className="stext-clip">
-              <div
-                className={`stext-cap ${overflowing ? "overflowing" : ""}`}
-                ref={capRef}
-                onScroll={handleStreamScroll}
+        {cards.length > 0 && <div className="slot">{cards}</div>}
+        <div className={`pill-anchor ${vertical ? "vertical" : ""}`}>
+          <div
+            className="pill meeting"
+            role="button"
+            tabIndex={0}
+            aria-label={t("overlay.meeting.recording")}
+            data-hit
+            onClick={() => {
+              if (consumeDrag()) return;
+              openMainSection("notetaker");
+            }}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                openMainSection("notetaker");
+              }
+            }}
+            onPointerDown={handleBarPointerDown}
+            onPointerMove={handleBarPointerMove}
+            onPointerUp={handleBarPointerUp}
+            onPointerCancel={handleBarPointerUp}
+            {...tipProps("meeting")}
+          >
+            <Waveform animated live vertical={false} bars={5} />
+            {meetingWrapping ? (
+              <Spinner />
+            ) : (
+              <button
+                type="button"
+                className="mstop"
+                aria-label={t("overlay.meeting.stop")}
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void stopMeeting();
+                }}
+                {...tipProps("meeting-stop")}
               >
-                <p>
-                  {loadingNotice && (
-                    <span className="sloading">
-                      {t("overlay.loadingModel")}
-                    </span>
-                  )}
-                  <span className="committed">
-                    {streamText.committed ? streamText.committed + " " : ""}
-                  </span>
-                  <span className="tentative">{streamText.tentative}</span>
-                  {/* Drop the blinking caret once finalizing — it's no longer
-                      capturing, and a static spinner conveys the work. */}
-                  {!working && !loadingNotice && <span className="scaret" />}
-                </p>
+                <i />
+                {tipFor === "meeting-stop" && (
+                  <Tooltip gap={10}>{t("overlay.meeting.stop")}</Tooltip>
+                )}
+              </button>
+            )}
+          </div>
+          {tipFor === "meeting" && (
+            <Tooltip>
+              {meetingWrapping
+                ? t("overlay.meeting.saving")
+                : t("overlay.bar.showNotepad")}
+            </Tooltip>
+          )}
+          {nudgeOpen && (
+            <div className="side after">
+              <div className="ncard nudge" role="status" data-hit>
+                <span className="ncard-title">
+                  {t("overlay.meeting.stillGoing")}
+                </span>
+                <button
+                  type="button"
+                  className="ncard-action"
+                  onClick={stopMeetingFromNudge}
+                >
+                  {t("overlay.meeting.stop")}
+                </button>
               </div>
             </div>
-          </div>
-          {working
-            ? workingRow(
-                workKind === "polishing"
-                  ? t("overlay.processing")
-                  : transcribingLabel,
-                true,
-              )
-            : listeningRow(open, true)}
+          )}
         </div>
       </div>
     );
   }
 
-  // ---- Minimal overlay: exactly one row at a time — waveform (recording), or a
-  // spinner + label (transcribing / processing). Never both. The pill animates its
-  // width between them; the cancel button is in both rows so it stays put.
-  const working = state === "transcribing" || state === "processing";
-  const workLabel =
-    state === "processing" ? t("overlay.processing") : transcribingLabel;
+  // ---- Cards above the pill ----
+  if (isVisible && state === "error") {
+    cards.push(
+      card(
+        "error",
+        t(`overlay.error.${errorCode}`, {
+          defaultValue: t("overlay.error.start_failed"),
+        }),
+        { role: "alert" },
+      ),
+    );
+  }
+  if (isVisible && micSilent && listening) {
+    cards.push(
+      card("silent", t("overlay.bar.silentTitle"), {
+        body: t("overlay.bar.silentBody"),
+        action: {
+          label: t("overlay.bar.selectMicrophone"),
+          onClick: () => openMainSection("general"),
+        },
+      }),
+    );
+  }
+  if (isVisible && commandHint) {
+    cards.push(card("command", t("overlay.commandFallback")));
+  }
+  if (!isVisible && barHidden) {
+    cards.push(
+      card("hidden", t("overlay.bar.hiddenTitle"), {
+        action: {
+          label: t("overlay.bar.undo"),
+          onClick: () => {
+            setBarHidden(false);
+            commands.undoHideFlowBar().catch(() => {});
+          },
+        },
+      }),
+    );
+  }
+  if (!isVisible && barError) {
+    cards.push(
+      card("bar-error", barError, {
+        role: "alert",
+        action: {
+          label: t("overlay.meeting.openSettings"),
+          onClick: () => {
+            setBarError(null);
+            void commands.openMicrophonePrivacySettings().catch(() => {});
+          },
+        },
+      }),
+    );
+  }
+
+  // ---- Live: the text card above the pill (opt-in overlay style) ----
+  let liveCard: React.ReactNode = null;
+  if (isVisible && state === "streaming" && overlayStyle === "live") {
+    const hasText =
+      streamText.committed.length > 0 || streamText.tentative.length > 0;
+    const streamWorking = phase === "working";
+    const loadingNotice = modelLoadSlow && !streamWorking && !hasText;
+    const open =
+      hasText || loadingNotice || (loadNoticeShown && !streamWorking);
+    if (open) {
+      liveCard = (
+        <div className="lcard" key={`live-${session}`} data-hit>
+          <div
+            className={`stext-cap ${overflowing ? "overflowing" : ""}`}
+            ref={capRef}
+            onScroll={handleStreamScroll}
+          >
+            <p>
+              {loadingNotice && (
+                <span className="sloading">{t("overlay.loadingModel")}</span>
+              )}
+              <span className="committed">
+                {streamText.committed ? streamText.committed + " " : ""}
+              </span>
+              <span className="tentative">{streamText.tentative}</span>
+              {!streamWorking && !loadingNotice && (
+                <span className="scaret" />
+              )}
+            </p>
+          </div>
+          {captureReady && !streamWorking && (
+            <span className="ltimer">{fmtTime(elapsed)}</span>
+          )}
+        </div>
+      );
+    }
+  }
+
+  // ---- The pill ----
+  const [pillW, pillH] = sizeFor(pillState, edge);
+  const showLanguageCircle = prefs.spokenLanguages.length >= 2;
+  const languageOptions = barLanguageOptions(
+    prefs.spokenLanguages,
+    suggestedLanguages(),
+  );
+  const ready = pillState === "ready";
+  const clickable =
+    pillState === "resting" ||
+    pillState === "ready" ||
+    pillState === "initializing" ||
+    pillState === "listening_ptt";
+  const workingLabel =
+    workKind === "polishing" || state === "processing"
+      ? t("overlay.processing")
+      : modelLoading
+        ? t("overlay.loadingModel")
+        : t("overlay.transcribing");
+  const plain = (text: string) => text.replace(/<\/?key>/g, "");
+
+  let pillContent: React.ReactNode = null;
+  if (pillState === "ready") {
+    pillContent = <MicIcon />;
+  } else if (
+    pillState === "initializing" ||
+    pillState === "listening_ptt" ||
+    pillState === "error"
+  ) {
+    pillContent = (
+      <Waveform
+        ref={waveRef}
+        animated={liveCapture}
+        live={liveCapture}
+        vertical={vertical}
+      />
+    );
+  } else if (pillState === "listening_handsfree") {
+    pillContent = (
+      <>
+        <button
+          type="button"
+          className="pbtn cancel"
+          aria-label={t("overlay.cancel")}
+          onClick={(event) => {
+            event.stopPropagation();
+            barStartedAtRef.current = 0;
+            commands.cancelOperation().catch(() => {});
+          }}
+          {...tipProps("cancel")}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinecap="round"
+            aria-hidden="true"
+          >
+            <path d="M18 6 6 18M6 6l12 12" />
+          </svg>
+          {tipFor === "cancel" && (
+            <Tooltip gap={10}>{t("overlay.cancel")}</Tooltip>
+          )}
+        </button>
+        <Waveform ref={waveRef} animated live vertical={vertical} />
+        <button
+          type="button"
+          className="pbtn stop"
+          aria-label={t("overlay.finishAndPaste")}
+          onClick={(event) => {
+            event.stopPropagation();
+            barStartedAtRef.current = 0;
+            commands.toggleDictationFromBar().catch(() => {});
+          }}
+          {...tipProps("stop")}
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="3"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <rect x="5" y="5" width="14" height="14" rx="2" />
+          </svg>
+          {tipFor === "stop" && (
+            <Tooltip gap={10}>{t("overlay.finishAndPaste")}</Tooltip>
+          )}
+        </button>
+      </>
+    );
+  } else if (pillState === "processing") {
+    pillContent = (
+      <>
+        <Waveform animated={false} live={false} vertical={vertical} />
+        <Spinner />
+      </>
+    );
+  }
+
+  let pillLabel: string | undefined;
+  if (pillState === "processing") pillLabel = workingLabel;
+  else if (pillState === "ready" || pillState === "resting") {
+    pillLabel = plain(t("overlay.bar.dictate", { key: prefs.shortcut }));
+  } else if (pillState === "listening_handsfree") {
+    pillLabel = plain(t("overlay.bar.pressToFinish", { key: prefs.shortcut }));
+  } else if (pillState === "error") {
+    pillLabel = t(`overlay.error.${errorCode}`, {
+      defaultValue: t("overlay.error.start_failed"),
+    });
+  }
+
+  // The pill's own tooltip: "Dictate fn" whenever the bar is ready (unless a
+  // side button's own tooltip shows), "Press fn to finish and paste" while
+  // the pointer is on the hands-free pill.
+  let pillTip: React.ReactNode = null;
+  if (ready && !langMenuOpen && (tipFor === null || tipFor === "pill")) {
+    pillTip = (
+      <Tooltip>
+        <Trans
+          i18nKey="overlay.bar.dictate"
+          values={{ key: prefs.shortcut }}
+          components={{ key: keyLabel }}
+        />
+      </Tooltip>
+    );
+  } else if (pillState === "listening_handsfree" && tipFor === "pill") {
+    pillTip = (
+      <Tooltip>
+        <Trans
+          i18nKey="overlay.bar.pressToFinish"
+          values={{ key: prefs.shortcut }}
+          components={{ key: keyLabel }}
+        />
+      </Tooltip>
+    );
+  }
+
+  const sideOut = !ready;
+  const styleChip =
+    isVisible &&
+    prefs.styleChip &&
+    styleInfo?.postProcessEnabled &&
+    styleInfo.styleName ? (
+      <div className="side before">
+        <span className="pchip" title={t("overlay.style.chipTitle")}>
+          {styleInfo.styleName}
+        </span>
+      </div>
+    ) : null;
+
+  const barView = !isVisible;
+  const showPill = pillState !== "hidden";
 
   return (
     <div
       dir={direction}
-      className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
-      onContextMenu={openStyleMenu}
+      ref={stageRef}
+      className={`${stageClass} ${barView ? "bar-view" : ""}`}
+      data-bar-position={edge}
+      onContextMenu={onContextMenu}
+      onPointerEnter={onStagePointerEnter}
+      onPointerLeave={onStagePointerLeave}
     >
-      {styleMenu}
-      <div
-        className={`scard compact ${working && isVisible ? "cworking" : ""}`}
-      >
-        {working ? workingRow(workLabel, true) : listeningRow(false, true)}
-      </div>
+      {(liveCard || cards.length > 0) && (
+        <div className="slot">
+          {liveCard}
+          {cards}
+        </div>
+      )}
+      {showPill && (
+        <div className={`pill-anchor ${vertical ? "vertical" : ""}`}>
+          {barView && (
+            <div className="side before">
+              {showLanguageCircle && (
+                <button
+                  type="button"
+                  className={`circ lang ${sideOut ? "out" : ""}`}
+                  aria-label={t("overlay.bar.language")}
+                  aria-haspopup="menu"
+                  aria-expanded={langMenuOpen}
+                  tabIndex={sideOut ? -1 : 0}
+                  data-hit={sideOut ? undefined : ""}
+                  onClick={() => {
+                    // The exact-fit windows have no room for an HTML menu:
+                    // the native menu's Languages submenu stands in.
+                    if (FIXED_FRAME) setLangMenuOpen((open) => !open);
+                    else showBarMenu();
+                  }}
+                  {...tipProps("lang")}
+                >
+                  {shortLanguageCode(prefs.selectedLanguage)}
+                  {tipFor === "lang" && !langMenuOpen && (
+                    <Tooltip>{t("overlay.bar.language")}</Tooltip>
+                  )}
+                  {langMenuOpen && (
+                    <span className="bmenu" role="menu" data-hit>
+                      {["auto", ...languageOptions].map((code) => {
+                        const active = prefs.selectedLanguage === code;
+                        return (
+                          <span
+                            key={code}
+                            role="menuitemradio"
+                            aria-checked={active}
+                            tabIndex={0}
+                            className="bmenu-item"
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              void pickLanguage(code);
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === "Enter" || event.key === " ") {
+                                event.preventDefault();
+                                void pickLanguage(code);
+                              }
+                            }}
+                          >
+                            {code === "auto"
+                              ? t("overlay.language.auto")
+                              : languageName(code, i18n.language)}
+                          </span>
+                        );
+                      })}
+                    </span>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+          {styleChip}
+          <div
+            className={`pill ${pillState} ${vertical ? "vertical" : ""} ${
+              commandStyle ? "command" : ""
+            }`}
+            style={{ width: pillW, height: pillH }}
+            role={clickable ? "button" : "status"}
+            tabIndex={clickable ? 0 : undefined}
+            aria-label={pillLabel}
+            data-hit
+            data-state={pillState}
+            onClick={clickable ? onPillClick : undefined}
+            onKeyDown={clickable ? onPillKeyDown : undefined}
+            onPointerDown={barView ? handleBarPointerDown : undefined}
+            onPointerMove={barView ? handleBarPointerMove : undefined}
+            onPointerUp={barView ? handleBarPointerUp : undefined}
+            onPointerCancel={barView ? handleBarPointerUp : undefined}
+            {...tipProps("pill")}
+          >
+            {pillContent}
+          </div>
+          {pillTip}
+          {barView && (
+            <div className="side after">
+              <button
+                type="button"
+                className={`circ ${sideOut ? "out" : ""}`}
+                aria-label={t("overlay.bar.takeNotes")}
+                tabIndex={sideOut ? -1 : 0}
+                data-hit={sideOut ? undefined : ""}
+                onClick={() => void startMeeting()}
+                {...tipProps("notes")}
+              >
+                <NotesIcon />
+                {tipFor === "notes" && (
+                  <Tooltip>{t("overlay.bar.takeNotes")}</Tooltip>
+                )}
+              </button>
+              {prefs.scratchpad && (
+                <button
+                  type="button"
+                  className={`circ ${sideOut ? "out" : ""}`}
+                  aria-label={t("tray.scratchpadOpen")}
+                  tabIndex={sideOut ? -1 : 0}
+                  data-hit={sideOut ? undefined : ""}
+                  onClick={() => {
+                    setHovered(false);
+                    commands.openScratchpad().catch(() => {});
+                  }}
+                  {...tipProps("scratchpad")}
+                >
+                  <BoltIcon />
+                  {tipFor === "scratchpad" && (
+                    <Tooltip>{t("tray.scratchpadOpen")}</Tooltip>
+                  )}
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };

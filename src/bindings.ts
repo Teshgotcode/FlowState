@@ -356,6 +356,42 @@ async setPostProcessSelectedPrompt(id: string) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * One prompt per writing context. Ids that no longer exist are dropped, so a
+ * deleted preset cannot leave a dangling binding behind.
+ */
+async updatePostProcessContextPrompts(prompts: Partial<{ [key in string]: string }>) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_post_process_context_prompts", { prompts }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateStarredWords(words: string[]) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_starred_words", { words }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async updateLearnedWords(words: string[]) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("update_learned_words", { words }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setDictionarySort(sort: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_dictionary_sort", { sort }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getFrontmostApp() : Promise<FrontmostAppInfo | null> {
     return await TAURI_INVOKE("get_frontmost_app");
 },
@@ -1430,21 +1466,23 @@ async startMeetingBarDrag() : Promise<Result<null, string>> {
 }
 },
 /**
- * Pop the meeting bar's context menu at the cursor (right-click on the idle
- * disc): "Hide for 1 hour". Native, because the disc's window is exactly the
- * disc — no room for HTML.
+ * Pop the bar's context menu at the cursor (right-click on the resting
+ * bar): Hide for 1 hour, Languages, Microphone, Paste last transcript,
+ * Transcript history, Settings, then the FlowState extras. Native, so it
+ * also fits the exact-fit windows on Windows and Linux. `language_labels`
+ * carries the webview's localized names for the language codes.
  */
-async openMeetingBarMenu() : Promise<Result<null, string>> {
+async openMeetingBarMenu(languageLabels: ([string, string])[] | null) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("open_meeting_bar_menu") };
+    return { status: "ok", data: await TAURI_INVOKE("open_meeting_bar_menu", { languageLabels }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
 },
 /**
- * Widen the idle disc into its action row while the pointer is over it. The
- * window is an exact fit for its content, so the row needs a real resize.
+ * Grow the resting bar's exact-fit window into the hovered pill with its
+ * side buttons (Windows/Linux). A no-op on macOS, where the window is fixed.
  */
 async setMeetingBarExpanded(expanded: boolean) : Promise<void> {
     await TAURI_INVOKE("set_meeting_bar_expanded", { expanded });
@@ -1463,6 +1501,47 @@ async setMeetingBarNudge(show: boolean) : Promise<Result<null, string>> {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * A click (or Enter/Space) on the Flow Bar: start hands-free dictation, or
+ * finish the running one. The same toggle press the CLI flag and SIGUSR2
+ * send, so it is exempt from the key debounce and keeps toggle parity.
+ */
+async toggleDictationFromBar() : Promise<void> {
+    await TAURI_INVOKE("toggle_dictation_from_bar");
+},
+/**
+ * The rects of the overlay webview that take clicks (pill, side buttons,
+ * cards, an open menu), in window-local points. On macOS everything else of
+ * the fixed overlay window stays click-through; elsewhere this is unused.
+ */
+async setBarHitRects(rects: BarHitRect[]) : Promise<void> {
+    await TAURI_INVOKE("set_bar_hit_rects", { rects });
+},
+/**
+ * The "hidden for an hour" card's Undo: bring the resting bar back now.
+ */
+async undoHideFlowBar() : Promise<void> {
+    await TAURI_INVOKE("undo_hide_flow_bar");
+},
+/**
+ * "Show the bar at all times" (Wispr's Settings > System). Turning it on
+ * also ends a running hour-long hide; off hides the bar at rest.
+ */
+async changeShowBarAtAllTimesSetting(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("change_show_bar_at_all_times_setting", { enabled });
+},
+/**
+ * Offer the Scratchpad button beside the hovered bar.
+ */
+async changeScratchpadInFlowBarSetting(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("change_scratchpad_in_flow_bar_setting", { enabled });
+},
+/**
+ * Show the active dictation style beside the pill while dictating.
+ */
+async changeFlowBarStyleChipSetting(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("change_flow_bar_style_chip_setting", { enabled });
 },
 /**
  * How long a meeting may record before the bar shows its "still going?"
@@ -1697,6 +1776,22 @@ spoken_languages?: string[]; overlay_position?: OverlayPosition;
  */
 meeting_bar_position?: OverlayPosition | null; 
 /**
+ * Wispr's "Show Flow Bar at all times": the resting bar stays on screen
+ * between dictations. Off hides it at rest; dictation still shows.
+ */
+show_bar_at_all_times?: boolean; 
+/**
+ * Offer the Scratchpad button beside the hovered bar (Wispr's
+ * `scratchpadInFlowBar`, off by default). The right-click menu always
+ * has it.
+ */
+scratchpad_in_flow_bar?: boolean; 
+/**
+ * Show the active dictation style beside the pill while dictating. A
+ * FlowState extra, off by default so the pill matches Wispr's.
+ */
+flow_bar_style_chip?: boolean; 
+/**
  * How many minutes a meeting may record before the meeting bar shows the
  * discreet "still going?" prompt with a Stop button (the reference's meeting
  * reminders, so a forgotten recording doesn't run for hours). `None`
@@ -1712,12 +1807,38 @@ meeting_reminder_minutes?: number | null;
  */
 record_system_audio?: boolean; debug_mode?: boolean; log_level?: LogLevel; custom_words?: string[]; 
 /**
+ * Words the user pinned in the dictionary. Purely organisational: they
+ * sort first and keep their place while the list is ordered by newest.
+ */
+starred_words?: string[]; 
+/**
+ * Words that came from a correction rather than from typing. The marker
+ * survives because the learner retires its suggestion once accepted.
+ */
+learned_words?: string[]; 
+/**
+ * `az` or `newest`. Unknown values read as `az`.
+ */
+dictionary_sort?: string; 
+/**
+ * One post-processing prompt per writing context (`email`, `chat`,
+ * `docs`, `terminal`). A per-app rule still wins; an empty map leaves
+ * the global prompt in charge.
+ */
+post_process_context_prompts?: Partial<{ [key in string]: string }>; 
+/**
  * Whether the dictionary learns from corrections the user makes — the
  * explicit "correct this" flow in history, and the diff against
  * LLM post-processed text. Everything stays on this device; off means
  * no corrections are recorded at all.
  */
 learn_from_corrections?: boolean; 
+/**
+ * With learning on: words that reach the suggestion threshold are added
+ * to the dictionary straight away (marked learned), instead of waiting
+ * in the suggestion list for the user to accept them.
+ */
+add_learned_words_automatically?: boolean; 
 /**
  * Spoken text templates ("say trigger, get expansion"), expanded after
  * transcription in [`post_process_transcription_text`].
@@ -1790,6 +1911,11 @@ export type AutoUnavailableReason =
  */
 { kind: "no_match" }
 export type AvailableAccelerators = { transcribe: string[]; gpu_devices: GpuDeviceOption[] }
+/**
+ * A rect of the webview that takes clicks (the pill, its side buttons, a
+ * card, an open menu), in window-local logical points.
+ */
+export type BarHitRect = { x: number; y: number; width: number; height: number }
 export type BindingResponse = { success: boolean; binding: ShortcutBinding | null; error: string | null }
 /**
  * Script applied to Mandarin and Cantonese output. Traditional carries its region

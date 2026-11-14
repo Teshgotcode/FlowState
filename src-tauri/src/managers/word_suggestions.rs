@@ -6,12 +6,15 @@
 //! LLM post-processed text. Editing a pasted text in another app is not
 //! observable, so it is never guessed at.
 //!
-//! Nothing leaves the device and nothing is added to the dictionary
-//! automatically: the counts only become suggestions the user sees (and
-//! accepts or ignores) in Settings → Dictionary. The whole feature can be
-//! switched off with `learn_from_corrections`.
+//! Nothing leaves the device. By default nothing is added to the dictionary
+//! automatically either: the counts only become suggestions the user sees
+//! (and accepts or ignores) in Settings → Dictionary. The whole feature can
+//! be switched off with `learn_from_corrections`. With
+//! `add_learned_words_automatically` on, words that reach the suggestion
+//! threshold are added to the dictionary straight away instead — see
+//! [`auto_learn_if_enabled`].
 
-use log::warn;
+use log::{info, warn};
 use serde::{Deserialize, Serialize};
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 use std::path::PathBuf;
@@ -203,6 +206,38 @@ impl WordSuggestionLearner {
         self.save(&state);
     }
 
+    /// Auto-learn: the words that would be suggested right now (same filter
+    /// as [`Self::suggestions`]), accepted into the tally so they are never
+    /// suggested again, and returned for the caller to add to the dictionary.
+    pub fn drain_learnable(&self, dictionary: &[String]) -> Vec<String> {
+        let mut state = match self.state.lock() {
+            Ok(state) => state,
+            Err(poisoned) => poisoned.into_inner(),
+        };
+        let mut learnable: Vec<(String, String)> = state
+            .counts
+            .iter()
+            .filter(|(key, sighting)| {
+                sighting.count >= MIN_SIGHTINGS
+                    && !state.learned.contains(*key)
+                    && !state.ignored.contains(*key)
+                    && !dictionary_contains(dictionary, key)
+                    && !sighting.display.is_empty()
+            })
+            .map(|(key, sighting)| (key.clone(), sighting.display.clone()))
+            .collect();
+        // Same order the suggestion list would have shown.
+        learnable.sort_by(|a, b| a.1.cmp(&b.1));
+        for (key, _) in &learnable {
+            state.counts.remove(key);
+            state.learned.insert(key.clone());
+        }
+        if !learnable.is_empty() {
+            self.save(&state);
+        }
+        learnable.into_iter().map(|(_, display)| display).collect()
+    }
+
     /// Called whenever the custom words list changes, so the learner's idea
     /// of "already known" tracks the real dictionary: words that left it
     /// may be learned about again.
@@ -241,6 +276,42 @@ impl WordSuggestionLearner {
 /// Whether `word` (lowercased) is in the dictionary, case-insensitively.
 fn dictionary_contains(dictionary: &[String], word: &str) -> bool {
     dictionary.iter().any(|entry| entry.to_lowercase() == word)
+}
+
+/// Auto-learn pass after a correction is recorded: with
+/// `add_learned_words_automatically` on, words that just reached the
+/// suggestion threshold are accepted and added to the dictionary (marked
+/// learned), in place of queueing as suggestions. One read-modify-write step;
+/// the closure only pushes, so the settings lock stays non-reentrant-safe.
+pub fn auto_learn_if_enabled(app: &tauri::AppHandle, learner: &WordSuggestionLearner) {
+    let settings = crate::settings::get_settings(app);
+    if !settings.add_learned_words_automatically {
+        return;
+    }
+    let words = learner.drain_learnable(&settings.custom_words);
+    if words.is_empty() {
+        return;
+    }
+    let settings = crate::settings::update_settings(app, |s| {
+        for word in &words {
+            let already = s
+                .custom_words
+                .iter()
+                .any(|existing| existing.eq_ignore_ascii_case(word));
+            if !already {
+                s.custom_words.push(word.clone());
+            }
+            if !s.learned_words.contains(word) {
+                s.learned_words.push(word.clone());
+            }
+        }
+    });
+    crate::sync::note_settings_change(app, &settings.custom_words, &[]);
+    info!(
+        "Auto-learned {} word(s) into the dictionary: {:?}",
+        words.len(),
+        words
+    );
 }
 
 /// FNV-1a over the pair, so identical corrections are recognized without
@@ -441,5 +512,45 @@ mod tests {
             vec![("Ola".into(), 2)]
         );
         let _ = std::fs::remove_file(&path);
+    }
+
+    #[test]
+    fn drain_learnable_takes_exactly_the_suggested_words() {
+        let l = learner("drain");
+        // Below the threshold: nothing to drain.
+        l.record_correction("a", "Ola", &[]);
+        assert!(l.drain_learnable(&[]).is_empty());
+        // Reaching the threshold makes it learnable.
+        l.record_correction("b", "Ola", &[]);
+        assert_eq!(l.drain_learnable(&[]), vec!["Ola".to_string()]);
+        // Accepted by the drain: never suggested again, not re-drained.
+        assert!(l.suggestions(&[]).is_empty());
+        assert!(l.drain_learnable(&[]).is_empty());
+        // Fresh corrections of a drained word stay silent, as with accept().
+        l.record_correction("c", "Ola", &[]);
+        l.record_correction("d", "Ola", &[]);
+        assert!(l.suggestions(&[]).is_empty());
+    }
+
+    #[test]
+    fn drain_learnable_skips_dictionary_and_ignored_words() {
+        let l = learner("drain-filters");
+        // "Bo" reaches the threshold but the user ignored it.
+        l.record_correction("a", "Bo", &[]);
+        l.record_correction("b", "Bo", &[]);
+        l.ignore("Bo");
+        assert!(l.drain_learnable(&[]).is_empty());
+        // "Ola" reaches the threshold while it is already in the dictionary.
+        l.record_correction("a", "Ola", &["ola".into()]);
+        l.record_correction("b", "Ola", &["ola".into()]);
+        assert!(l.drain_learnable(&["ola".into()]).is_empty());
+    }
+
+    #[test]
+    fn drain_learnable_keeps_the_display_casing() {
+        let l = learner("drain-casing");
+        l.record_correction("hei ola nordmann", "hei Ola Nordmann", &[]);
+        l.record_correction("ring ola igjen", "ring Ola igjen", &[]);
+        assert_eq!(l.drain_learnable(&[]), vec!["Ola".to_string()]);
     }
 }

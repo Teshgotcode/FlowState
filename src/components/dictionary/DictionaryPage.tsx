@@ -51,14 +51,17 @@ export const DictionaryPage: React.FC = () => {
         <Button
           variant="secondary"
           size="sm"
+          className="inline-flex items-center gap-[6px]"
           onClick={() => setImportOpen(true)}
         >
           <FileUp size={13} />
           {t("dictionary.import")}
         </Button>
       </div>
-      <div className="rounded-[16px] border border-line bg-surface px-[24px] py-[8px]">
-        <CustomWords descriptionMode="inline" grouped={false} />
+      {/* One inset group, like a Settings section, instead of bordered
+          boxes inside a bordered card. */}
+      <div className="divide-y divide-line overflow-hidden rounded-[var(--flow-radius-card)] border border-line bg-surface-soft">
+        <CustomWords descriptionMode="inline" grouped />
       </div>
 
       <Dialog
@@ -94,7 +97,7 @@ export const DictionaryPage: React.FC = () => {
           onChange={(event) => setRaw(event.target.value)}
           placeholder={t("dictionary.importPlaceholder")}
           rows={8}
-          className="w-full resize-none rounded-[10px] border border-line bg-surface px-[12px] py-[10px] font-mono text-[12.5px] leading-[20px] text-text outline-none focus:border-logo-primary"
+          className="w-full resize-none rounded-[10px] border border-line bg-surface px-[12px] py-[10px] font-mono text-[12.5px] leading-[20px] text-text outline-none focus:border-focus"
         />
       </Dialog>
     </Page>

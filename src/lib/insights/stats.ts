@@ -194,3 +194,106 @@ export const wordsByLanguage = (entries: HistoryEntry[]): LanguageSplit[] => {
   }
   return [...byLanguage.values()].sort((a, b) => b.words - a.words);
 };
+
+export interface SpeechSpeed {
+  /** Words in the takes that recorded their own length. */
+  words: number;
+  /** Seconds those takes ran. */
+  seconds: number;
+  /** Words per minute, or null until a take has a length. */
+  wpm: number | null;
+  /** How many takes carried a length. */
+  timed: number;
+}
+
+/**
+ * Words per minute over the takes that recorded their own length. Dictations
+ * saved before the length was written are left out rather than counted as
+ * instant, which would make the number meaningless. Meetings are left out too:
+ * their length includes the silences a call is mostly made of.
+ */
+export const speechSpeed = (entries: HistoryEntry[]): SpeechSpeed => {
+  let words = 0;
+  let seconds = 0;
+  let timed = 0;
+  for (const entry of entries) {
+    if (entry.source === "meeting") continue;
+    const secs = entry.metadata?.duration_secs ?? 0;
+    if (secs <= 0) continue;
+    seconds += secs;
+    words += wordCount(entryText(entry));
+    timed += 1;
+  }
+  return {
+    words,
+    seconds,
+    wpm: seconds > 0 ? Math.round((words * 60) / seconds) : null,
+    timed,
+  };
+};
+
+/** Longest middle span the word diff compares; past it the span length is
+ * reported instead of spending a second squaring words on the main thread. */
+const DIFF_CAP = 400;
+
+const splitWords = (text: string): string[] =>
+  text.trim() ? text.trim().split(/\s+/) : [];
+
+/** Case and edge punctuation are the polish pass's normal work, not a fix. */
+const norm = (word: string): string =>
+  word.toLowerCase().replace(/^[^\p{L}\p{N}]+|[^\p{L}\p{N}]+$/gu, "");
+
+/**
+ * Words the polish pass changed: common start and end are trimmed, then the
+ * middle is compared word by word (longest common subsequence) and the words
+ * left unmatched on either side are counted. A word diff, not a character
+ * diff: punctuation-only rewrites read as zero.
+ */
+export const editsBetween = (raw: string, polished: string): number => {
+  const a = splitWords(raw).map(norm);
+  const b = splitWords(polished).map(norm);
+  let start = 0;
+  while (start < a.length && start < b.length && a[start] === b[start]) {
+    start += 1;
+  }
+  let endA = a.length - 1;
+  let endB = b.length - 1;
+  while (endA >= start && endB >= start && a[endA] === b[endB]) {
+    endA -= 1;
+    endB -= 1;
+  }
+  const tailA = a.slice(start, endA + 1);
+  const tailB = b.slice(start, endB + 1);
+  if (tailA.length === 0) return tailB.length;
+  if (tailB.length === 0) return tailA.length;
+  if (tailA.length > DIFF_CAP || tailB.length > DIFF_CAP) {
+    return Math.max(tailA.length, tailB.length);
+  }
+
+  const prev = new Array<number>(tailB.length + 1).fill(0);
+  const cur = new Array<number>(tailB.length + 1).fill(0);
+  for (let i = 1; i <= tailA.length; i += 1) {
+    for (let j = 1; j <= tailB.length; j += 1) {
+      cur[j] =
+        tailA[i - 1] === tailB[j - 1]
+          ? prev[j - 1] + 1
+          : Math.max(prev[j], cur[j - 1]);
+    }
+    for (let j = 0; j <= tailB.length; j += 1) {
+      prev[j] = cur[j];
+      cur[j] = 0;
+    }
+  }
+  return tailA.length + tailB.length - 2 * prev[tailB.length];
+};
+
+/** Words the polish pass changed across every entry it touched. */
+export const corrections = (entries: HistoryEntry[]): number => {
+  let total = 0;
+  for (const entry of entries) {
+    const polished = entry.post_processed_text?.trim();
+    if (!polished) continue;
+    total += editsBetween(entry.transcription_text, polished);
+  }
+  return total;
+};

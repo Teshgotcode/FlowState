@@ -21,15 +21,15 @@ export const Button: React.FC<ButtonProps> = ({
   ...props
 }) => {
   const baseClasses =
-    "font-medium rounded-lg border focus:outline-none transition-colors disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer";
+    "font-[560] rounded-[var(--flow-radius-control)] border transition-all duration-[var(--flow-dur-quick)] ease-[var(--flow-ease-spring)] active:scale-[0.985] focus:outline-none focus-visible:ring-2 focus-visible:ring-focus disabled:opacity-45 disabled:cursor-not-allowed disabled:active:scale-100 cursor-pointer";
 
   const variantClasses = {
     primary:
-      "text-on-accent bg-background-ui border-background-ui hover:bg-background-ui/80 hover:border-background-ui/80 focus:ring-1 focus:ring-background-ui",
+      "text-on-accent bg-background-ui border-logo-primary/25 shadow-[var(--flow-shadow-control)] hover:brightness-[0.97] hover:border-logo-primary/40",
     "primary-soft":
-      "text-text bg-logo-primary/20 border-transparent hover:bg-logo-primary/20 focus:ring-1 focus:ring-logo-primary",
+      "text-text bg-logo-primary/14 border-transparent hover:bg-logo-primary/20",
     secondary:
-      "bg-wash border-line hover:bg-logo-primary/20 hover:border-logo-primary focus:outline-none",
+      "bg-surface border-line-strong text-text shadow-[var(--flow-shadow-control)] hover:bg-wash",
     // For screens where secondary's grey fill reads as disabled (onboarding)
     outline:
       "text-text bg-background border-line-strong hover:border-plum focus-visible:ring-1 focus-visible:ring-logo-primary",
@@ -43,13 +43,13 @@ export const Button: React.FC<ButtonProps> = ({
     "danger-ghost":
       "text-error border-transparent hover:bg-error-wash focus:bg-error-wash",
     ghost:
-      "text-current border-transparent hover:bg-wash hover:border-logo-primary focus:bg-line",
+      "text-current border-transparent hover:bg-wash hover:border-transparent focus:bg-wash",
   };
 
   const sizeClasses = {
-    sm: "px-2 py-1 text-xs",
-    md: "px-4 py-[5px] text-sm",
-    lg: "px-4 py-2 text-base",
+    sm: "px-2.5 py-[5px] text-[12.5px]",
+    md: "px-3.5 py-[7px] text-[13px]",
+    lg: "px-4 py-2 text-[14px]",
   };
 
   return (

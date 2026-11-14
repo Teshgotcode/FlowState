@@ -115,7 +115,7 @@ const NoteBody: React.FC<{ note: MeetingNote }> = ({ note }) => {
       )}
       {sections.map((section) => (
         <section key={section.heading} className="mt-[14px]">
-          <h3 className="text-[11px] font-[600] uppercase tracking-[0.06em] text-ink-3">
+          <h3 className="text-[11px] font-[600] tracking-[-0.005em] text-ink-3">
             {section.heading}
           </h3>
           <ul className="mt-[6px] flex flex-col gap-[4px]">

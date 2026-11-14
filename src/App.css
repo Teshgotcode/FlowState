@@ -34,6 +34,10 @@
   --color-error-wash: var(--color-error-wash);
   --color-ink-2: var(--color-ink-2);
   --color-ink-3: var(--color-ink-3);
+  --color-ink-4: var(--color-ink-4);
+  --color-accent-wash: var(--color-accent-wash);
+  --color-chart: var(--color-chart);
+  --color-focus: var(--color-focus);
   --color-line: var(--color-line);
   --color-line-strong: var(--color-line-strong);
 }

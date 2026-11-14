@@ -378,6 +378,12 @@ enum SystemOutcome {
     Failed(String),
 }
 
+/// What the worker's stop flag asks for: 0 keep capturing, `STOP_KEEP`
+/// stop and finalize the recording, `STOP_DISCARD` stop and delete the
+/// working file (a cancelled meeting leaves nothing).
+const STOP_KEEP: u32 = 1;
+const STOP_DISCARD: u32 = 2;
+
 /// The system-audio capture a meeting runs beside its microphone track.
 /// The worker thread owns the CoreAudio objects, so stopping is a flag, a
 /// join and one final report — never a CoreAudio call from the meeting's
@@ -389,12 +395,12 @@ struct SystemTrack {
 }
 
 impl SystemTrack {
-    /// End the capture and collect its report. The worker always sends one
-    /// outcome before it exits; a panicked worker is a failure like any
-    /// other, logged and swallowed — the meeting's mic track decides what
-    /// the entry keeps.
-    fn stop(mut self) -> SystemOutcome {
-        self.stop.store(1, Ordering::Release);
+    /// Signal the flag, join the worker, collect its report. The worker
+    /// always sends one outcome before it exits; a panicked worker is a
+    /// failure like any other, logged and swallowed — the meeting's mic
+    /// track decides what the entry keeps.
+    fn end(mut self, mode: u32) -> SystemOutcome {
+        self.stop.store(mode, Ordering::Release);
         if let Some(join) = self.join.take() {
             if join.join().is_err() {
                 return SystemOutcome::Failed("the system audio thread panicked".into());
@@ -403,6 +409,27 @@ impl SystemTrack {
         self.outcome.recv().unwrap_or(SystemOutcome::Failed(
             "the system audio thread reported nothing".into(),
         ))
+    }
+
+    /// End the capture and finalize its recording.
+    fn stop(self) -> SystemOutcome {
+        self.end(STOP_KEEP)
+    }
+
+    /// End the capture and delete its recording: a cancelled meeting keeps
+    /// no system track, not even the working file.
+    fn discard(self) -> SystemOutcome {
+        self.end(STOP_DISCARD)
+    }
+}
+
+impl Drop for SystemTrack {
+    /// Safety net: an owner that drops a live track (a path that forgets
+    /// `stop`/`discard`) must not leave the CoreAudio tap capturing the
+    /// machine's audio forever. Signal discard; the worker tears the tap
+    /// down and removes its file itself.
+    fn drop(&mut self) {
+        self.stop.store(STOP_DISCARD, Ordering::Release);
     }
 }
 
@@ -539,6 +566,14 @@ fn system_track_worker(
             }
             recorder.stop();
             let mut working = working.lock().unwrap();
+            // A cancel asks for discard: the working file is removed, not
+            // finalized, so a cancelled meeting leaves no system track.
+            if stop.load(Ordering::Acquire) == STOP_DISCARD {
+                if let Err(e) = working.discard() {
+                    error!("Failed to remove the cancelled system working file: {e}");
+                }
+                break 'capture SystemOutcome::NoAudio;
+            }
             if working.frames() == 0 {
                 if let Err(e) = working.discard() {
                     error!("Failed to remove the empty system working file: {e}");
@@ -675,7 +710,16 @@ impl MeetingManager {
             .join(format!("{file_name}.{WORKING_SUFFIX}"));
 
         let mut session = self.session.lock().unwrap();
-        // The notes belong to one session: a new one starts empty.
+        session.state.start(
+            started,
+            started_unix,
+            working_path.clone(),
+            rm.is_recording(),
+        )?;
+        // The notes belong to one session: a new one starts empty. Reset only
+        // after the transition above is accepted, so a refused start
+        // (AlreadyRunning, MicrophoneBusy) leaves the running meeting's notes
+        // and app label untouched.
         session.notes.clear();
         // Read once, at the start: by the stop the user is usually elsewhere.
         session.app = crate::style::frontmost_app()
@@ -685,12 +729,6 @@ impl MeetingManager {
                     .is_none_or(|id| !id.starts_with("com.teshgotcode.flowstate"))
             })
             .and_then(|app| app.name);
-        session.state.start(
-            started,
-            started_unix,
-            working_path.clone(),
-            rm.is_recording(),
-        )?;
 
         let working = match WorkingFile::create(&working_path, constants::WHISPER_SAMPLE_RATE) {
             Ok(working) => Arc::new(Mutex::new(working)),
@@ -813,12 +851,26 @@ impl MeetingManager {
             None
         } else {
             let file_name = working.finish()?;
-            let entry = hm.save_meeting_entry(
-                file_name,
+            let entry = match hm.save_meeting_entry(
+                file_name.clone(),
                 decision.started_at_unix,
                 decision.duration_secs,
-                system_info,
-            )?;
+                system_info.clone(),
+            ) {
+                Ok(entry) => entry,
+                Err(e) => {
+                    // The entry is what makes these files reachable: with
+                    // no row, no delete or retention path can ever see
+                    // them, so they are removed here instead of orphaned.
+                    remove_recording_quietly(&hm.recordings_dir().join(&file_name));
+                    if let Some(system) = &system_info {
+                        remove_recording_quietly(&hm.recordings_dir().join(&system.file_name));
+                    }
+                    return Err(anyhow!(
+                        "Failed to save the meeting's entry; its recordings were removed: {e}"
+                    ));
+                }
+            };
             if let Some(app) = session.app.take() {
                 if let Err(e) = hm.save_meeting_app(entry.id, app) {
                     error!("Failed to label the meeting's app: {e}");
@@ -881,6 +933,14 @@ impl MeetingManager {
                 "Failed to remove the cancelled meeting's working file {}: {e}",
                 working_path.display()
             );
+        }
+        // The cancelled session keeps no system track either: the same
+        // shutdown `stop()` gives it, and the worker deletes its working
+        // file instead of finalizing it.
+        if let Some(track) = system_track {
+            if let SystemOutcome::Captured { file_name, .. } = track.discard() {
+                remove_recording_quietly(&hm.recordings_dir().join(file_name));
+            }
         }
         drop(session);
 

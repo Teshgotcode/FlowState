@@ -16,7 +16,12 @@ import {
 
 import { commands } from "@/bindings";
 import type { SidebarSection } from "@/components/Sidebar";
-import { getStoredAccent, applyAccent, type AccentId } from "@/lib/utils/accent";
+import {
+  ACCENT_OPTIONS,
+  getStoredAccent,
+  applyAccent,
+  type AccentId,
+} from "@/lib/utils/accent";
 import { getStoredTheme, applyTheme } from "@/lib/utils/theme";
 
 interface Item {
@@ -33,7 +38,8 @@ interface Props {
   onNavigate: (section: SidebarSection) => void;
 }
 
-const ACCENT_ORDER: AccentId[] = ["bla", "rosa", "gronn", "rod", "gul"];
+// The presets in picker order; the custom hue is only reachable from Settings.
+const ACCENT_ORDER: AccentId[] = ACCENT_OPTIONS.filter((id) => id !== "egen");
 
 /**
  * Cmd+K: everything the rail does not show, one keystroke away. The analysis
@@ -135,7 +141,7 @@ export const CommandPalette: React.FC<Props> = ({ open, onClose, onNavigate }) =
         aria-modal="true"
         aria-label={t("palette.title")}
         onMouseDown={(event) => event.stopPropagation()}
-        className="w-[560px] overflow-hidden rounded-[12px] border border-line bg-surface shadow-[0_24px_64px_rgba(0,0,0,0.28)]"
+        className="w-[560px] overflow-hidden rounded-[12px] border border-line bg-surface shadow-[var(--flow-shadow-pop)]"
       >
         <div className="flex items-center gap-[9px] border-b border-line px-[14px]">
           <Search size={15} className="text-ink-3" />

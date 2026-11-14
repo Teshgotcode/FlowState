@@ -9,15 +9,15 @@ interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
 export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   ({ className = "", variant = "default", disabled, ...props }, ref) => {
     const baseClasses =
-      "px-2 py-1 text-sm font-semibold bg-wash border border-line-strong rounded-md text-start transition-all duration-150";
+      "text-[13px] font-[450] bg-surface border border-line-strong rounded-[var(--flow-radius-control)] text-start transition-[background-color,border-color,box-shadow] duration-[var(--flow-dur-quick)] ease-[var(--flow-ease-spring)] placeholder:text-ink-3/80";
 
     const interactiveClasses = disabled
-      ? "opacity-60 cursor-not-allowed bg-wash border-line"
-      : "hover:bg-logo-primary/10 hover:border-logo-primary focus:outline-none focus:bg-logo-primary/20 focus:border-logo-primary";
+      ? "opacity-55 cursor-not-allowed bg-wash border-line"
+      : "hover:border-ink-4 focus:outline-none focus:border-focus focus:ring-[3px] focus:ring-logo-primary/15";
 
     const variantClasses = {
-      default: "px-3 py-2",
-      compact: "px-2 py-1",
+      default: "px-3 py-[7px]",
+      compact: "px-2.5 py-[5px]",
     } as const;
 
     return (

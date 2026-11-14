@@ -266,20 +266,40 @@ pub fn change_binding(
         }
     };
 
+    // The same hotkey on two bindings never works: whichever registers first
+    // wins and the other silently stops firing. Refuse the clash up front.
+    for (existing_id, existing) in &settings.bindings {
+        if existing_id != &id
+            && !existing.current_binding.is_empty()
+            && existing.current_binding.eq_ignore_ascii_case(&binding)
+        {
+            return Err(format!(
+                "'{}' is already bound to '{}'",
+                binding, existing.name
+            ));
+        }
+    }
+
     // If this is the cancel binding, just update the settings and return
     // It's managed dynamically, so we don't register/unregister here
     if id == "cancel" {
-        if let Some(mut b) = settings.bindings.get(&id).cloned() {
-            b.current_binding = binding;
-            settings.bindings.insert(id.clone(), b.clone());
-            settings::write_settings(&app, settings);
-            crate::secure_input::reconcile_fallback(&app);
-            return Ok(BindingResponse {
-                success: true,
-                binding: Some(b.clone()),
-                error: None,
-            });
-        }
+        // A store without the key (pre-feature or hand-edited settings) gets
+        // the default binding rather than falling through to the static
+        // registration below, which would double-register a hotkey the
+        // recording lifecycle manages itself.
+        let mut b = settings.bindings.get(&id).cloned().unwrap_or_else(|| {
+            warn!("Cancel binding missing from settings; restoring from defaults");
+            binding_to_modify.clone()
+        });
+        b.current_binding = binding;
+        settings.bindings.insert(id.clone(), b.clone());
+        settings::write_settings(&app, settings);
+        crate::secure_input::reconcile_fallback(&app);
+        return Ok(BindingResponse {
+            success: true,
+            binding: Some(b.clone()),
+            error: None,
+        });
     }
 
     // Unregister the existing binding
@@ -975,8 +995,7 @@ pub fn change_whats_new_last_seen_version_setting(
 #[tauri::command]
 #[specta::specta]
 pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-    settings.custom_words = words.clone();
+    let settings = settings::update_settings(&app, |s| s.custom_words = words.clone());
     // Keep the word suggestion learner's idea of "already known" in step
     // with the real dictionary, so a word the user removes can be learned
     // about again.
@@ -985,7 +1004,6 @@ pub fn update_custom_words(app: AppHandle, words: Vec<String>) -> Result<(), Str
     {
         learner.sync_dictionary(&settings.custom_words);
     }
-    settings::write_settings(&app, settings);
     crate::sync::note_settings_change(&app, &words, &[]);
     Ok(())
 }
@@ -1006,9 +1024,7 @@ pub fn change_learn_from_corrections_setting(app: AppHandle, value: bool) -> Res
 #[tauri::command]
 #[specta::specta]
 pub fn update_snippets(app: AppHandle, snippets: Vec<Snippet>) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-    settings.snippets = snippets.clone();
-    settings::write_settings(&app, settings);
+    settings::update_settings(&app, |s| s.snippets = snippets.clone());
     crate::sync::note_settings_change(&app, &[], &snippets);
     Ok(())
 }
@@ -1254,6 +1270,10 @@ pub fn change_post_process_base_url_setting(
         ));
     }
 
+    // A cleartext endpoint would carry the API key and every transcript over
+    // the network unencrypted; only this machine or a LAN host may skip TLS.
+    crate::llm_client::validate_provider_base_url(base_url.trim())?;
+
     provider.base_url = base_url;
     settings::write_settings(&app, settings);
     Ok(())
@@ -1307,8 +1327,12 @@ pub fn change_post_process_api_key_setting(
 ) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     validate_provider_exists(&settings, &provider_id)?;
-    settings.post_process_api_keys.insert(provider_id, api_key);
-    settings::write_settings(&app, settings);
+    // The masked placeholder from `get_app_settings` comes back here when
+    // the field is left untouched: keep the stored key, not the mask.
+    if api_key != settings::MASKED_API_KEY {
+        settings.post_process_api_keys.insert(provider_id, api_key);
+        settings::write_settings(&app, settings);
+    }
     Ok(())
 }
 
@@ -1343,8 +1367,6 @@ pub fn add_post_process_prompt(
     name: String,
     prompt: String,
 ) -> Result<LLMPrompt, String> {
-    let mut settings = settings::get_settings(&app);
-
     // Generate unique ID using timestamp and random component
     let id = format!("prompt_{}", chrono::Utc::now().timestamp_millis());
 
@@ -1354,8 +1376,7 @@ pub fn add_post_process_prompt(
         prompt,
     };
 
-    settings.post_process_prompts.push(new_prompt.clone());
-    settings::write_settings(&app, settings);
+    settings::update_settings(&app, |s| s.post_process_prompts.push(new_prompt.clone()));
 
     Ok(new_prompt)
 }
@@ -1368,16 +1389,15 @@ pub fn update_post_process_prompt(
     name: String,
     prompt: String,
 ) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-
-    if let Some(existing_prompt) = settings
-        .post_process_prompts
-        .iter_mut()
-        .find(|p| p.id == id)
-    {
-        existing_prompt.name = name;
-        existing_prompt.prompt = prompt;
-        settings::write_settings(&app, settings);
+    let mut found = false;
+    settings::update_settings(&app, |s| {
+        if let Some(existing_prompt) = s.post_process_prompts.iter_mut().find(|p| p.id == id) {
+            existing_prompt.name = name;
+            existing_prompt.prompt = prompt;
+            found = true;
+        }
+    });
+    if found {
         Ok(())
     } else {
         Err(format!("Prompt with id '{}' not found", id))
@@ -1387,29 +1407,29 @@ pub fn update_post_process_prompt(
 #[tauri::command]
 #[specta::specta]
 pub fn delete_post_process_prompt(app: AppHandle, id: String) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-
     // Don't allow deleting the last prompt
-    if settings.post_process_prompts.len() <= 1 {
+    if settings::get_settings(&app).post_process_prompts.len() <= 1 {
         return Err("Cannot delete the last prompt".to_string());
     }
 
-    // Find and remove the prompt
-    let original_len = settings.post_process_prompts.len();
-    settings.post_process_prompts.retain(|p| p.id != id);
+    let mut deleted = false;
+    settings::update_settings(&app, |s| {
+        let original_len = s.post_process_prompts.len();
+        s.post_process_prompts.retain(|p| p.id != id);
+        deleted = original_len != s.post_process_prompts.len();
 
-    if settings.post_process_prompts.len() == original_len {
-        return Err(format!("Prompt with id '{}' not found", id));
+        // If the deleted prompt was selected, select the first one or None
+        if deleted && s.post_process_selected_prompt_id.as_ref() == Some(&id) {
+            s.post_process_selected_prompt_id =
+                s.post_process_prompts.first().map(|p| p.id.clone());
+        }
+    });
+
+    if deleted {
+        Ok(())
+    } else {
+        Err(format!("Prompt with id '{}' not found", id))
     }
-
-    // If the deleted prompt was selected, select the first one or None
-    if settings.post_process_selected_prompt_id.as_ref() == Some(&id) {
-        settings.post_process_selected_prompt_id =
-            settings.post_process_prompts.first().map(|p| p.id.clone());
-    }
-
-    settings::write_settings(&app, settings);
-    Ok(())
 }
 
 #[tauri::command]
@@ -1460,15 +1480,62 @@ pub async fn fetch_post_process_models(
 #[tauri::command]
 #[specta::specta]
 pub fn set_post_process_selected_prompt(app: AppHandle, id: String) -> Result<(), String> {
-    let mut settings = settings::get_settings(&app);
-
-    // Verify the prompt exists
-    if !settings.post_process_prompts.iter().any(|p| p.id == id) {
-        return Err(format!("Prompt with id '{}' not found", id));
+    let mut found = false;
+    settings::update_settings(&app, |s| {
+        // Verify the prompt exists
+        if s.post_process_prompts.iter().any(|p| p.id == id) {
+            s.post_process_selected_prompt_id = Some(id.clone());
+            found = true;
+        }
+    });
+    if found {
+        Ok(())
+    } else {
+        Err(format!("Prompt with id '{}' not found", id))
     }
+}
 
-    settings.post_process_selected_prompt_id = Some(id);
-    settings::write_settings(&app, settings);
+/// One prompt per writing context. Ids that no longer exist are dropped, so a
+/// deleted preset cannot leave a dangling binding behind.
+#[tauri::command]
+#[specta::specta]
+pub fn update_post_process_context_prompts(
+    app: AppHandle,
+    prompts: std::collections::HashMap<String, String>,
+) -> Result<(), String> {
+    settings::update_settings(&app, |s| {
+        let kept: std::collections::HashMap<String, String> = prompts
+            .into_iter()
+            .filter(|(context, id)| {
+                ["email", "chat", "docs", "terminal"].contains(&context.as_str())
+                    && s.post_process_prompts.iter().any(|p| &p.id == id)
+            })
+            .collect();
+        s.post_process_context_prompts = kept;
+    });
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn update_starred_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
+    settings::update_settings(&app, |s| s.starred_words = words);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn update_learned_words(app: AppHandle, words: Vec<String>) -> Result<(), String> {
+    settings::update_settings(&app, |s| s.learned_words = words);
+    Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub fn set_dictionary_sort(app: AppHandle, sort: String) -> Result<(), String> {
+    settings::update_settings(&app, |s| {
+        s.dictionary_sort = if sort == "newest" { "newest" } else { "az" }.to_string();
+    });
     Ok(())
 }
 

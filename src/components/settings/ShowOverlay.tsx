@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Dropdown } from "../ui/Dropdown";
 import { SettingContainer } from "../ui/SettingContainer";
+import { ToggleSwitch } from "../ui/ToggleSwitch";
 import { useSettings } from "../../hooks/useSettings";
 import type { OverlayPosition, OverlayStyle } from "@/bindings";
 
@@ -49,8 +50,9 @@ export const ShowOverlay: React.FC<ShowOverlayProps> = React.memo(
       },
     ];
 
+    // Minimal (Wispr's pill, no live text) is the default; a stored style wins.
     const selectedStyle = (getSetting("overlay_style") ||
-      "live") as OverlayStyle;
+      "minimal") as OverlayStyle;
     // All four edges are selectable; an unset store falls back to "bottom"
     // (a legacy "none" was already folded onto Bottom when the store loaded).
     const selectedPosition: OverlayPosition =
@@ -91,6 +93,40 @@ export const ShowOverlay: React.FC<ShowOverlayProps> = React.memo(
             />
           </SettingContainer>
         )}
+
+        <ToggleSwitch
+          checked={getSetting("show_bar_at_all_times") ?? true}
+          onChange={(enabled) =>
+            updateSetting("show_bar_at_all_times", enabled)
+          }
+          isUpdating={isUpdating("show_bar_at_all_times")}
+          label={t("settings.advanced.overlay.showBar.label")}
+          description={t("settings.advanced.overlay.showBar.description")}
+          descriptionMode={descriptionMode}
+          grouped={grouped}
+        />
+        <ToggleSwitch
+          checked={getSetting("scratchpad_in_flow_bar") ?? false}
+          onChange={(enabled) =>
+            updateSetting("scratchpad_in_flow_bar", enabled)
+          }
+          isUpdating={isUpdating("scratchpad_in_flow_bar")}
+          label={t("settings.advanced.overlay.scratchpadInBar.label")}
+          description={t(
+            "settings.advanced.overlay.scratchpadInBar.description",
+          )}
+          descriptionMode={descriptionMode}
+          grouped={grouped}
+        />
+        <ToggleSwitch
+          checked={getSetting("flow_bar_style_chip") ?? false}
+          onChange={(enabled) => updateSetting("flow_bar_style_chip", enabled)}
+          isUpdating={isUpdating("flow_bar_style_chip")}
+          label={t("settings.advanced.overlay.styleChip.label")}
+          description={t("settings.advanced.overlay.styleChip.description")}
+          descriptionMode={descriptionMode}
+          grouped={grouped}
+        />
       </>
     );
   },

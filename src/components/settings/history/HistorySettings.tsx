@@ -513,7 +513,7 @@ export const HistorySettings: React.FC = () => {
       <div className="space-y-2">
         <div className="px-4 flex items-center justify-between">
           <div>
-            <h2 className="text-xs font-medium text-ink-3 uppercase tracking-wide">
+            <h2 className="text-[12.5px] font-[560] text-ink-2">
               {t("settings.history.title")}
             </h2>
           </div>
@@ -689,15 +689,22 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
 
   const saveCorrection = async () => {
     setSavingCorrection(true);
-    const result = await commands.correctHistoryEntry(entry.id, draft);
-    setSavingCorrection(false);
-    if (result.status === "error") {
+    try {
+      const result = await commands.correctHistoryEntry(entry.id, draft);
+      if (result.status === "error") {
+        toast.error(t("settings.history.correctError"));
+        return;
+      }
+      setEditing(false);
+      onCorrected(result.data);
+      toast.success(t("settings.history.correctSaved"));
+    } catch (error) {
+      // A rejected IPC call must not leave the save button disabled.
+      console.error("Failed to save the correction:", error);
       toast.error(t("settings.history.correctError"));
-      return;
+    } finally {
+      setSavingCorrection(false);
     }
-    setEditing(false);
-    onCorrected(result.data);
-    toast.success(t("settings.history.correctSaved"));
   };
 
   const handleDeleteEntry = async () => {

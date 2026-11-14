@@ -159,7 +159,7 @@ export const StyleRules: React.FC = () => {
                 "settings.postProcessing.styleRules.appPlaceholder",
               )}
               variant="compact"
-              className="min-w-[220px]"
+              className="min-w-[280px]"
             />
             <Button
               onClick={handleCapture}
@@ -188,7 +188,7 @@ export const StyleRules: React.FC = () => {
           </Button>
         </div>
 
-        {error && <p className="text-sm text-red-500">{error}</p>}
+        {error && <p className="text-sm text-error">{error}</p>}
       </div>
     </SettingContainer>
   );

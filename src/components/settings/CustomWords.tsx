@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { commands, type WordSuggestion } from "@/bindings";
@@ -29,6 +29,29 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
     const normalizedWord = normalizeCustomWord(newWord);
     // Learning is on unless the loaded settings say otherwise.
     const learnFromCorrections = getSetting("learn_from_corrections") ?? true;
+    const autoAddLearned = getSetting("add_learned_words_automatically") ?? false;
+    const starred = getSetting("starred_words") || [];
+    const learned = getSetting("learned_words") || [];
+    const sort = getSetting("dictionary_sort") || "az";
+
+    // Starred words hold the top of the list whatever the sort is; the sort
+    // only decides the order inside each half.
+    const ordered = useMemo(() => {
+      const base =
+        sort === "newest"
+          ? [...customWords].reverse()
+          : [...customWords].sort((a, b) => a.localeCompare(b, "nb"));
+      return base.sort(
+        (a, b) => Number(starred.includes(b)) - Number(starred.includes(a)),
+      );
+    }, [customWords, sort, starred]);
+
+    const toggleStar = (word: string) => {
+      const next = starred.includes(word)
+        ? starred.filter((w) => w !== word)
+        : [...starred, word];
+      void updateSetting("starred_words", next);
+    };
 
     const handleAddWord = () => {
       if (normalizedWord && normalizedWord.length <= 50) {
@@ -92,6 +115,9 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
         )
       ) {
         updateSetting("custom_words", [...customWords, word]);
+        if (!learned.includes(word)) {
+          updateSetting("learned_words", [...learned, word]);
+        }
       }
       setSuggestions((prev) => prev.filter((s) => s.word !== word));
     };
@@ -144,14 +170,73 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
           <div
             className={`overflow-hidden ${grouped ? "" : "rounded-lg border border-line"}`}
           >
-            {customWords.map((word, index) => (
+            <div className="flex h-[36px] items-center justify-between border-b border-line px-4">
+              <span className="text-[12px] text-ink-3">
+                {customWords.length}{" "}
+                {t("settings.advanced.customWords.countLabel")}
+              </span>
+              <button
+                type="button"
+                onClick={() =>
+                  updateSetting(
+                    "dictionary_sort",
+                    sort === "az" ? "newest" : "az",
+                  )
+                }
+                className="cursor-pointer rounded-[6px] px-[7px] py-[3px] text-[12px] font-[550] text-ink-2 transition-colors hover:bg-wash hover:text-text"
+              >
+                {sort === "az"
+                  ? t("settings.advanced.customWords.sortAz")
+                  : t("settings.advanced.customWords.sortNewest")}
+              </button>
+            </div>
+            {ordered.map((word, index) => (
               <div
                 key={word}
                 className={`flex h-[52px] items-center justify-between px-4 ${
                   index > 0 ? "border-t border-line" : ""
                 }`}
               >
-                <span className="text-[15px] font-[550] text-text">{word}</span>
+                <span className="flex min-w-0 items-center gap-[8px]">
+                  <button
+                    type="button"
+                    onClick={() => toggleStar(word)}
+                    aria-pressed={starred.includes(word)}
+                    aria-label={t(
+                      starred.includes(word)
+                        ? "settings.advanced.customWords.unstar"
+                        : "settings.advanced.customWords.star",
+                      { word },
+                    )}
+                    className={`flex h-[24px] w-[24px] shrink-0 cursor-pointer items-center justify-center rounded-[6px] transition-colors hover:bg-wash ${
+                      starred.includes(word) ? "text-logo-primary" : "text-ink-3"
+                    }`}
+                  >
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-[13px] w-[13px]"
+                      fill={starred.includes(word) ? "currentColor" : "none"}
+                      stroke="currentColor"
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m12 3.6 2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.8-5.2 2.8 1-5.8L3.6 9.7l5.8-.8z"
+                      />
+                    </svg>
+                  </button>
+                  <span className="text-[15px] font-[550] text-text">{word}</span>
+                  {learned.includes(word) && (
+                    <span
+                      title={t("settings.advanced.customWords.learned")}
+                      className="rounded-[5px] bg-wash px-[5px] py-[1px] text-[10.5px] font-[550] text-ink-3"
+                    >
+                      {t("settings.advanced.customWords.learned")}
+                    </span>
+                  )}
+                </span>
                 <button
                   type="button"
                   onClick={() => handleRemoveWord(word)}
@@ -189,6 +274,25 @@ export const CustomWords: React.FC<CustomWordsProps> = React.memo(
           grouped={grouped}
         />
         {learnFromCorrections && (
+          <ToggleSwitch
+            checked={autoAddLearned}
+            onChange={(value) =>
+              updateSetting(
+                "add_learned_words_automatically",
+                value as boolean,
+              )
+            }
+            isUpdating={isUpdating("add_learned_words_automatically")}
+            label={t("settings.advanced.customWords.autoAddTitle")}
+            description={t("settings.advanced.customWords.autoAddDescription")}
+            descriptionMode={descriptionMode}
+            grouped={grouped}
+          />
+        )}
+        {/* With auto-add on, threshold-reaching words never queue as
+            suggestions, so the list (whose copy says "nothing is added
+            automatically") would only ever show its empty state. */}
+        {learnFromCorrections && !autoAddLearned && (
           <SettingContainer
             title={t("settings.advanced.customWords.suggestionsTitle")}
             description={t(

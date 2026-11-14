@@ -185,7 +185,9 @@ pub async fn diarize_entry(app: &AppHandle, entry_id: i64) -> Result<HistoryEntr
         .clone()
         .ok_or_else(|| "The entry has no timed segments".to_string())?;
 
-    let recording = hm.get_audio_file_path(&entry.file_name);
+    let recording = hm
+        .get_audio_file_path(&entry.file_name)
+        .ok_or_else(|| format!("History entry {entry_id} has no usable recording file"))?;
     let samples = crate::audio_toolkit::read_wav_samples(&recording)
         .map_err(|e| format!("Failed to load the meeting's audio: {e}"))?;
     let turns = diarize_meeting(app, &samples)

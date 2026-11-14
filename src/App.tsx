@@ -254,7 +254,11 @@ function App() {
   // The bead's menu can ask for a section (it opens the app on Notes).
   useEffect(() => {
     const unlisten = listen<string>("navigate-section", (event) => {
-      setCurrentSection(event.payload as SidebarSection);
+      // The payload is a runtime string from the overlay or the tray; an id
+      // the sidebar does not know would land on General Settings, so ignore it.
+      if (Object.prototype.hasOwnProperty.call(SECTIONS_CONFIG, event.payload)) {
+        setCurrentSection(event.payload as SidebarSection);
+      }
     });
     return () => {
       unlisten.then((fn) => fn());
@@ -516,7 +520,7 @@ function App() {
             />
           )}
           <main className="flex-1 flex flex-col overflow-hidden">
-            <div className="flex-1 overflow-y-auto mb-[8px] me-[8px] rounded-t-[24px] rounded-b-[16px] bg-surface px-[40px] pt-[40px]">
+            <div className="flex-1 overflow-y-auto mb-[10px] me-[10px] rounded-[var(--flow-radius-panel)] bg-surface px-[40px] pt-[38px] shadow-[var(--flow-shadow-panel)]">
               <MeetingDetectedBanner />
               {DAILY_SECTIONS.includes(currentSection) ? (
                 renderDailyContent(currentSection, setCurrentSection)

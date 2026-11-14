@@ -3,6 +3,7 @@
     "settings": "Innstillinger...",
     "checkUpdates": "Se etter oppdateringer...",
     "copyLastTranscript": "Kopier siste transkripsjon",
+    "pasteLastTranscript": "Lim inn siste transkripsjon",
     "unloadModel": "Last ut modellen",
     "model": "Modell",
     "quit": "Avslutt",
@@ -11,7 +12,13 @@
     "meetingBarHideForHour": "Skjul i 1 time",
     "scratchpadOpen": "Hurtignotat",
     "meeting_bar_start": "Start møte",
-    "meeting_bar_note": "Nytt notat"
+    "meeting_bar_note": "Nytt notat",
+    "barLanguages": "Språk",
+    "barLanguageAuto": "Oppdag automatisk",
+    "barMicrophone": "Mikrofon",
+    "barMicrophoneDefault": "Systemstandard",
+    "barHistory": "Transkripsjonshistorikk",
+    "barStyle": "Stil"
   },
   "sidebar": {
     "general": "Generelt",
@@ -24,6 +31,11 @@
     "integrations": "Integrasjoner",
     "sync": "Synk",
     "mainNav": "Hovednavigasjon",
+    "groups": {
+      "capture": "Opptak",
+      "words": "Dine ord",
+      "progress": "Fremgang"
+    },
     "home": "Diktering",
     "notes": "Notater",
     "insights": "Innsikt",
@@ -396,6 +408,10 @@
           "command": {
             "name": "Kommandosnarvei",
             "description": "Snarveien som redigerer merket tekst med en muntlig instruksjon."
+          },
+          "paste_last_transcript": {
+            "name": "Lim inn siste transkripsjon",
+            "description": "Tastatursnarveien som limer inn den nyeste transkripsjonen på nytt ved markøren."
           }
         },
         "errors": {
@@ -617,6 +633,18 @@
             "left": "Venstre",
             "right": "Høyre"
           }
+        },
+        "showBar": {
+          "label": "Vis linjen hele tiden",
+          "description": "Holder den lille linjen på skjermen mellom dikteringer. Av: den vises bare mens du dikterer."
+        },
+        "scratchpadInBar": {
+          "label": "Hurtignotat-knapp på linjen",
+          "description": "Viser en knapp for hurtignotat når du holder pekeren over linjen."
+        },
+        "styleChip": {
+          "label": "Vis stilen under diktering",
+          "description": "Viser den aktive skrivestilen ved siden av linjen mens du dikterer."
         }
       },
       "pasteMethod": {
@@ -685,13 +713,21 @@
         "duplicate": "«{{word}}» finnes allerede",
         "learnTitle": "Lær av rettelser",
         "learnDescription": "Sammenlign transkripsjoner med teksten du retter, og foreslå ord du må rette om og om igjen. Alt lagres på denne enheten.",
+        "autoAddTitle": "Legg til lærte ord automatisk",
+        "autoAddDescription": "Ord du må rette om og om igjen, legges inn i ordboken av seg selv, uten forslag.",
         "suggestionsTitle": "Foreslåtte ord",
         "suggestionsDescription": "Ord du har rettet minst to ganger som ikke finnes i ordboken ennå. Ingenting legges til automatisk.",
         "suggestionsEmpty": "Ingen forslag ennå. Ord du retter to ganger havner her.",
         "suggestionAdd": "Legg til {{word}}",
         "suggestionIgnore": "Ignorer {{word}}",
         "suggestionCount": "Rettet {{count}} ganger",
-        "suggestionError": "Kunne ikke oppdatere forslaget for «{{word}}»"
+        "suggestionError": "Kunne ikke oppdatere forslaget for «{{word}}»",
+        "countLabel": "ord i ordboken",
+        "sortAz": "A til Å",
+        "sortNewest": "Nyeste først",
+        "star": "Stjernemerk {{word}}",
+        "unstar": "Fjern stjerne fra {{word}}",
+        "learned": "lært"
       },
       "snippets": {
         "title": "Tekstmaler",
@@ -1254,6 +1290,7 @@
     "cancel": "Avbryt"
   },
   "errors": {
+    "settingSaveFailed": "Endringen kunne ikke lagres.",
     "loadDirectory": "Kunne ikke laste mappen: {{error}}",
     "micPermissionDeniedTitle": "Mikrofontilgang nektet",
     "micPermissionDenied": {
@@ -1284,18 +1321,20 @@
       "dark": "Mørk"
     },
     "accent": {
-      "title": "Aksentfarge",
-      "description": "Velg farge for knapper, aktive rader og markeringer.",
-      "bla": "Blå",
+      "title": "Fargetema",
+      "description": "En pastellfarge for vinduet, knappene og markeringene.",
+      "bla": "Himmel",
+      "lilla": "Lavendel",
       "rosa": "Rosa",
-      "gronn": "Grønn",
-      "rod": "Rød",
-      "gul": "Guloransje",
+      "rod": "Fersken",
+      "gul": "Sand",
+      "gronn": "Salvie",
       "egen": "Egen",
       "hue": "Fargetone"
     }
   },
   "overlay": {
+    "cancel": "Avbryt",
     "transcribing": "Transkriberer...",
     "processing": "Skriver",
     "loadingModel": "Laster inn modell...",
@@ -1311,11 +1350,35 @@
     },
     "command": "Kommando",
     "commandFallback": "Ingen merking - vanlig diktering",
+    "noMicSound": "Ingen lyd fra mikrofonen",
+    "language": {
+      "menuTitle": "Språk",
+      "auto": "Auto"
+    },
     "style": {
       "menuTitle": "Stil",
       "chipTitle": "Dikteringsstil - høyreklikk for å bytte"
     },
-    "quickNote": "Nytt notat"
+    "quickNote": "Nytt notat",
+    "error": {
+      "no_model": "Ingen modell valgt. Velg en i Innstillinger.",
+      "model_failed": "Modellen kunne ikke lastes. Sjekk Innstillingene.",
+      "command_failed": "Kommandoen feilet. Ingenting ble endret.",
+      "start_failed": "Fikk ikke startet mikrofonen."
+    },
+    "finishAndPaste": "Fullfør og lim inn",
+    "bar": {
+      "dictate": "Dikter <key>{{key}}</key>",
+      "pressToFinish": "Trykk <key>{{key}}</key> for å fullføre og lime inn",
+      "takeNotes": "Ta notater",
+      "showNotepad": "Vis notatblokken",
+      "language": "Dikteringsspråk",
+      "hiddenTitle": "Linjen er skjult i en time",
+      "undo": "Angre",
+      "silentTitle": "Vi hører ingenting",
+      "silentBody": "Sjekk at riktig mikrofon er valgt.",
+      "selectMicrophone": "Velg mikrofon"
+    }
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} blokkerer kanskje 1 snarvei",
@@ -1476,12 +1539,19 @@
     "topHourCount_other": "{{count}} dikteringer",
     "voiceEmpty": "Ingen språk plukket opp ennå. Modellen fanger dem opp fortløpende.",
     "cardLastWeek": "Siste 7 dager",
-    "cardWordsToday": "Ord i dag"
+    "cardWordsToday": "Ord i dag",
+    "cardSpeed": "Ord per minutt",
+    "cardSpeedTakes": "Målte opptak",
+    "cardSpeedPending": "Måles fra neste diktering",
+    "cardFixes": "Ord rettet",
+    "cardFixesHint": "Endret i etterbehandling"
   },
   "topbar": {
     "toggleSidebar": "Vis eller skjul sidepanelet"
   },
   "notetaker": {
+    "durationMinutes": "{{minutes}} min",
+    "durationHours": "{{hours}} t {{minutes}} min",
     "subtitle": "Møtene du har tatt opp, med lengde og transkripsjon.",
     "emptyTitle": "Ingen møter ennå",
     "emptyBody": "Start et møte fra perlen eller snarveien, så dukker det opp her.",
@@ -1532,7 +1602,21 @@
     "importCount": "Legg til {{count}}"
   },
   "snippets": {
-    "subtitle": "Si en snarvei, få en fast tekst."
+    "subtitle": "Si en snarvei, få en fast tekst.",
+    "newTitle": "Ny tekstmal",
+    "listTitle": "Dine maler",
+    "search": "Søk i maler",
+    "count_one": "{{count}} mal",
+    "count_other": "{{count}} maler",
+    "emptyTitle": "Ingen maler ennå",
+    "emptyBody": "Lag en mal for det du skriver oftest, som signatur eller adresse. Si utløserordet, så kommer hele teksten i stedet.",
+    "emptyCta": "Lag den første",
+    "noHits": "Ingen treff på «{{query}}»",
+    "edit": "Rediger",
+    "done": "Ferdig",
+    "removed": "Fjernet «{{trigger}}»",
+    "undo": "Angre",
+    "caseBadge": "Aa"
   },
   "style": {
     "subtitle": "Skriveregler per app, brukt av etterbehandlingen.",
@@ -1570,7 +1654,16 @@
         "description": "Én kort linje per poeng, uten markdown.",
         "sample": "// Retter race i sync-løkka når to kall treffer samtidig"
       }
-    }
+    },
+    "autoCleanup": "Automatisk opprydding",
+    "contexts": {
+      "default": "Standard",
+      "email": "E-post",
+      "chat": "Chat",
+      "docs": "Dokumenter",
+      "terminal": "Terminal"
+    },
+    "contextHint": "Brukes for apper uten egen regel. En app-regel nedenfor vinner fortsatt."
   },
   "help": {
     "subtitle": "Slik dikterer du, og hvor du finner resten.",

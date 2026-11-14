@@ -34,10 +34,10 @@ export const SettingsHub: React.FC<{
               key={tab}
               type="button"
               onClick={() => onSelect(tab)}
-              className={`cursor-pointer rounded-[6px] px-[10px] py-[6px] text-[13px] transition-colors ${
+              className={`cursor-pointer rounded-[var(--flow-radius-chip)] px-[10px] py-[6px] text-[13px] transition-colors ${
                 tab === active
-                  ? "bg-surface text-text shadow-[0_1px_2px_rgba(0,0,0,.08)]"
-                  : "text-text/70 hover:bg-wash hover:text-text"
+                  ? "bg-text/[0.07] font-[560] text-text"
+                  : "text-ink-2 hover:bg-wash hover:text-text"
               }`}
             >
               {t(`settings.tab.${tab}`)}

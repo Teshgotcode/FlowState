@@ -6,6 +6,7 @@ use serde_json::Value;
 use std::collections::HashSet;
 use std::error::Error as StdError;
 use std::sync::{Mutex, OnceLock};
+use std::time::Duration;
 
 #[derive(Debug, Serialize)]
 struct ChatMessage {
@@ -144,6 +145,10 @@ const ANTHROPIC_MAX_TOKENS: u32 = 4096;
 struct AnthropicMessagesRequest {
     model: String,
     max_tokens: u32,
+    // Top-level Messages API field. `None` keeps the wire format the plain
+    // path has always sent (no `system` key).
+    #[serde(skip_serializing_if = "Option::is_none")]
+    system: Option<String>,
     messages: Vec<ChatMessage>,
 }
 
@@ -215,13 +220,101 @@ fn build_headers(provider: &PostProcessProvider, api_key: &str) -> Result<Header
     Ok(headers)
 }
 
+/// Whether a redirect the endpoint answers with may be followed: only to
+/// the same host, and only over https — except plain http to a local or
+/// LAN host, the same exception `validate_provider_base_url` makes for
+/// the base URL. Anything else would hand the API key (and the transcript)
+/// to another host or drop them to cleartext.
+fn redirect_allowed(original: &reqwest::Url, next: &reqwest::Url) -> bool {
+    original.host() == next.host()
+        && (next.scheme() == "https"
+            || (next.scheme() == "http" && is_local_or_lan_host(next)))
+}
+
 /// Create an HTTP client with provider-specific headers
 fn create_client(provider: &PostProcessProvider, api_key: &str) -> Result<reqwest::Client, String> {
+    // The settings command validates the base URL, but the store can hold
+    // one written before that check existed or imported otherwise: refuse
+    // it here, at the single place every request builds its client.
+    validate_provider_base_url(&provider.base_url)?;
     let headers = build_headers(provider, api_key)?;
     reqwest::Client::builder()
         .default_headers(headers)
+        .redirect(reqwest::redirect::Policy::custom(|attempt| {
+            let allowed = attempt
+                .previous()
+                .first()
+                .is_some_and(|original| redirect_allowed(original, attempt.url()));
+            if allowed {
+                attempt.follow()
+            } else {
+                attempt.error("the endpoint tried to redirect to another host or a non-https URL")
+            }
+        }))
+        // A hung endpoint must fail into the caller's fallback instead of
+        // holding the post-processing await for the rest of the session:
+        // 10 s to connect, 60 s for the whole request. Requests here are
+        // one-shot completions, never streamed, so a total cap is safe.
+        .connect_timeout(Duration::from_secs(10))
+        .timeout(Duration::from_secs(60))
         .build()
         .map_err(|e| report_reqwest_error("Failed to build HTTP client", &e))
+}
+
+/// Whether a custom provider's base URL may be used. `https` is always
+/// allowed; plain `http` only for this machine or a private LAN address, so
+/// the API key and every transcript stay off the open internet in cleartext.
+/// Local model servers (Ollama, LM Studio) keep working.
+pub fn validate_provider_base_url(base_url: &str) -> Result<(), String> {
+    let url = reqwest::Url::parse(base_url.trim())
+        .map_err(|e| format!("Invalid base URL: {e}"))?;
+    match url.scheme() {
+        "https" => Ok(()),
+        "http" => {
+            if is_local_or_lan_host(&url) {
+                Ok(())
+            } else {
+                Err("The base URL must use https; plain http is only allowed for localhost or private LAN addresses".to_string())
+            }
+        }
+        other => Err(format!(
+            "The base URL must use https (or http for localhost or a LAN address), not '{other}'"
+        )),
+    }
+}
+
+/// Whether the URL's host is this machine or a private LAN address. DNS is
+/// not consulted: a hostname that merely resolves to a LAN IP is refused,
+/// like `is_local_llm_endpoint` in meeting_note.
+fn is_local_or_lan_host(url: &reqwest::Url) -> bool {
+    let Some(host) = url.host_str() else {
+        return false;
+    };
+    let host = host
+        .trim_start_matches('[')
+        .trim_end_matches(']')
+        .to_lowercase();
+    if host == "localhost" {
+        return true;
+    }
+    match host.parse::<std::net::IpAddr>() {
+        Ok(std::net::IpAddr::V4(ip)) => {
+            let octets = ip.octets();
+            ip.is_loopback()
+                || ip.is_private()
+                || ip.is_link_local()
+                // 100.64/10: the CGNAT range used by Tailscale-style LANs.
+                || (octets[0] == 100 && (octets[1] & 0xc0) == 0x40)
+        }
+        Ok(std::net::IpAddr::V6(ip)) => {
+            let segments = ip.segments();
+            ip.is_loopback()
+                // fc00::/7 unique local, fe80::/10 link local.
+                || (segments[0] & 0xfe00) == 0xfc00
+                || (segments[0] & 0xffc0) == 0xfe80
+        }
+        Err(_) => false,
+    }
 }
 
 /// Format a bounded error source chain.
@@ -382,6 +475,23 @@ pub async fn send_chat_completion_with_schema(
     json_schema: Option<Value>,
     disable_reasoning: bool,
 ) -> Result<Option<String>, String> {
+    // The Messages API has no `/chat/completions`; posting there is a 404 on
+    // every take. Branch exactly like `send_chat_completion`, with the schema
+    // carried the way this format supports it.
+    if provider.api_format == PostProcessApiFormat::Anthropic {
+        return send_anthropic_messages(
+            provider,
+            api_key,
+            model,
+            anthropic_schema_system_prompt(system_prompt, json_schema),
+            vec![ChatMessage {
+                role: "user".to_string(),
+                content: user_content,
+            }],
+        )
+        .await;
+    }
+
     let base_url = provider.base_url.trim_end_matches('/');
     let url = format!("{}/chat/completions", base_url);
 
@@ -527,6 +637,48 @@ async fn send_anthropic_message(
     model: &str,
     prompt: String,
 ) -> Result<Option<String>, String> {
+    send_anthropic_messages(
+        provider,
+        api_key,
+        model,
+        None,
+        vec![ChatMessage {
+            role: "user".to_string(),
+            content: prompt,
+        }],
+    )
+    .await
+}
+
+/// The top-level `system` field a schema-asking Anthropic request carries:
+/// the caller's system prompt plus the schema. The Messages API has no
+/// `response_format`, so JSON output is requested in the prompt; the text
+/// blocks then parse exactly like the plain path's.
+fn anthropic_schema_system_prompt(
+    system_prompt: Option<String>,
+    json_schema: Option<Value>,
+) -> Option<String> {
+    let mut system = system_prompt.unwrap_or_default();
+    if let Some(schema) = json_schema {
+        if !system.is_empty() {
+            system.push_str("\n\n");
+        }
+        system.push_str(
+            "Reply with only a JSON object matching this JSON schema, with no other text:\n",
+        );
+        system.push_str(&schema.to_string());
+    }
+    (!system.is_empty()).then_some(system)
+}
+
+/// Post one Anthropic Messages request and return its joined text blocks.
+async fn send_anthropic_messages(
+    provider: &PostProcessProvider,
+    api_key: String,
+    model: &str,
+    system: Option<String>,
+    messages: Vec<ChatMessage>,
+) -> Result<Option<String>, String> {
     let url = format!("{}/messages", provider.base_url.trim_end_matches('/'));
 
     debug!(
@@ -537,10 +689,8 @@ async fn send_anthropic_message(
     let request_body = AnthropicMessagesRequest {
         model: model.to_string(),
         max_tokens: ANTHROPIC_MAX_TOKENS,
-        messages: vec![ChatMessage {
-            role: "user".to_string(),
-            content: prompt,
-        }],
+        system,
+        messages,
     };
 
     let response = create_client(provider, &api_key)?
@@ -656,6 +806,72 @@ mod tests {
     use super::*;
     use std::fmt;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+    #[test]
+    fn base_url_requires_https_except_for_local_or_lan_hosts() {
+        for allowed in [
+            "https://api.openai.com/v1",
+            "http://localhost:11434/v1",
+            "http://127.0.0.1:11434/v1",
+            "http://[::1]:11434/v1",
+            "http://192.168.1.10:11434/v1",
+            "http://10.0.0.5:1234/v1",
+            "http://172.16.4.2/v1",
+            "http://100.101.5.7:11434/v1",
+        ] {
+            assert!(validate_provider_base_url(allowed).is_ok(), "{allowed}");
+        }
+        for refused in [
+            "http://api.openai.com/v1",
+            "http://example.com",
+            "http://8.8.8.8/v1",
+            "ftp://example.com",
+            "not a url",
+        ] {
+            assert!(validate_provider_base_url(refused).is_err(), "{refused}");
+        }
+    }
+
+    #[test]
+    fn redirects_stay_on_the_configured_host_and_scheme() {
+        let openai = "https://api.openai.com/v1";
+        let original = reqwest::Url::parse(openai).unwrap();
+        let follows = |next: &str| {
+            redirect_allowed(&original, &reqwest::Url::parse(next).unwrap())
+        };
+        assert!(follows("https://api.openai.com/v2"));
+        assert!(!follows("https://evil.com/v1"), "another host");
+        assert!(
+            !follows("http://api.openai.com/v1"),
+            "https to http downgrade"
+        );
+        assert!(
+            !follows("http://127.0.0.1:1234/v1"),
+            "another host, even a loopback one"
+        );
+
+        // Plain http keeps working for local model servers, the same
+        // exception the base URL rule makes.
+        let local = reqwest::Url::parse("http://localhost:11434/v1").unwrap();
+        let local_follows = |next: &str| {
+            redirect_allowed(&local, &reqwest::Url::parse(next).unwrap())
+        };
+        assert!(local_follows("http://localhost:11435/v1"));
+        assert!(local_follows("https://localhost:11434/v1"));
+        assert!(
+            !local_follows("http://192.168.1.5:11434/v1"),
+            "a LAN address is still another host"
+        );
+    }
+
+    #[test]
+    fn create_client_refuses_a_base_url_the_setter_would_refuse() {
+        // A value that reached the store without the setter's check (an
+        // older build, a hand-edited store) must fail at use time too.
+        let error = create_client(&provider("custom", "http://example.com/v1"), "key").unwrap_err();
+        assert!(error.contains("https"), "{error}");
+        assert!(create_client(&provider("custom", "http://localhost:11434/v1"), "key").is_ok());
+    }
 
     #[derive(Debug)]
     struct TestError {
@@ -886,6 +1102,7 @@ mod tests {
         let request = AnthropicMessagesRequest {
             model: "claude-haiku".to_string(),
             max_tokens: ANTHROPIC_MAX_TOKENS,
+            system: None,
             messages: vec![ChatMessage {
                 role: "user".to_string(),
                 content: "hi".to_string(),
@@ -896,6 +1113,55 @@ mod tests {
         assert_eq!(json["messages"][0]["role"], "user");
         assert!(json.get("stream").is_none());
         assert!(json.get("reasoning_effort").is_none());
+        // No system prompt means no `system` key, the wire format the plain
+        // path has always sent.
+        assert!(json.get("system").is_none());
+    }
+
+    #[test]
+    fn anthropic_schema_request_carries_system_prompt_and_schema() {
+        let schema = serde_json::json!({
+            "type": "object",
+            "properties": { "transcription": { "type": "string" } },
+            "required": ["transcription"]
+        });
+        let system =
+            anthropic_schema_system_prompt(Some("Clean up the text.".to_string()), Some(schema));
+        assert!(system.as_deref().unwrap().starts_with("Clean up the text."));
+        assert!(system
+            .as_deref()
+            .unwrap()
+            .contains("Reply with only a JSON object"));
+        assert!(system.as_deref().unwrap().contains("\"transcription\""));
+
+        let request = AnthropicMessagesRequest {
+            model: "claude-haiku".to_string(),
+            max_tokens: ANTHROPIC_MAX_TOKENS,
+            system,
+            messages: vec![ChatMessage {
+                role: "user".to_string(),
+                content: serde_json::json!({"selected_text": "hi"}).to_string(),
+            }],
+        };
+        let json = serde_json::to_value(&request).unwrap();
+        // The schema rides in the top-level `system` field, and the user
+        // content stays in `messages` — the request never hits
+        // `/chat/completions`-only fields like `response_format`.
+        assert!(json["system"].is_string());
+        assert!(json.get("response_format").is_none());
+        assert_eq!(json["messages"][0]["role"], "user");
+        assert_eq!(json["max_tokens"], ANTHROPIC_MAX_TOKENS);
+    }
+
+    #[test]
+    fn anthropic_schema_system_prompt_is_none_without_input() {
+        assert!(anthropic_schema_system_prompt(None, None).is_none());
+        // A schema alone still produces a system prompt.
+        let system = anthropic_schema_system_prompt(
+            None,
+            Some(serde_json::json!({"type": "object"})),
+        );
+        assert!(system.is_some());
     }
 
     #[test]
